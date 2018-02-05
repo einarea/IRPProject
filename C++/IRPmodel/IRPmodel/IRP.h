@@ -4,6 +4,8 @@
 #include "xprb_cpp.h"
 #include "Map.h"
 #include <vector>
+#include "CustomerDB.h"
+
 using namespace ::dashoptimization;
 using namespace::std;
 
@@ -11,13 +13,19 @@ class IRP
 {
 private:
 	//Problem
+	CustomerDB database;
+	Map map;
 	XPRBprob prob;
 
 	//Parameters
+	static const int TRANSCOST_MULTIPLIER = 10;
+	static const int SERVICECOST_MULTIPLIER = 5;
+
 	int NumOfCustomers;
 	int NumOfPeriods;
-	int ** DistanceMatrix;
-	int ** CostMatrix;
+	int ** Dist;
+	int ** TransCost;
+	int ** HoldCost;
 	//Map map;
 
 	//Variables
@@ -42,11 +50,13 @@ private:
 	//Utility functions
 	bool initializeSets();
 	bool initializeVariables();
+	bool inArcSet(int, int);
 	bool initializeParameters();
+	
 
 public:
 
-	IRP(FILE * InstanceFile);
+	IRP(string);
 	XPRBprob & getProblem();
 	int getNumOfPeriods(IRP * model);
 	int getNumOfCustomers();

@@ -3,6 +3,7 @@
 #include "stdafx.h"
 #include <stdio.h>
 #include <iostream>
+#include "CustomerDB.h"
 
 using namespace std;
 
@@ -11,16 +12,18 @@ class Map
 {
 
 private:
-public:
 	int numVertex;
-	double ** coordinate;
-	Map(string msg);
-	double getDistance(int, int);
+	int getDistance(int, int);
 	string file;
 	void free();
+	void nodeToCustomer(int&);
+	int TRANSCOST_MULTIPLIER;
+	int SERVICECOST_MULTIPLIER;
 public:
-	Map(FILE * dfile);
-	double ** getDistanceMatrix(double ** positions);
+	Map(CustomerDB&, int, int);
+	CustomerDB & database;
+	int getTransCost(int, int);
+	int getHoldCost(int);
 	int getNumCustomers();
 	~Map();
 };

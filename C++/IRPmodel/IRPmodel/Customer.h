@@ -10,6 +10,7 @@ class Customer
 private:
 	static int nPeriods;
 	
+	int CustomerID;
 	int HoldingCost;
 	int LowerLimit;
 	int UpperLimit;
@@ -18,9 +19,14 @@ private:
 	double posY;
 
 public:
-	Customer(int, int, int, int *, int, int);
+	Customer(int, int, int, int, int *, int, int);
+	Customer(int, int, int, int, int *);
 
 	Customer(int numberOfPeriods);
+	double getXpos();
+	double getYpos();
+	int getHoldCost();
+	
 
 
 };

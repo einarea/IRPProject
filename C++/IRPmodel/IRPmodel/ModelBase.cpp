@@ -8,26 +8,21 @@ ModelBase::ModelBase()
 
 void ModelBase::createUnion(vector<int> &set1, vector<int> &set2, vector<int> &result)
 {
-
-	result = vector<int>(set1.size() + set2.size());
-
 	for (int i = 0; i<set1.size(); i++)
 	{
-		result[i] = set1[i];
+		result.push_back(set1[i]);
 	}
 
-	for (int i = set2.size(); i<set2.size(); i++)
+	for (int i = 0; i<set2.size(); i++)
 	{
-		result[i] = set2[i - set1.size()];
+		result.push_back(set2[i]);
 	}
 }
 
-void ModelBase::createRangeSet(int start, int end, vector<int> * set)
+void ModelBase::createRangeSet(int start, int end, vector<int> &set)
 {
-	(*set) = vector<int>(end - start + 1);
-
-	for (int i = 0; i < end; i++) {
-		(*set)[i] = start + i;
+	for (int i = start; i <= end; i++) {
+		set.push_back(i);
 	}
 }
 
