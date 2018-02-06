@@ -9,7 +9,15 @@ using namespace ::std;
 
 
 
-Map::Map(CustomerDB& db, int transCost, int serviceCost)
+bool Map::isDelivery(int node)
+{
+	if (node <= getNumCustomers())
+		return true;
+	else
+		return false;
+}
+
+Map::Map(CustomerDB& db, int transCost = 1, int serviceCost = 1)
 	:
 	database(db),
 	TRANSCOST_MULTIPLIER(transCost),
@@ -31,6 +39,43 @@ int Map::getHoldCost(int node)
 {
 	nodeToCustomer(node);
 	return database.getHoldCost(node);
+}
+
+int Map::getNumCustomers()
+{
+	return database.getnCustomers();
+}
+
+int Map::getUpperLimit(int node)
+{
+	nodeToCustomer(node);
+	return database.getUpperLimit(node);
+}
+
+int Map::getLowerLimit(int node)
+{
+	nodeToCustomer(node);
+	return database.getLowerLimit(node);
+}
+
+int Map::getDemand(int node, int period, int indicator)
+{
+	nodeToCustomer(node);
+	return database.getDemand(node, period, indicator);
+}
+
+int Map::getInitInventory(int node)
+{
+	int indicator;
+	if (isDelivery(node))
+		indicator = Customer::DELIVERY;
+	else
+		indicator = Customer::PICKUP;
+	
+	nodeToCustomer(node);
+
+	return database.getInitInventory(node, indicator);
+	
 }
 
 int Map::getDistance(int id1, int id2)

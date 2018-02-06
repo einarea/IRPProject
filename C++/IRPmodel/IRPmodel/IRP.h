@@ -18,14 +18,19 @@ private:
 	XPRBprob prob;
 
 	//Parameters
-	static const int TRANSCOST_MULTIPLIER = 10;
-	static const int SERVICECOST_MULTIPLIER = 5;
+	static const int TRANSCOST_MULTIPLIER = 1;
+	static const int SERVICECOST_MULTIPLIER = 1;
 
 	int NumOfCustomers;
 	int NumOfPeriods;
+	int nVehicles;
 	int ** Dist;
 	int ** TransCost;
-	int ** HoldCost;
+	int * HoldCost;
+	int * InitInventory;
+	int * UpperLimit;
+	int * LowerLimit;
+	int ** Demand;
 	//Map map;
 
 	//Variables
@@ -36,10 +41,13 @@ private:
 	XPRBvar ** pickup;
 	XPRBvar *** loadDelivery;
 	XPRBvar *** loadPickup;
+
+	XPRBexpr objective;
 	int ** t;
 
 	//Sets
 	vector  <int> Periods;
+	vector  <int> AllPeriods;
 	vector  <int> DeliveryNodes;
 	vector <int> PickupNodes;
 	vector  <int> Nodes;
@@ -52,6 +60,7 @@ private:
 	bool initializeVariables();
 	bool inArcSet(int, int);
 	bool initializeParameters();
+	bool formulateProblem();
 	
 
 public:

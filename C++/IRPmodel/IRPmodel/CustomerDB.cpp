@@ -24,7 +24,8 @@ CustomerDB::CustomerDB(string FileName)
 	int nPeriods = 2;
 	int CustomerID = 0;
 	int HoldingCost;
-	int * Demand;
+	int ** Demand;
+	int * InitInventory;
 	int LowerLimit;
 	int UpperLimit;
 
@@ -39,13 +40,24 @@ CustomerDB::CustomerDB(string FileName)
 		UpperLimit = stoi(getNextToken(line, delimiter));
 
 		//Dynamically allocated array
-		Demand = new int[nPeriods];
+		Demand = new int * [2]; //pickup and delivery demand
 
-		for (int i = 0; i < nPeriods; i++) {
-			Demand[i] = stoi(getNextToken(line, delimiter));
-		};
+		for (int i = 0; i < 2; i++){
+			Demand[i] = new int[nPeriods];
+			for (int t = 0; t < nPeriods; t++) {
+				Demand[i][t] = stoi(getNextToken(line, delimiter));
+				
+			}
+		}
 
-		Customer cust(CustomerID, HoldingCost, LowerLimit, UpperLimit, Demand);
+		//Inital inventory
+		InitInventory = new int [2]; //pickup and delivery demand
+		for (int i = 0; i < 2; i++) {
+			InitInventory[i] = stoi(getNextToken(line, delimiter));
+		}
+
+		Customer cust(CustomerID, HoldingCost, LowerLimit, UpperLimit, Demand, InitInventory);
+		printf("%d ", cust.getInitInventory(Customer::PICKUP));
 		Customers.push_back(cust);
 		CustomerID++;
 	}
@@ -69,6 +81,26 @@ double CustomerDB::getX(int id)
 double CustomerDB::getY(int id)
 {
 	return getCustomer(id)->getYpos();
+}
+
+int CustomerDB::getUpperLimit(int id)
+{
+	return getCustomer(id)->getUpperLimit();
+}
+
+int CustomerDB::getInitInventory(int id, int indicator)
+{
+	return getCustomer(id)->getInitInventory(indicator);
+}
+
+int CustomerDB::getLowerLimit(int id)
+{
+	return getCustomer(id)->getLowerLimit();
+}
+
+int CustomerDB::getDemand(int id, int period, int indicator)
+{
+	return getCustomer(id)->getDemand(period-1, indicator);
 }
 
 string CustomerDB::getNextToken(string &str, string& delimiter)

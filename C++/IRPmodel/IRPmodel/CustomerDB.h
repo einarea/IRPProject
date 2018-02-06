@@ -26,4 +26,8 @@ public:
 	int getHoldCost(int);
 	double getX(int);
 	double getY(int);
+	int getUpperLimit(int);
+	int getInitInventory(int id, int indicator);
+	int getLowerLimit(int);
+	int getDemand(int id, int period, int INDICATOR);
 };

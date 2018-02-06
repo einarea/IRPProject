@@ -24,13 +24,97 @@ IRP::IRP(string filename)
 
 	//Initialize parameters
 	if (!initializeParameters()) {
-		cout << "Data Error: Could not initialize variables.";
+		cout << "Data Error: Could not initialize parameters.";
 		return;
 	}
+
+	formulateProblem();
 	
-
-
 }
+
+bool IRP::formulateProblem()
+{
+
+	/****OBJECTIVE****/
+
+	//Transportation costs
+	for (int i : AllNodes)
+		for (int j : AllNodes)
+			for (int t : Periods) {
+				if (inArcSet(i, j))
+					objective += TransCost[i][j] * x[i][j][t];
+			}
+	//Holding costs
+	for (int i : Nodes)
+		for (int t : Periods)
+			objective += HoldCost[i] * y[i][t];
+
+	prob.setObj(prob.newCtr("OBJ", objective));  /* Set the objective function */
+	//end objective
+
+	/**** CONSTRAINTS ****/
+
+	//Routing constraints
+	XPRBexpr p1;
+	XPRBexpr p2;
+	for (int i : AllNodes){
+		for (int t : Periods) {
+			for (int j : AllNodes) {
+				if (inArcSet(i, j)) {
+					p1 += x[i][j][t];
+				}
+				if (inArcSet(j, i)) {
+					p2 += x[j][i][t];
+				}
+			}
+			prob.newCtr("RoutingFlow", p1 - p2 = 0);
+			p1 = XPRBexpr();
+			p2 = XPRBexpr();
+		}
+	}
+
+	//Linking x and y
+	for (int i : AllNodes){
+		for (int t : Periods) {
+			for (int j : AllNodes) {
+				if (inArcSet(i, j)) {
+					p1 += x[i][j][t];
+				}
+				p2 = y[i][t];
+				prob.newCtr("LinkingArcandVisit", p1 - p2 = 0);
+				p1 = XPRBexpr();
+				p2 = XPRBexpr();
+			}
+		}
+	}	
+
+	//Max visit
+	for (int i : Nodes) {
+		for (int t : Periods) {
+			p1 = y[i][t];
+			prob.newCtr("Max visit", p1 = 0);
+			p1 = XPRBexpr();
+		}
+	}
+
+	//Depot
+	for (int t : Periods) {
+		p1 = y[0][t];
+		prob.newCtr("Max vehicles", p1 <= nVehicles);
+		p1 = XPRBexpr();
+	}
+
+	//Inventory constraints
+	for (int i : Nodes) {
+		p1 = inventory[i][0];
+		prob.newCtr("Initial inventory", p1 <= InitInventory[i]);
+	}
+
+
+	return false;
+}
+
+
 
 XPRBprob & IRP::getProblem() {
 	return prob;
@@ -39,34 +123,76 @@ XPRBprob & IRP::getProblem() {
 
 bool IRP::initializeParameters() {
 	TransCost = new int *[AllNodes.size()];
+
+
 	for (int i : AllNodes) {
 		printf("\n");
 		TransCost[i] = new  int[AllNodes.size()];
 		for (int j : AllNodes) {
-			
 			if (inArcSet(i, j)) {
 				TransCost[i][j] = map.getTransCost(i, j);
 				printf("%-10d", TransCost[i][j]);
 			}
 			else {
-				TransCost[i][j] = -1;
+				TransCost[i][j] = 0;
 				printf("%-10d", TransCost[i][j]);
 			}
 			
 		}
 	} // end initialization TransCost
 	
-	HoldCost = new int *[Nodes.size()];
+	HoldCost = new int [Nodes.size()];
 	for (int i : Nodes) {
-		HoldCost[i] = new int[Periods.size()];
-			for (int t : Periods) {
-				HoldCost[i][t] = map.getHoldCost(i);
-			}
+		HoldCost[i] = map.getHoldCost(i);
+	} //end initialization HoldCost
+
+	InitInventory = new int[Nodes.size()];
+
+	for (int i : Nodes) {
+		InitInventory[i] = map.getInitInventory(i);
 	}
 
 
+	UpperLimit = new int[Nodes.size()];
+	LowerLimit = new int[Nodes.size()];
+	for (int i : Nodes) {	
+		UpperLimit[i] = map.getUpperLimit(i);
+		LowerLimit[i] = map.getLowerLimit(i);
+	} //end limit initialization
+
+	printf("\n");
+	printf("Demand Delivery");
+
+	Demand = new int * [Nodes.size()];
+
+	for (int i : DeliveryNodes) {
+		printf("\n");
+		Demand[i] = new int [Periods.size()];
+		for (int t : Periods) {
+			if (t > 0) {
+				Demand[i][t] = map.getDemand(i, t, Customer::DELIVERY);
+				printf("%-10d", Demand[i][t]);
+			}
+		}
+	} //end demand delivery nodes
+
+	printf("\n");
+	printf("Pickup Delivery");
+
+	for (int i : PickupNodes) {
+		printf("\n");
+		Demand[i] = new int[Periods.size()];
+		for (int t : Periods) {
+			if (t > 0) {
+				Demand[i][t] = map.getDemand(i, t, Customer::PICKUP);
+				printf("%-10d", Demand[i][t]);
+			}
+		}
+	} //end demand delivery nodes
+
 	return true;
 }
+
 
 
 
@@ -77,6 +203,7 @@ bool IRP::initializeSets()
 	NumOfPeriods = 2;
 
 	ModelBase::createRangeSet(1, NumOfPeriods, Periods);
+	ModelBase::createRangeSet(0, NumOfPeriods, AllPeriods);
 	ModelBase::createRangeSet(1, NumOfCustomers, DeliveryNodes);
 	ModelBase::createRangeSet(NumOfCustomers+1, 2*NumOfCustomers, PickupNodes);
 	ModelBase::createUnion(DeliveryNodes, PickupNodes, Nodes);
@@ -116,12 +243,21 @@ bool IRP::initializeVariables()
 
 	//initialize y-variables and inventory
 	y = new XPRBvar *[AllNodes.size()];
-	inventory = new XPRBvar *[DeliveryNodes.size()];
+	
 	for (int i : Nodes) {
 		y[i] = new XPRBvar[Periods.size()];
-		inventory[i] = new XPRBvar[Periods.size()];
+		
 		for (int t : Periods) {
 			y[i][t] = prob.newVar(XPRBnewname("y_%d%d", i, t), XPRB_PL, 0, 1);
+		
+		}
+	}
+
+	inventory = new XPRBvar *[DeliveryNodes.size()];
+
+	for (int i : Nodes) {
+		inventory[i] = new XPRBvar[Periods.size()];
+		for (int t : AllPeriods) {
 			inventory[i][t] = prob.newVar(XPRBnewname("inventory_%d%d", i, t), XPRB_PL, 0, 100);
 		}
 	}
@@ -152,7 +288,8 @@ bool IRP::initializeVariables()
 		}
 	}
 	return true;
-}
+}// end initialize variables
+
 
 bool IRP::inArcSet(int i, int j)
 {
@@ -161,7 +298,6 @@ bool IRP::inArcSet(int i, int j)
 	return !a;
 }
 
-// end initialize variables
 
 
 
