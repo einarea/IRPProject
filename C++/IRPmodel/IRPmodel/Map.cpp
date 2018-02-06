@@ -17,22 +17,19 @@ bool Map::isDelivery(int node)
 		return false;
 }
 
-Map::Map(CustomerDB& db, int transCost = 1, int serviceCost = 1)
+Map::Map(CustomerDB& db)
 	:
-	database(db),
-	TRANSCOST_MULTIPLIER(transCost),
-	SERVICECOST_MULTIPLIER(serviceCost)
+	database(db)
 {	
 }
 
-int Map::getTransCost(int node1, int node2)
+int Map::getTransCost(int node1, int node2, int TRANSCOST_MULTIPLIER, int SERVICECOST_MULTIPLER)
 {
 	//Make sure node corresponds to node in network
-	nodeToCustomer(node1);
-	nodeToCustomer(node2);
+
 
 	int distance = getDistance(node1, node2);
-	return distance* TRANSCOST_MULTIPLIER + SERVICECOST_MULTIPLIER;
+	return distance* TRANSCOST_MULTIPLIER + SERVICECOST_MULTIPLER;
 }
 
 int Map::getHoldCost(int node)
@@ -78,21 +75,23 @@ int Map::getInitInventory(int node)
 	
 }
 
-int Map::getDistance(int id1, int id2)
+int Map::getDistance(int node1, int node2)
 {
 	int distance;
+	nodeToCustomer(node1);
+	nodeToCustomer(node2);
 
-	if (id1 == 0 || id2 == 0) {
-		int x = database.getX(max(id1, id2));
-		int y = database.getY(max(id1, id2));
+	if (node1 == 0 || node2 == 0) {
+		int x = database.getX(max(node1, node2));
+		int y = database.getY(max(node1, node2));
 		distance = floor(sqrt(pow(x, 2) + pow(y, 2)));
 	}
 	else
 	{
-		int x1 = database.getX(id1);
-		int y1 = database.getY(id1);
-		int x2 = database.getX(id2);
-		int y2 = database.getY(id2);
+		int x1 = database.getX(node1);
+		int y1 = database.getY(node1);
+		int x2 = database.getX(node2);
+		int y2 = database.getY(node2);
 
 		distance = floor(sqrt(pow(x2 - x1, 2) + pow(y2 - y1, 2)));
 	}

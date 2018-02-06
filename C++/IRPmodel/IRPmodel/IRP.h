@@ -19,7 +19,7 @@ private:
 
 	//Parameters
 	static const int TRANSCOST_MULTIPLIER = 1;
-	static const int SERVICECOST_MULTIPLIER = 1;
+	static const int SERVICECOST_MULTIPLIER = 0;
 
 	int NumOfCustomers;
 	int NumOfPeriods;

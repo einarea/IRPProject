@@ -24,8 +24,8 @@ Customer::Customer(int id, int holdCost, int lowLim, int uppLim, int ** dem, int
 	UpperLimit(uppLim),
 	Demand(dem)
 {
-	posX = rand() % 100 + 1;
-	posY = rand() % 100 + 1;
+	posX = (rand() % 1000 + 1)/10;
+	posY = (rand() % 1000 + 1)/10;
 }
 
 

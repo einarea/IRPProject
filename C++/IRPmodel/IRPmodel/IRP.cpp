@@ -7,7 +7,7 @@ IRP::IRP(string filename)
 	:
 	prob("IRP"),						//Initialize problem in BCL
 	database(filename),					//Initialize database of customers
-	map(database, TRANSCOST_MULTIPLIER, SERVICECOST_MULTIPLIER)			//Set up map of all customers
+	map(database)			//Set up map of all customers
 {
 	
 	//Initialize sets
@@ -130,7 +130,7 @@ bool IRP::initializeParameters() {
 		TransCost[i] = new  int[AllNodes.size()];
 		for (int j : AllNodes) {
 			if (inArcSet(i, j)) {
-				TransCost[i][j] = map.getTransCost(i, j);
+				TransCost[i][j] = map.getTransCost(i, j, TRANSCOST_MULTIPLIER, SERVICECOST_MULTIPLIER);
 				printf("%-10d", TransCost[i][j]);
 			}
 			else {
