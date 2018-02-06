@@ -20,10 +20,13 @@ private:
 	//Parameters
 	static const int TRANSCOST_MULTIPLIER = 1;
 	static const int SERVICECOST_MULTIPLIER = 0;
+	static const int TRAVELTIME_MULTIPLIER = 10;
+	const int maxTime = 100;
+	int Capacity = 1000;
+	int nVehicles = 3;
 
 	int NumOfCustomers;
 	int NumOfPeriods;
-	int nVehicles;
 	int ** Dist;
 	int ** TransCost;
 	int * HoldCost;
@@ -31,6 +34,7 @@ private:
 	int * UpperLimit;
 	int * LowerLimit;
 	int ** Demand;
+	int ** TravelTime;
 	//Map map;
 
 	//Variables
@@ -41,6 +45,8 @@ private:
 	XPRBvar ** pickup;
 	XPRBvar *** loadDelivery;
 	XPRBvar *** loadPickup;
+	XPRBvar ** time;
+
 
 	XPRBexpr objective;
 	int ** t;
@@ -66,6 +72,7 @@ private:
 public:
 
 	IRP(string);
+	void solveLP();
 	XPRBprob & getProblem();
 	int getNumOfPeriods(IRP * model);
 	int getNumOfCustomers();

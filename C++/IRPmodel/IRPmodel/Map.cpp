@@ -75,6 +75,11 @@ int Map::getInitInventory(int node)
 	
 }
 
+int Map::getTravelTime(int node1, int node2, int travelTimeParam)
+{
+	return getDistance(node1, node2) * travelTimeParam;
+}
+
 int Map::getDistance(int node1, int node2)
 {
 	int distance;

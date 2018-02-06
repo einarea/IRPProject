@@ -28,6 +28,7 @@ public:
 	int getLowerLimit(int node);
 	int getDemand(int node, int period, int indicator);
 	int getInitInventory(int node);
+	int getTravelTime(int node1, int node2, int timeParam);
 	~Map();
 };
 
