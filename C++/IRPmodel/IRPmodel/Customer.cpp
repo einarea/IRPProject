@@ -1,6 +1,11 @@
 #include "stdafx.h"
+#include <algorithm>
+using namespace ::std;
 #include "Customer.h"
 #include <fstream>
+
+
+
 
 Customer::Customer(int id, int holdCost, int lowLim, int uppLim, int ** dem, int * init, int coordinateX, int coordinateY)
 	:
@@ -30,8 +35,11 @@ Customer::Customer(int id, int holdCost, int lowLim, int uppLim, int ** dem, int
 
 
 //Randomly generated customer, default
-Customer::Customer(int numberOfPeriods)
+Customer::Customer(int numberOfPeriods, int holdCost[2], int lowLimit[2], int uppLim[2], int dem[2])
 {
+	//Check range
+	
+	LowerLimit = rand() %lowLimit[1]
 	HoldingCost = rand();
 	LowerLimit = 0;
 	UpperLimit = 0;

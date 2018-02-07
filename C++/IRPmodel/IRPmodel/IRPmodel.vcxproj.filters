@@ -62,9 +62,6 @@
     <ClCompile Include="ModelBase.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="VRP.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="customerData.txt" />
