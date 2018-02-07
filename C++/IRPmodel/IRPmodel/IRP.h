@@ -18,12 +18,12 @@ private:
 	XPRBprob prob;
 
 	//Parameters
-	static const int TRANSCOST_MULTIPLIER = 1;
-	static const int SERVICECOST_MULTIPLIER = 0;
-	static const int TRAVELTIME_MULTIPLIER = 10;
-	const int maxTime = 100;
+	static const int TRANSCOST_MULTIPLIER = 4;
+	static const int SERVICECOST_MULTIPLIER = 2;
+	static const int TRAVELTIME_MULTIPLIER = 1;
+	const int maxTime = 2000;
 	int Capacity = 1000;
-	int nVehicles = 3;
+	int nVehicles = 4;
 
 	int NumOfCustomers;
 	int NumOfPeriods;
@@ -71,7 +71,7 @@ private:
 
 public:
 
-	IRP(string);
+	IRP(CustomerDB&);
 	void solveLP();
 	XPRBprob & getProblem();
 	int getNumOfPeriods(IRP * model);

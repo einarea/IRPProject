@@ -4,11 +4,11 @@
 #include <algorithm>
 using namespace ::dashoptimization;
 
-IRP::IRP(string filename)
+IRP::IRP(CustomerDB& db)
 	:
-	prob("IRP"),						//Initialize problem in BCL
-	database(filename),					//Initialize database of customers
-	map(database)			//Set up map of all customers
+	database(db),
+	prob("IRP"),			//Initialize problem in BCL							
+	map(db)			//Set up map of all customers
 {
 	
 	//Initialize sets
@@ -37,8 +37,45 @@ void IRP::solveLP()
 {
 	prob.lpOptimize();
 	int b = prob.getLPStat();
+	
+	int d = prob.mipOptimize();
 	prob.print();
-	int c = 2;
+	for (int i : AllNodes)
+		for (int t : Periods){
+			y[i][t].print();
+			printf("\t");
+			for (int j : AllNodes) {
+				if (inArcSet(i, j)) {
+					XPRBvar temp = prob.getVarByName(XPRBnewname("x%d-%d%d", i, j, t));
+					(x[i][j][t]).print();
+					printf("\t");
+					/*(loadDelivery[i][j][t]).print();
+					printf("\t");
+					(loadPickup[i][j][t]).print();
+					printf("\t"); */
+				}
+			}
+			
+			(time[i][t]).print();
+			printf("\t");
+
+			if (i > 0 ){
+				if (i <= DeliveryNodes.size()) {
+					(delivery[i][t]).print();
+				}
+				else {
+					printf("\t\t\t\t\t\t");
+					(pickup[i][t]).print();
+				}
+				
+				printf("\n");
+				}
+			else
+				printf("\n");
+	}
+
+
+	int c = prob.getObjVal();
 }
 
 bool IRP::formulateProblem()
@@ -160,6 +197,7 @@ bool IRP::formulateProblem()
 
 
 	//Time constraints
+	
 	for (int t : Periods) {
 		p1 = time[0][t];
 		prob.newCtr("Initial time", p1 == 0);
@@ -167,22 +205,30 @@ bool IRP::formulateProblem()
 	}
 
 	for (int i : AllNodes) {
-		for (int j : AllNodes) {
-			if (inArcSet(i, j)) {
-				for (int t : Periods) {
+		for (int t : Periods) {
+			for (int j : Nodes){
+				if (inArcSet(i, j)) {
 					p1 = time[i][t] - time[j][t] + TravelTime[i][j]
 						+ (maxTime + TravelTime[i][j]) * x[i][j][t];
-					prob.newCtr("Time flow", p1 <= (maxTime + TravelTime[i][j]));
-					p1 = 0;
 
-					p1 = time[i][t] + TravelTime[i][j] * x[i][j][t];
-					prob.newCtr("Time flow 2", p1 <= maxTime);
+					p2 = maxTime + TravelTime[i][j];
+					prob.newCtr("Time flow", p1 <= p2);
 					p1 = 0;
+					p2 = 0;
+				}
+	
 				}
 
+			if (inArcSet(i, 0)) {
+				p1 = time[i][t] + TravelTime[i][0] * x[i][0][t];
+				prob.newCtr("Final time", p1 <= maxTime);
+				p1 = 0;
 			}
-		}
-	} //end time constraints
+			}
+	}
+	
+	
+	//end time constraints
 
 	//Loading constraints
 	for (int i : DeliveryNodes) {
@@ -219,7 +265,7 @@ bool IRP::formulateProblem()
 					p2 -= loadDelivery[i][j][t];
 				}
 			}
-			p1 -= pickup[i][t];
+			p1 += pickup[i][t];
 
 			prob.newCtr("LoadBalance pickup", p1 == 0);
 			prob.newCtr("DeliveryBalance at pickupNodes", p2 == 0);
@@ -235,9 +281,9 @@ bool IRP::formulateProblem()
 			if (inArcSet(i, j)) {
 				for (int t : Periods) {
 					p1 = loadDelivery[i][j][t] + loadPickup[i][j][t] - Capacity * x[i][j][t];
+					prob.newCtr("ArcCapacity", p1 <= 0);
+					p1 = 0;
 				}
-				prob.newCtr("ArcCapacity", p1 <= 0);
-				p1 = 0;
 			}
 		}
 	}
@@ -355,7 +401,7 @@ bool IRP::initializeParameters() {
 bool IRP::initializeSets()
 {
 	NumOfCustomers = database.getnCustomers();					//Number of customers
-	NumOfPeriods = 2;
+	NumOfPeriods = database.getnPeriods();
 
 	ModelBase::createRangeSet(1, NumOfPeriods, Periods);
 	ModelBase::createRangeSet(0, NumOfPeriods, AllPeriods);
@@ -398,14 +444,17 @@ bool IRP::initializeVariables()
 	//initialize y-variables and inventory
 	y = new XPRBvar *[AllNodes.size()];
 	
-	for (int i : Nodes) {
+	for (int i : AllNodes) {
 		y[i] = new XPRBvar[Periods.size()];
 		
 		for (int t : Periods) {
+			if(i>0)
 			y[i][t] = prob.newVar(XPRBnewname("y_%d%d", i, t), XPRB_PL, 0, 1);
-		
+			else
+			y[i][t] = prob.newVar(XPRBnewname("y_%d%d", 0, t), XPRB_PL, 0, nVehicles);	
 		}
 	}
+
 
 	inventory = new XPRBvar *[Nodes.size()];
 
@@ -416,12 +465,6 @@ bool IRP::initializeVariables()
 		}
 	}
 
-	//Initalize depot
-	
-	y[0] = new XPRBvar[Periods.size()];
-	for (int t : Periods) {
-		y[0][t] = prob.newVar(XPRBnewname("y_%d", t), XPRB_PL, 0, nVehicles);
-	}
 
 	//Initialize at delivery nodes
 	delivery = new XPRBvar *[DeliveryNodes.size()+1];
@@ -447,7 +490,7 @@ bool IRP::initializeVariables()
 	for (int i : AllNodes) {
 		time[i] = new XPRBvar[Periods.size()];
 		for (int t : Periods) {
-			time[i][t] = prob.newVar(XPRBnewname("t_%d%d", i, t), XPRB_PL, 0, 100);
+			time[i][t] = prob.newVar(XPRBnewname("t_%d%d", i, t), XPRB_PL, 0, 1000);
 		}
 
 	}
