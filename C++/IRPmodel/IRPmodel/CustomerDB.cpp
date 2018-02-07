@@ -18,10 +18,16 @@ CustomerDB::CustomerDB(string FileName)
 
 
 	string line;
+
+	//Get number of periods
+	getline(CustomerRecords, line);
+	string delimiter = "=";
+	getNextToken(line, delimiter);
+	nPeriods = stoi(getNextToken(line, delimiter));
+
 	//check file for errors
 	getline(CustomerRecords, line);
 
-	int nPeriods = 2;
 	int CustomerID = 0;
 	int HoldingCost;
 	int ** Demand;
@@ -34,7 +40,7 @@ CustomerDB::CustomerDB(string FileName)
 	
 		size_t pos = 0;
 		string token;
-		string delimiter = "\t";
+		delimiter = "\t";
 		HoldingCost = stoi(getNextToken(line, delimiter));
 		LowerLimit = stoi(getNextToken(line, delimiter));
 		UpperLimit = stoi(getNextToken(line, delimiter));
@@ -71,6 +77,11 @@ int CustomerDB::getnCustomers()
 int CustomerDB::getHoldCost(int id)
 {
 	return getCustomer(id)->getHoldCost();
+}
+
+int CustomerDB::getnPeriods()
+{
+	return nPeriods;
 }
 
 double CustomerDB::getX(int id)

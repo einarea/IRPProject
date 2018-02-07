@@ -24,6 +24,7 @@ public:
 	CustomerDB(string);
 	int getnCustomers();
 	int getHoldCost(int);
+	int getnPeriods();
 	double getX(int);
 	double getY(int);
 	int getUpperLimit(int);
