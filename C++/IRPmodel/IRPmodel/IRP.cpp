@@ -4,11 +4,11 @@
 #include <algorithm>
 using namespace ::dashoptimization;
 
-IRP::IRP(string filename)
+IRP::IRP(CustomerDB& db)
 	:
-	prob("IRP"),						//Initialize problem in BCL
-	database(filename),					//Initialize database of customers
-	map(database)			//Set up map of all customers
+	database(db),
+	prob("IRP"),			//Initialize problem in BCL							
+	map(db)			//Set up map of all customers
 {
 	
 	//Initialize sets
@@ -46,7 +46,7 @@ void IRP::solveLP()
 			printf("\t");
 			for (int j : AllNodes) {
 				if (inArcSet(i, j)) {
-					//XPRBvar temp = prob.getVarByName(XPRBnewname("x%d-%d%d", i, j, t));
+					XPRBvar temp = prob.getVarByName(XPRBnewname("x%d-%d%d", i, j, t));
 					(x[i][j][t]).print();
 					printf("\t");
 					/*(loadDelivery[i][j][t]).print();
@@ -93,7 +93,7 @@ bool IRP::formulateProblem()
 	//Holding costs
 	for (int i : Nodes)
 		for (int t : Periods)
-			objective += HoldCost[i] * y[i][t] + 40*time[i][t];
+			objective += HoldCost[i] * y[i][t];
 
 	prob.setObj(prob.newCtr("OBJ", objective));  /* Set the objective function */
 	//end objective

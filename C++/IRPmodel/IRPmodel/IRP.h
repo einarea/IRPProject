@@ -71,7 +71,7 @@ private:
 
 public:
 
-	IRP(string);
+	IRP(CustomerDB&);
 	void solveLP();
 	XPRBprob & getProblem();
 	int getNumOfPeriods(IRP * model);
