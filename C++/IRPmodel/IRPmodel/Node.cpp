@@ -3,7 +3,7 @@
 
 
 
-Node::Node(int id, vector<Edge&> edges)
+Node::Node(int id, vector<Edge> edges)
 	:
 	Edges(edges),
 	NodeID(id),
@@ -18,13 +18,23 @@ Node::Node(int id)
 {
 }
 
-int Node::getId() {
+int Node::getId() const {
 	return NodeID;
 }
 
-void Node::addEdge(double value, Node child)
+Node::Edge * Node::getEdge(int id)
 {
-	Edges.push_back(Edge(child, value));
+	return &Edges[id];
+}
+
+vector<Node::Edge>* Node::getEdges()
+{
+	return &Edges;
+}
+
+void Node::addEdge(double value, Node &child)
+{
+	this->Edges.push_back(Edge(child, value));
 }
 
 Node::~Node()
@@ -33,22 +43,24 @@ Node::~Node()
 
 bool Node::operator==(const Node & node) const
 {
-	if(this->getId == node.getId)
+	if(this->getId() == node.getId())
 	return true;
 }
 
-class Node::Edge
-{
-public:
-	Edge(Node& endNode, double value);
-private:
-	double Value;
-	vector <Node&> Children;
-
-};
 
 Node::Edge::Edge(Node & endNode, double value)
+	:
+	EndNode(endNode),
+	Value(value)
 {
-	Value = value;
-	Children.push_back(endNode);
+}
+
+double Node::Edge::getValue()
+{
+	return Value;
+}
+
+Node & Node::Edge::getEndNode()
+{
+	return EndNode;
 }

@@ -6,11 +6,22 @@ using namespace std;
 class Node
 {
 public:
-	class Edge;
-	Node(int id, vector <Edge&> edges);
+	class Edge {
+	public:
+		Edge(Node& endNode, double value);
+		double getValue();
+		Node & getEndNode();
+	private:
+		double Value;
+		Node& EndNode;
+	};
+
+	Node(int id, vector <Edge> edges);
 	Node(int id);
-	int getId();
-	void addEdge(double value, Node child);
+	int getId() const;
+	Edge * getEdge(int);
+	vector <Edge> * getEdges();
+	void addEdge(double value, Node & child);
 	~Node();
 	bool operator==(const Node &) const; 
 	bool operator!=(const Node &node) const
@@ -22,7 +33,7 @@ public:
 private:
 	int NodeID;
 	bool onStack;
-	vector <Edge&> Edges;
+	vector <Edge> Edges;
 	int Index;
 	int LowIndex;
 	vector <Node> Nodes;

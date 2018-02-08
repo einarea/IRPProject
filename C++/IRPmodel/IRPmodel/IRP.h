@@ -68,13 +68,14 @@ private:
 	bool inArcSet(int, int);
 	bool initializeParameters();
 	bool formulateProblem();
-	void sepStrongComponents();
-	void buildGraph(vector <Node> &);
+	void buildGraph(vector <Node> &, int);
+	void printGraph(vector <Node> &);
 	
 
 public:
 
 	IRP(CustomerDB&);
+	void sepStrongComponents();
 	void solveLP();
 	XPRBprob & getProblem();
 	int getNumOfPeriods(IRP * model);

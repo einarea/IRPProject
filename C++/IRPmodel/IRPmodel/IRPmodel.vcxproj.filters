@@ -39,13 +39,10 @@
     <ClInclude Include="VRP.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="\\sambaad.stud.ntnu.no\einarea\Documents\Visual Studio 2015\Projects\IRP\C++\IRPmodel\IRPmodel\graphAlgorithm.h">
+    <ClInclude Include="graphAlgorithm.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="\\sambaad.stud.ntnu.no\einarea\Documents\Visual Studio 2015\Projects\IRP\C++\IRPmodel\IRPmodel\Node.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Edge.h">
+    <ClInclude Include="Node.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -71,13 +68,10 @@
     <ClCompile Include="ModelBase.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="\\sambaad.stud.ntnu.no\einarea\Documents\Visual Studio 2015\Projects\IRP\C++\IRPmodel\IRPmodel\graphAlgorithm.cpp">
+    <ClCompile Include="graphAlgorithm.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="\\sambaad.stud.ntnu.no\einarea\Documents\Visual Studio 2015\Projects\IRP\C++\IRPmodel\IRPmodel\Node.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Edge.cpp">
+    <ClCompile Include="Node.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

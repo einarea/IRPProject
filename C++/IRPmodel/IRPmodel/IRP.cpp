@@ -39,7 +39,7 @@ void IRP::solveLP()
 	prob.lpOptimize();
 	int b = prob.getLPStat();
 	
-	int d = prob.mipOptimize();
+	//int d = prob.mipOptimize();
 	prob.print();
 	for (int i : AllNodes)
 		for (int t : Periods){
@@ -82,20 +82,18 @@ void IRP::solveLP()
 void IRP::sepStrongComponents()
 {
 	vector <Node> graph;
-	buildGraph(graph);
+	for (int t : Periods) {
+		buildGraph(graph, t);
+		printGraph(graph);
+	}
 	graphAlgorithm::sepByStrongComp(graph);
 }
 
 
-void IRP::buildGraph(vector<Node> &graph)
+void IRP::buildGraph(vector<Node> &graph, int t)
 {
 	int s;
 	double edgeValue;
-
-	for (int t : Periods) { //Each period is its own problem
-
-							//*******Build graph**************//
-
 							//Create nodes for each visited customer
 		for (int i : Nodes) {
 			if (y[i][t].getSol() >= 0.01); {
@@ -105,16 +103,33 @@ void IRP::buildGraph(vector<Node> &graph)
 		}
 
 		//Add outgoing edges from each visited node
-		for (Node node : graph) {
+		for (Node &node : graph) {
 			s = node.getId();
-			for (Node endingNode : graph) {
-				if (node.getId() != endingNode.getId())
-					edgeValue = x[s][endingNode.getId][t].getSol();
-				if (edgeValue > 0.01)
-					node.addEdge(edgeValue, endingNode);
+			for (Node &endingNode : graph) {
+				if (inArcSet(s, endingNode.getId())) {
+					edgeValue = x[s][endingNode.getId()][t].getSol();
+					if (edgeValue > 0.01) {
+						node.addEdge(edgeValue, endingNode);
+						int a = 1;
+					}
+				}
 			}
 		}
+}
+
+void IRP::printGraph(vector<Node> &graph)
+{
+	for (Node node : graph) {
+		int id = node.getId();
+		printf("Node: %d with edges to ", id);
+		vector<Node::Edge> edges = (*node.getEdges());
+
+		for (Node::Edge &edge : (*node.getEdges())) {
+			printf("%d with flow %f" ,edge.getEndNode().getId(), edge.getValue());
+		}
+		printf("\n");
 	}
+		
 }
 
 
