@@ -10,10 +10,10 @@ public:
 	public:
 		Edge(Node& endNode, double value);
 		double getValue();
-		Node * getEndNode();
+		Node *getEndNode();
 	private:
 		double Value;
-		Node& EndNode;
+		Node &EndNode;
 	};
 
 	Node(int id, vector <Edge> edges);
