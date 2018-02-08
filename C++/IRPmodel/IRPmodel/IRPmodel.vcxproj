@@ -152,6 +152,7 @@
   <ItemGroup>
     <ClInclude Include="Customer.h" />
     <ClInclude Include="CustomerDB.h" />
+    <ClInclude Include="Edge.h" />
     <ClInclude Include="IRP.h" />
     <ClInclude Include="Map.h" />
     <ClInclude Include="ModelBase.h" />
@@ -164,6 +165,7 @@
   <ItemGroup>
     <ClCompile Include="Customer.cpp" />
     <ClCompile Include="CustomerDB.cpp" />
+    <ClCompile Include="Edge.cpp" />
     <ClCompile Include="IRP.cpp" />
     <ClCompile Include="IRPmodel.cpp" />
     <ClCompile Include="Map.cpp" />

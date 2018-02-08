@@ -108,7 +108,7 @@ void IRP::buildGraph(vector<Node> &graph)
 		for (Node node : graph) {
 			s = node.getId();
 			for (Node endingNode : graph) {
-				if (node != endingNode)
+				if (node.getId() != endingNode.getId())
 					edgeValue = x[s][endingNode.getId][t].getSol();
 				if (edgeValue > 0.01)
 					node.addEdge(edgeValue, endingNode);
