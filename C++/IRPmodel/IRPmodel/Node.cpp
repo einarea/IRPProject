@@ -14,7 +14,7 @@ Node::Node(int id, vector<Edge> edges)
 Node::Node(int id)
 	:
 	NodeID(id),
-	onStack(true)
+	onStack(false)
 {
 }
 
@@ -35,6 +35,36 @@ vector<Node::Edge>* Node::getEdges()
 void Node::addEdge(double value, Node &child)
 {
 	this->Edges.push_back(Edge(child, value));
+}
+
+int Node::getIndex()
+{
+	return Index;
+}
+
+void Node::setIndex(int ind)
+{
+	Index = ind;
+}
+
+void Node::setLowLink(int lnk)
+{
+	LowLink = lnk;
+}
+
+void Node::setOnStack(bool bl)
+{
+	onStack = bl;
+}
+
+int Node::getLowLink()
+{
+	return LowLink;
+}
+
+bool Node::isOnStack()
+{
+	return onStack;
 }
 
 Node::~Node()
@@ -60,7 +90,7 @@ double Node::Edge::getValue()
 	return Value;
 }
 
-Node & Node::Edge::getEndNode()
+Node * Node::Edge::getEndNode()
 {
-	return EndNode;
+	return &EndNode;
 }

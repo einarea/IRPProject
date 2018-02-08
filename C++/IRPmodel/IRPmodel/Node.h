@@ -10,7 +10,7 @@ public:
 	public:
 		Edge(Node& endNode, double value);
 		double getValue();
-		Node & getEndNode();
+		Node * getEndNode();
 	private:
 		double Value;
 		Node& EndNode;
@@ -22,7 +22,15 @@ public:
 	Edge * getEdge(int);
 	vector <Edge> * getEdges();
 	void addEdge(double value, Node & child);
+	int getIndex();
+	void setIndex(int);
+	void setLowLink(int);
+	void setOnStack(bool);
+	int getLowLink();
+	bool isOnStack();
 	~Node();
+
+
 	bool operator==(const Node &) const; 
 	bool operator!=(const Node &node) const
 	{
@@ -32,10 +40,11 @@ public:
 
 private:
 	int NodeID;
-	bool onStack;
+	
 	vector <Edge> Edges;
-	int Index;
-	int LowIndex;
+	int Index = -1;
+	int LowLink = -1;
+	bool onStack;
 	vector <Node> Nodes;
 };
 
