@@ -39,6 +39,12 @@
     <ClInclude Include="VRP.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="\\sambaad.stud.ntnu.no\einarea\Documents\Visual Studio 2015\Projects\IRP\C++\IRPmodel\IRPmodel\graphAlgorithm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="\\sambaad.stud.ntnu.no\einarea\Documents\Visual Studio 2015\Projects\IRP\C++\IRPmodel\IRPmodel\Node.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -60,6 +66,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ModelBase.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="\\sambaad.stud.ntnu.no\einarea\Documents\Visual Studio 2015\Projects\IRP\C++\IRPmodel\IRPmodel\graphAlgorithm.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="\\sambaad.stud.ntnu.no\einarea\Documents\Visual Studio 2015\Projects\IRP\C++\IRPmodel\IRPmodel\Node.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

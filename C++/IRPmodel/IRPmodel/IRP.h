@@ -5,6 +5,7 @@
 #include "Map.h"
 #include <vector>
 #include "CustomerDB.h"
+#include "Node.h"
 
 using namespace ::dashoptimization;
 using namespace::std;
@@ -67,6 +68,8 @@ private:
 	bool inArcSet(int, int);
 	bool initializeParameters();
 	bool formulateProblem();
+	void sepStrongComponents();
+	void buildGraph(vector <Node> &);
 	
 
 public:

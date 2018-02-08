@@ -2,6 +2,7 @@
 #include "IRP.h"
 #include "ModelBase.h"
 #include <algorithm>
+#include "graphAlgorithm.h"
 using namespace ::dashoptimization;
 
 IRP::IRP(CustomerDB& db)
@@ -77,6 +78,46 @@ void IRP::solveLP()
 
 	int c = prob.getObjVal();
 }
+
+void IRP::sepStrongComponents()
+{
+	vector <Node> graph;
+	buildGraph(graph);
+	graphAlgorithm::sepByStrongComp(graph);
+}
+
+
+void IRP::buildGraph(vector<Node> &graph)
+{
+	int s;
+	double edgeValue;
+
+	for (int t : Periods) { //Each period is its own problem
+
+							//*******Build graph**************//
+
+							//Create nodes for each visited customer
+		for (int i : Nodes) {
+			if (y[i][t].getSol() >= 0.01); {
+				Node node(i);
+				graph.push_back(node);
+			}
+		}
+
+		//Add outgoing edges from each visited node
+		for (Node node : graph) {
+			s = node.getId();
+			for (Node endingNode : graph) {
+				if (node != endingNode)
+					edgeValue = x[s][endingNode.getId][t].getSol();
+				if (edgeValue > 0.01)
+					node.addEdge(edgeValue, endingNode);
+			}
+		}
+	}
+}
+
+
 
 bool IRP::formulateProblem()
 {
