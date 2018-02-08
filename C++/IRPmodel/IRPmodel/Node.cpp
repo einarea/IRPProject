@@ -73,8 +73,10 @@ Node::~Node()
 
 bool Node::operator==(const Node & node) const
 {
-	if(this->getId() == node.getId())
-	return true;
+	if (this->getId() == node.getId())
+		return true;
+	else
+		return false;
 }
 
 
