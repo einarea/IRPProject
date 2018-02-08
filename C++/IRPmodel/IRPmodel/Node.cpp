@@ -92,7 +92,7 @@ double Node::Edge::getValue()
 	return Value;
 }
 
-Node *Node::Edge::getEndNode()
+Node &Node::Edge::getEndNode()
 {
-	return &EndNode;
+	return EndNode;
 }

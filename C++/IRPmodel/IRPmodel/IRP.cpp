@@ -85,6 +85,7 @@ void IRP::sepStrongComponents()
 	for (int t : Periods) {
 		buildGraph(graph, t);
 		vector <vector<Node>> result;
+		printGraph(graph);
 		graphAlgorithm::sepByStrongComp(graph, result);
 	}
 }
@@ -120,13 +121,14 @@ void IRP::printGraph(vector<Node> &graph)
 {
 	for (Node node : graph) {
 		int id = node.getId();
-		printf("Node: %d with edges to ", id);
 		vector<Node::Edge> edges = (*node.getEdges());
 
 		for (Node::Edge &edge : (*node.getEdges())) {
-			printf("%d with flow %f" ,(*edge.getEndNode()).getId(), edge.getValue());
+			printf("Node: %d with edges to ", id);
+			printf("%d with flow %f" ,(edge.getEndNode()).getId(), edge.getValue());
+			printf("\n");
 		}
-		printf("\n");
+		
 	}
 		
 }

@@ -13,6 +13,7 @@ void graphAlgorithm::sepByStrongComp(vector<Node>& graph, vector<vector<Node>> &
 {
 	
 	int index = 0;
+
 	stack <Node> S;
 	for (Node &node : graph) {
 		if (node.getIndex() == -1) {
@@ -31,7 +32,7 @@ void graphAlgorithm::strongConnect(Node & node, int &index, stack <Node> &S, vec
 	node.setOnStack(true);
 
 	for (Node::Edge &edge : (*node.getEdges())) {
-		endNode = edge.getEndNode();
+		endNode = &edge.getEndNode();
 		if (endNode->getIndex() == -1)
 			strongConnect(*endNode, index, S, result);
 
@@ -41,14 +42,16 @@ void graphAlgorithm::strongConnect(Node & node, int &index, stack <Node> &S, vec
 		}
 	}
 
+	vector <Node> StrongComponent;
 	if (node.getLowLink() == node.getIndex()) {
 		do{
 			//Add strong component to result
-			(*endNode) = S.top();
-			result[node.getIndex()].push_back(*endNode);
+			endNode = &S.top();
+			StrongComponent.push_back(*endNode);
 			S.pop();
 			printf("%d	", (*endNode).getId());
 		} while ((*endNode) != node);
+		result.push_back(StrongComponent);
 		printf("\n");
 		
 	}
