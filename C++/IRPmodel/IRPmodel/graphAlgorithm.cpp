@@ -51,10 +51,10 @@ void graphAlgorithm::strongConnect(Node & node, int &index, stack <Node> &S, vec
 			endNode = &S.top();
 			StrongComponent.push_back(*endNode);
 			S.pop();
-			printf("%d	", (*endNode).getId());
+	//		printf("%d	", (*endNode).getId());
 		} while ((*endNode) != node);
 		result.push_back(StrongComponent);
-		printf("\n");
+//		printf("\n");
 		
 	}
 

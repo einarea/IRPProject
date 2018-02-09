@@ -79,10 +79,10 @@ private:
 public:
 
 	IRP(CustomerDB&);
-	void sepStrongComponents(vector<Node> &, vector<vector<Node>> &, int t);
+	void sepStrongComponents();
 	void addSubtourCut(vector<vector <Node>> &, int t);
 	void solveLP();
-	XPRBprob & getProblem();
+	XPRBprob * getProblem();
 	CustomerDB * getDB();
 	int getNumOfPeriods();
 	int getNumOfCustomers();
