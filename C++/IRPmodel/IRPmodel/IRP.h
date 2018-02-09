@@ -6,6 +6,7 @@
 #include <vector>
 #include "CustomerDB.h"
 #include "Node.h"
+#include "xprs.h"
 
 using namespace ::dashoptimization;
 using namespace::std;
@@ -17,6 +18,7 @@ private:
 	CustomerDB database;
 	Map map;
 	XPRBprob prob;
+	XPRSprob oprob;		//Express problem to use with cuts
 
 	//Parameters
 	static const int TRANSCOST_MULTIPLIER = 4;
@@ -70,6 +72,7 @@ private:
 	bool formulateProblem();
 	void buildGraph(vector <Node> &, int);
 	void printGraph(vector <Node> &);
+	void addSubtourCut(vector<vector <Node>> &, int t);
 	
 
 public:
@@ -78,8 +81,10 @@ public:
 	void sepStrongComponents();
 	void solveLP();
 	XPRBprob & getProblem();
+	CustomerDB * getDB();
 	int getNumOfPeriods(IRP * model);
 	int getNumOfCustomers();
+	
 
 	~IRP();
 };

@@ -3,7 +3,20 @@
 #include "ModelBase.h"
 #include <algorithm>
 #include "graphAlgorithm.h"
+
 using namespace ::dashoptimization;
+
+//Global callBack manager
+int XPRS_CC cbmng(XPRSprob oprob, void * vd)
+{
+	// subtour callback
+	IRP *modelInstance;
+	printf("Hello");
+	modelInstance = (IRP*)vd;
+	modelInstance->sepStrongComponents();
+	return 0;
+}
+
 
 IRP::IRP(CustomerDB& db)
 	:
@@ -34,12 +47,17 @@ IRP::IRP(CustomerDB& db)
 
 }
 
+
 void IRP::solveLP()
 {
-	prob.lpOptimize();
-	int b = prob.getLPStat();
+
+	prob.setCutMode(1); // Enable the cut mode
+	XPRSsetcbcutmgr(oprob, cbmng, &(*this));
+
+	//prob.lpOptimize();
+	//int b = prob.getLPStat();
 	
-	//int d = prob.mipOptimize();
+	int d = prob.solve("g");
 	prob.print();
 	for (int i : AllNodes)
 		for (int t : Periods){
@@ -87,6 +105,8 @@ void IRP::sepStrongComponents()
 		vector <vector<Node>> result;
 		printGraph(graph);
 		graphAlgorithm::sepByStrongComp(graph, result);
+		addSubtourCut(result, t);
+		graph.clear();
 	}
 }
 
@@ -124,13 +144,38 @@ void IRP::printGraph(vector<Node> &graph)
 		vector<Node::Edge> edges = (*node.getEdges());
 
 		for (Node::Edge &edge : (*node.getEdges())) {
+			Node * endNode = edge.getEndNode();
 			printf("Node: %d with edges to ", id);
-			printf("%d with flow %f" ,(edge.getEndNode()).getId(), edge.getValue());
+			printf("%d with flow %f" , (*endNode).getId(), edge.getValue());
 			printf("\n");
 		}
 		
 	}
 		
+}
+
+void IRP::addSubtourCut(vector<vector<Node>>& strongComp, int t)
+{
+	for (int i = 0; i < strongComp.size(); i++) {
+		double circleFlow = 0;
+		double nodeFlow = 0;
+		double tempNodeFlow = 0;
+		for (Node &node : strongComp[i]) {
+			for (Node::Edge &edge : (*node.getEdges())) {
+				circleFlow += edge.getValue();
+				tempNodeFlow += edge.getValue();
+			}
+			//Add flow to depot for the node
+			tempNodeFlow += x[node.getId()][0][t].getSol();
+			nodeFlow = max(nodeFlow, tempNodeFlow);
+			tempNodeFlow = 0;
+		}
+
+		if (circleFlow >= nodeFlow + 0.1) {
+			//addSubtour constraint
+			printf("Circleflow: %d:		NodeFlow: %d\n", circleFlow, nodeFlow);
+		}
+	}
 }
 
 
@@ -372,6 +417,11 @@ XPRBprob & IRP::getProblem() {
 	return prob;
 }
 
+CustomerDB * IRP::getDB()
+{
+	return &database;
+}
+
 
 bool IRP::initializeParameters() {
 	TransCost = new int *[AllNodes.size()];
@@ -571,6 +621,8 @@ int IRP::getNumOfCustomers()
 {
 	return NumOfCustomers;
 }
+
+
 
 int IRP::getNumOfPeriods(IRP * model)
 {

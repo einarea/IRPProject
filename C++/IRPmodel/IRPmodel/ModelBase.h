@@ -1,5 +1,12 @@
+#include "stdafx.h"
+#include "xprb_cpp.h"
+#include "Map.h"
 #include <vector>
+#include "CustomerDB.h"
+#include "Node.h"
+#include "xprs.h"
 
+using namespace ::dashoptimization;
 using namespace std;
 
 class ModelBase

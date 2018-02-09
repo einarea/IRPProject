@@ -32,18 +32,20 @@ void graphAlgorithm::strongConnect(Node & node, int &index, stack <Node> &S, vec
 	node.setOnStack(true);
 
 	for (Node::Edge &edge : (*node.getEdges())) {
-		endNode = &edge.getEndNode();
-		if (endNode->getIndex() == -1)
+		endNode = edge.getEndNode();
+		if (endNode->getIndex() == -1) {
 			strongConnect(*endNode, index, S, result);
-
+			node.setLowLink(min(node.getLowLink(), endNode->getLowLink()));
+		}
 		else if (endNode->isOnStack())
 		{
 			node.setLowLink(min(node.getLowLink(), endNode->getIndex()));
 		}
 	}
 
-	vector <Node> StrongComponent;
+
 	if (node.getLowLink() == node.getIndex()) {
+	vector <Node> StrongComponent;
 		do{
 			//Add strong component to result
 			endNode = &S.top();

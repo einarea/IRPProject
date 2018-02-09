@@ -27,6 +27,7 @@ void ModelBase::createRangeSet(int start, int end, vector<int> &set)
 }
 
 
+
 ModelBase::~ModelBase()
 {
 }
