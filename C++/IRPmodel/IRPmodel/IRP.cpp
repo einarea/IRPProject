@@ -10,22 +10,25 @@ using namespace ::dashoptimization;
 int XPRS_CC cbmng(XPRSprob oprob, void * vd)
 {
 	// subtour callback
-	//printf("h");
-	XPRBprob * prob;
-	prob = (XPRBprob*) vd;
-	int ind = prob->sync(XPRB_XPRS_PROB);
-	double a = prob->getObjVal();
-	/*
+
+	int depth;
+	int node;
+
+	XPRSgetintattrib(oprob, XPRS_NODEDEPTH, &depth);
+	XPRSgetintattrib(oprob, XPRS_NODES, &node);
+
+	
 	IRP * modelInstance;
 	modelInstance = (IRP*)vd;
 	int Periods = modelInstance->getNumOfPeriods();
 
 	vector <vector<Node>> result; //matrix to store strong components
-
+	vector <Node> graph;		//Grpah to store nodes
 	for (int t = 1; t <= Periods; t++) {
-		modelInstance->sepStrongComponents(result, t);
+		modelInstance->sepStrongComponents(graph, result, t);
 		modelInstance->addSubtourCut(result, t);
-		//}*/
+		result.clear();
+	}
 		return 0;
 	
 }
@@ -66,7 +69,7 @@ void IRP::solveLP()
 
 	oprob = prob.getXPRSprob();
 	int a=prob.setCutMode(1); // Enable the cut mode
-	XPRSsetcbcutmgr(oprob, cbmng, &prob);
+	XPRSsetcbcutmgr(oprob, cbmng, &(*this));
 
 	//prob.lpOptimize();
 	//int b = prob.getLPStat();
@@ -111,12 +114,12 @@ void IRP::solveLP()
 	int c = prob.getObjVal();
 }
 
-void IRP::sepStrongComponents(vector<vector<Node>> &result, int t)
+void IRP::sepStrongComponents(vector <Node> &graph, vector<vector<Node>> &result, int t)
 {
 	//Load LP relaxation currently held in the optimizer
-	prob.sync(XPRB_XPRS_PROB);
+	prob.sync(XPRB_XPRS_SOL);
+	double ss =y[4][1].getSol();
 	double a = prob.getObjVal();
-	vector <Node> graph;
 	buildGraph(graph, t);
 	printGraph(graph);
 	graphAlgorithm::sepByStrongComp(graph, result);
@@ -130,7 +133,7 @@ void IRP::buildGraph(vector<Node> &graph, int t)
 	double edgeValue;
 							//Create nodes for each visited customer
 		for (int i : Nodes) {
-			if (y[i][t].getSol() >= 0.1); {
+			if (y[i][t].getSol() >= 0.01){
 				double a = y[i][t].getSol();
 				Node node(i);
 				graph.push_back(node);
@@ -196,16 +199,27 @@ void IRP::addSubtourCut(vector<vector<Node>>& strongComp, int t)
 			//printf("Circleflow: %d:		NodeFlow: %d\n", circleFlow, nodeFlow);
 			XPRBexpr rSide;
 			XPRBexpr cut;
-			
+			cout << "LP relaxation before cut: " << prob.getObjVal() << "\n";
+			string rSideStr = "<=";
+			printf("Added subtour cut: ");
+
 			for (Node &node : strongComp[i]) {
 				rSide += y[node.getId()][t];
-				for (Node::Edge &edge : (*node.getEdges())) {
+				rSideStr = rSideStr + " + " + "y_" + to_string(node.getId()) + to_string(t);
+				for (Node::Edge &edge : *(node.getEdges())) {
+					int u = node.getId();
+					int v = edge.getEndNode()->getId();
+					printf("x_%d%d%d + ", u, v, t);
 					cut += x[node.getId()][(*edge.getEndNode()).getId()][t];
 				}
 			}
+			
 		
 			subtourCut[0] = prob.newCut(cut <= rSide - y[maxVisit][t]);
+			rSideStr = rSideStr + " - " + "y_" + to_string(maxVisit) + to_string(t);
+			cout << rSideStr << "\n";
 			prob.addCuts(subtourCut, 1);
+			
 			maxVisit = -1;
 			subtourCut[0] = 0;
 

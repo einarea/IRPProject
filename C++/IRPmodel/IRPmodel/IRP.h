@@ -7,6 +7,7 @@
 #include "CustomerDB.h"
 #include "Node.h"
 #include "xprs.h"
+#include <string.h>
 
 using namespace ::dashoptimization;
 using namespace::std;
@@ -78,7 +79,7 @@ private:
 public:
 
 	IRP(CustomerDB&);
-	void sepStrongComponents(vector<vector<Node>> &, int t);
+	void sepStrongComponents(vector<Node> &, vector<vector<Node>> &, int t);
 	void addSubtourCut(vector<vector <Node>> &, int t);
 	void solveLP();
 	XPRBprob & getProblem();
