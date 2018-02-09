@@ -72,17 +72,18 @@ private:
 	bool formulateProblem();
 	void buildGraph(vector <Node> &, int);
 	void printGraph(vector <Node> &);
-	void addSubtourCut(vector<vector <Node>> &, int t);
+	
 	
 
 public:
 
 	IRP(CustomerDB&);
-	void sepStrongComponents();
+	void sepStrongComponents(vector<vector<Node>> &, int t);
+	void addSubtourCut(vector<vector <Node>> &, int t);
 	void solveLP();
 	XPRBprob & getProblem();
 	CustomerDB * getDB();
-	int getNumOfPeriods(IRP * model);
+	int getNumOfPeriods();
 	int getNumOfCustomers();
 	
 

@@ -10,11 +10,24 @@ using namespace ::dashoptimization;
 int XPRS_CC cbmng(XPRSprob oprob, void * vd)
 {
 	// subtour callback
-	IRP *modelInstance;
-	printf("Hello");
+	//printf("h");
+	XPRBprob * prob;
+	prob = (XPRBprob*) vd;
+	int ind = prob->sync(XPRB_XPRS_PROB);
+	double a = prob->getObjVal();
+	/*
+	IRP * modelInstance;
 	modelInstance = (IRP*)vd;
-	modelInstance->sepStrongComponents();
-	return 0;
+	int Periods = modelInstance->getNumOfPeriods();
+
+	vector <vector<Node>> result; //matrix to store strong components
+
+	for (int t = 1; t <= Periods; t++) {
+		modelInstance->sepStrongComponents(result, t);
+		modelInstance->addSubtourCut(result, t);
+		//}*/
+		return 0;
+	
 }
 
 
@@ -51,8 +64,9 @@ IRP::IRP(CustomerDB& db)
 void IRP::solveLP()
 {
 
-	prob.setCutMode(1); // Enable the cut mode
-	XPRSsetcbcutmgr(oprob, cbmng, &(*this));
+	oprob = prob.getXPRSprob();
+	int a=prob.setCutMode(1); // Enable the cut mode
+	XPRSsetcbcutmgr(oprob, cbmng, &prob);
 
 	//prob.lpOptimize();
 	//int b = prob.getLPStat();
@@ -97,17 +111,16 @@ void IRP::solveLP()
 	int c = prob.getObjVal();
 }
 
-void IRP::sepStrongComponents()
+void IRP::sepStrongComponents(vector<vector<Node>> &result, int t)
 {
+	//Load LP relaxation currently held in the optimizer
+	prob.sync(XPRB_XPRS_PROB);
+	double a = prob.getObjVal();
 	vector <Node> graph;
-	for (int t : Periods) {
-		buildGraph(graph, t);
-		vector <vector<Node>> result;
-		printGraph(graph);
-		graphAlgorithm::sepByStrongComp(graph, result);
-		addSubtourCut(result, t);
-		graph.clear();
-	}
+	buildGraph(graph, t);
+	printGraph(graph);
+	graphAlgorithm::sepByStrongComp(graph, result);
+	graph.clear();
 }
 
 
@@ -117,7 +130,8 @@ void IRP::buildGraph(vector<Node> &graph, int t)
 	double edgeValue;
 							//Create nodes for each visited customer
 		for (int i : Nodes) {
-			if (y[i][t].getSol() >= 0.01); {
+			if (y[i][t].getSol() >= 0.1); {
+				double a = y[i][t].getSol();
 				Node node(i);
 				graph.push_back(node);
 			}
@@ -156,10 +170,13 @@ void IRP::printGraph(vector<Node> &graph)
 
 void IRP::addSubtourCut(vector<vector<Node>>& strongComp, int t)
 {
+	XPRBcut subtourCut[1];
+	//Check if SEV is violated
 	for (int i = 0; i < strongComp.size(); i++) {
 		double circleFlow = 0;
 		double nodeFlow = 0;
 		double tempNodeFlow = 0;
+		int maxVisit = -1;
 		for (Node &node : strongComp[i]) {
 			for (Node::Edge &edge : (*node.getEdges())) {
 				circleFlow += edge.getValue();
@@ -167,13 +184,31 @@ void IRP::addSubtourCut(vector<vector<Node>>& strongComp, int t)
 			}
 			//Add flow to depot for the node
 			tempNodeFlow += x[node.getId()][0][t].getSol();
-			nodeFlow = max(nodeFlow, tempNodeFlow);
+			if (tempNodeFlow >= nodeFlow) {
+				nodeFlow = tempNodeFlow;
+				maxVisit = node.getId();
+			}
 			tempNodeFlow = 0;
 		}
 
 		if (circleFlow >= nodeFlow + 0.1) {
 			//addSubtour constraint
-			printf("Circleflow: %d:		NodeFlow: %d\n", circleFlow, nodeFlow);
+			//printf("Circleflow: %d:		NodeFlow: %d\n", circleFlow, nodeFlow);
+			XPRBexpr rSide;
+			XPRBexpr cut;
+			
+			for (Node &node : strongComp[i]) {
+				rSide += y[node.getId()][t];
+				for (Node::Edge &edge : (*node.getEdges())) {
+					cut += x[node.getId()][(*edge.getEndNode()).getId()][t];
+				}
+			}
+		
+			subtourCut[0] = prob.newCut(cut <= rSide - y[maxVisit][t]);
+			prob.addCuts(subtourCut, 1);
+			maxVisit = -1;
+			subtourCut[0] = 0;
+
 		}
 	}
 }
@@ -624,9 +659,9 @@ int IRP::getNumOfCustomers()
 
 
 
-int IRP::getNumOfPeriods(IRP * model)
+int IRP::getNumOfPeriods()
 {
-	return (*model).NumOfPeriods;
+	return Periods.size();
 }
 
 
