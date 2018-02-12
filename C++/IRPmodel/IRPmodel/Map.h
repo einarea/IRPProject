@@ -14,7 +14,6 @@ class Map
 private:
 	int numVertex;
 	string file;
-	void free();
 
 public:
 	Map(CustomerDB&);

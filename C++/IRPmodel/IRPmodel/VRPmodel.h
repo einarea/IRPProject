@@ -13,6 +13,7 @@ class VRPmodel
 {
 public:
 	VRPmodel(CustomerVRPDB db);
+	~VRPmodel();
 
 private:
 
@@ -45,6 +46,6 @@ private:
 	bool initializeVariables();
 	bool formulateProblem();
 
-	~VRPmodel();
+	
 };
 

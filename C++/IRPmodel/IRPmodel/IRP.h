@@ -84,7 +84,7 @@ public:
 	IRP(CustomerIRPDB&, bool);
 	void sepStrongComponents();
 	void addSubtourCut(vector<vector <Node>> &, int t);
-	void solveLP();
+	void solveModel();
 	XPRBprob * getProblem();
 	CustomerDB * getDB();
 	int getNumOfPeriods();

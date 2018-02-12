@@ -24,7 +24,7 @@ CustomerIRPDB::CustomerIRPDB(string FileName)
 	//check file for errors
 	getline(CustomerRecords, line);
 
-	int CustomerID = 0;
+	int CustomerID = 1;
 	int HoldingCost;
 	int ** Demand;
 	int * InitInventory;

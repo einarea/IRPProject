@@ -63,7 +63,7 @@ IRP::IRP(CustomerIRPDB& db, bool ArcRel = false)
 }
 
 
-void IRP::solveLP()
+void IRP::solveModel()
 {
 
 	oprob = prob.getXPRSprob();
@@ -74,7 +74,7 @@ void IRP::solveLP()
 	//int b = prob.getLPStat();
 	
 	int d = prob.solve("g");
-	prob.print();
+	//prob.print();
 	for (int i : AllNodes)
 		for (int t : Periods){
 			y[i][t].print();
@@ -701,13 +701,12 @@ int IRP::getNumOfCustomers()
 }
 
 
-//Construct vector of visited customers
+//Construct vector of visited nodes
 void IRP::getVisitedCustomers(int period, vector<Customer *> &custVisit)
 {
-
 	if (ARC_RELAXED == true) {
-		for (int i : Nodes) {
-			if (y[i][period].getSol() > 0.01)
+		for (int i : DeliveryNodes) {
+			if (y[i][period].getSol() > 0.01 || y[i+getNumOfCustomers()][period].getSol() > 0.01)
 				custVisit.push_back(map.getCustomer(i));
 		}
 	}
@@ -718,8 +717,8 @@ void IRP::getVisitedCustomers(int period, vector<Customer *> &custVisit)
 void IRP::getDemand(int t, vector<vector<int>>& demand, vector<Customer *> &customers)
 {
 	demand.resize(2);
-	demand[DELIVERY].resize(getNumOfCustomers());
-	demand[PICKUP].resize(getNumOfCustomers());
+	demand[DELIVERY].resize(getNumOfCustomers()+1);
+	demand[PICKUP].resize(getNumOfCustomers()+1);
 	int node;
 	for (Customer* c : customers) {
 			demand[DELIVERY][c->getId()] = delivery[map.getDeliveryNode(c)][t].getSol();

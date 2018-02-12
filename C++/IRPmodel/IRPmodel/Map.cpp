@@ -36,12 +36,12 @@ int Map::getTransCost(int node1, int node2, int TRANSCOST_MULTIPLIER, int SERVIC
 
 int Map::getDeliveryNode(Customer * cust)
 {
-	return (cust->getId() + 1);
+	return (cust->getId());
 }
 
 int Map::getPickupNode(Customer * c)
 {
-	return c->getId()+1+database.getnCustomers();
+	return c->getId()+getNumCustomers();
 }
 
 int Map::CustomerToPickup(Customer * cust)
