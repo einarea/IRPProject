@@ -32,20 +32,21 @@ int Map::getTransCost(int node1, int node2, int TRANSCOST_MULTIPLIER, int SERVIC
 	return distance* TRANSCOST_MULTIPLIER + SERVICECOST_MULTIPLER;
 }
 
-int Map::getHoldCost(int node)
-{
-	nodeToCustomer(node);
-	return database.getHoldCost(node);
-}
 
-int Map::getDeliveryNode(CustomerIRP * cust)
+
+int Map::getDeliveryNode(Customer * cust)
 {
 	return (cust->getId() + 1);
 }
 
-int Map::getPickupNode(CustomerIRP * c)
+int Map::getPickupNode(Customer * c)
 {
 	return c->getId()+1+database.getnCustomers();
+}
+
+int Map::CustomerToPickup(Customer * cust)
+{
+	return (cust->getId() + 1);
 }
 
 int Map::getNumCustomers()
@@ -53,43 +54,13 @@ int Map::getNumCustomers()
 	return database.getnCustomers();
 }
 
-CustomerIRP * Map::getCustomer(int id)
+Customer * Map::getCustomer(int id)
 {
 	nodeToCustomer(id);
 	return database.getCustomer(id);
 }
 
-int Map::getUpperLimit(int node)
-{
-	nodeToCustomer(node);
-	return database.getUpperLimit(node);
-}
 
-int Map::getLowerLimit(int node)
-{
-	nodeToCustomer(node);
-	return database.getLowerLimit(node);
-}
-
-int Map::getDemand(int node, int period, int indicator)
-{
-	nodeToCustomer(node);
-	return database.getDemand(node, period, indicator);
-}
-
-int Map::getInitInventory(int node)
-{
-	int indicator;
-	if (isDelivery(node))
-		indicator = Customer::DELIVERY;
-	else
-		indicator = Customer::PICKUP;
-	
-	nodeToCustomer(node);
-
-	return database.getInitInventory(node, indicator);
-	
-}
 
 int Map::getTravelTime(int node1, int node2, int travelTimeParam)
 {

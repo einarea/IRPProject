@@ -32,7 +32,7 @@ int XPRS_CC cbmng(XPRSprob oprob, void * vd)
 }
 
 
-IRP::IRP(CustomerDB& db, bool ArcRel = false)
+IRP::IRP(CustomerIRPDB& db, bool ArcRel = false)
 	:
 	database(db),
 	prob("IRP"),			//Initialize problem in BCL							
@@ -702,9 +702,8 @@ int IRP::getNumOfCustomers()
 
 
 //Construct vector of visited customers
-void IRP::getVisitedCustomers(int period, vector<CustomerIRP *> &custVisit)
+void IRP::getVisitedCustomers(int period, vector<Customer *> &custVisit)
 {
-
 
 	if (ARC_RELAXED == true) {
 		for (int i : Nodes) {
@@ -716,13 +715,13 @@ void IRP::getVisitedCustomers(int period, vector<CustomerIRP *> &custVisit)
 		cout << "Error, problem not solved when creating visited customers";
 }
 
-void IRP::getDemand(int t, vector<vector<int>>& demand, vector<CustomerIRP *> &customers)
+void IRP::getDemand(int t, vector<vector<int>>& demand, vector<Customer *> &customers)
 {
 	demand.resize(2);
 	demand[DELIVERY].resize(getNumOfCustomers());
 	demand[PICKUP].resize(getNumOfCustomers());
 	int node;
-	for (CustomerIRP* c : customers) {
+	for (Customer* c : customers) {
 			demand[DELIVERY][c->getId()] = delivery[map.getDeliveryNode(c)][t].getSol();
 			demand[PICKUP][c->getId()] = pickup[map.getPickupNode(c)][t].getSol();
 	}

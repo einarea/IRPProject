@@ -57,6 +57,12 @@
     <ClInclude Include="CustomerVRPDB.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="MapIRP.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CustomerIRPDB.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -96,6 +102,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="CustomerVRPDB.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MapIRP.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CustomerIRPDB.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

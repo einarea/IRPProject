@@ -15,22 +15,20 @@ private:
 	int numVertex;
 	string file;
 	void free();
-	void nodeToCustomer(int&);
-	bool isDelivery(int node);
+
 public:
 	Map(CustomerDB&);
+	void nodeToCustomer(int&);
 	CustomerDB & database;
 	int getTransCost(int node1, int node2, int transCostMultiplier, int serviceCostMultipler);
 	int getDistance(int node1, int node2);
-	int getHoldCost(int);
-	int getDeliveryNode(CustomerIRP *);
-	int getPickupNode(CustomerIRP *);
+	int getDeliveryNode(Customer *);
+	int getPickupNode(Customer *);
+	int CustomerToPickup(Customer * );
 	int getNumCustomers();
-	CustomerIRP * getCustomer(int);
-	int getUpperLimit(int node);
-	int getLowerLimit(int node);
-	int getDemand(int node, int period, int indicator);
-	int getInitInventory(int node);
+	bool isDelivery(int node);
+	Customer * getCustomer(int);
+	
 	int getTravelTime(int node1, int node2, int timeParam);
 	~Map();
 };

@@ -1,6 +1,7 @@
 #pragma once
 #include "Customer.h"
 
+
 class CustomerVRP:
 	public Customer
 {

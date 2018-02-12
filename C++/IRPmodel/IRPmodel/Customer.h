@@ -20,8 +20,7 @@ public:
 	Customer(int id);
 	double getXpos();
 	double getYpos();
-	int getId();
-
+	int getId();	
 
 	const int static DELIVERY = 0;
 	const int static PICKUP = 1;

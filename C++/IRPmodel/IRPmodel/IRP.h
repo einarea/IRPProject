@@ -2,7 +2,7 @@
 
 
 #include "xprb_cpp.h"
-#include "Map.h"
+#include "MapIRP.h"
 #include <vector>
 #include "CustomerDB.h"
 #include "Node.h"
@@ -16,8 +16,8 @@ class IRP
 {
 private:
 	//Problem
-	CustomerDB database;
-	Map map;
+	CustomerIRPDB database;
+	MapIRP map;
 	XPRBprob prob;
 	XPRSprob oprob;		//Express problem to use with cuts
 
@@ -81,7 +81,7 @@ public:
 	static const int DELIVERY = 0;
 	static const int PICKUP = 1;
 
-	IRP(CustomerDB&, bool);
+	IRP(CustomerIRPDB&, bool);
 	void sepStrongComponents();
 	void addSubtourCut(vector<vector <Node>> &, int t);
 	void solveLP();
@@ -89,8 +89,8 @@ public:
 	CustomerDB * getDB();
 	int getNumOfPeriods();
 	int getNumOfCustomers();
-	void getVisitedCustomers(int period, vector <CustomerIRP *> &);
-	void getDemand(int period, vector<vector<int>> &, vector <CustomerIRP *> &);
+	void getVisitedCustomers(int period, vector <Customer *> &);
+	void getDemand(int period, vector<vector<int>> &, vector <Customer *> &);
 
 	~IRP();
 };
