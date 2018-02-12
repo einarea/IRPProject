@@ -38,9 +38,25 @@ int Map::getHoldCost(int node)
 	return database.getHoldCost(node);
 }
 
+int Map::getDeliveryNode(CustomerIRP * cust)
+{
+	return (cust->getId() + 1);
+}
+
+int Map::getPickupNode(CustomerIRP * c)
+{
+	return c->getId()+1+database.getnCustomers();
+}
+
 int Map::getNumCustomers()
 {
 	return database.getnCustomers();
+}
+
+CustomerIRP * Map::getCustomer(int id)
+{
+	nodeToCustomer(id);
+	return database.getCustomer(id);
 }
 
 int Map::getUpperLimit(int node)

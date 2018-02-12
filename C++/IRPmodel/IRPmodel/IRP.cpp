@@ -32,11 +32,12 @@ int XPRS_CC cbmng(XPRSprob oprob, void * vd)
 }
 
 
-IRP::IRP(CustomerDB& db)
+IRP::IRP(CustomerDB& db, bool ArcRel = false)
 	:
 	database(db),
 	prob("IRP"),			//Initialize problem in BCL							
-	map(db)			//Set up map of all customers
+	map(db),			//Set up map of all customers
+	ARC_RELAXED(ArcRel)
 {
 	
 	//Initialize sets
@@ -78,7 +79,7 @@ void IRP::solveLP()
 		for (int t : Periods){
 			y[i][t].print();
 			printf("\t");
-			for (int j : AllNodes) {
+			/*for (int j : AllNodes) {
 				if (inArcSet(i, j)) {
 					XPRBvar temp = prob.getVarByName(XPRBnewname("x%d-%d%d", i, j, t));
 					(x[i][j][t]).print();
@@ -86,9 +87,9 @@ void IRP::solveLP()
 					/*(loadDelivery[i][j][t]).print();
 					printf("\t");
 					(loadPickup[i][j][t]).print();
-					printf("\t"); */
+					printf("\t"); 
 				}
-			}
+			}*/
 			
 			(time[i][t]).print();
 			printf("\t");
@@ -600,7 +601,11 @@ bool IRP::initializeVariables()
 
 			if (inArcSet(i, j)) {
 			for (int t : Periods) {
-				x[i][j][t] = prob.newVar(XPRBnewname("x%d-%d%d", i, j, t), XPRB_BV, 0, 1);
+				if (ARC_RELAXED)
+					x[i][j][t] = prob.newVar(XPRBnewname("x%d-%d%d", i, j, t), XPRB_PL, 0, 1);
+				else
+					x[i][j][t] = prob.newVar(XPRBnewname("x%d-%d%d", i, j, t), XPRB_BV, 0, 1);
+
 				loadDelivery[i][j][t] = prob.newVar(XPRBnewname("lD_%d%d%d", i, j, t), XPRB_PL, 0, 100);
 				loadPickup[i][j][t] = prob.newVar(XPRBnewname("lP_%d%d%d", i, j, t), XPRB_PL, 0, 100);
 			}
@@ -611,14 +616,27 @@ bool IRP::initializeVariables()
 	//initialize y-variables and inventory
 	y = new XPRBvar *[AllNodes.size()];
 	
-	for (int i : AllNodes) {
-		y[i] = new XPRBvar[Periods.size()];
-		
-		for (int t : Periods) {
-			if(i>0)
-			y[i][t] = prob.newVar(XPRBnewname("y_%d%d", i, t), XPRB_PL, 0, 1);
-			else
-			y[i][t] = prob.newVar(XPRBnewname("y_%d%d", 0, t), XPRB_PL, 0, nVehicles);	
+	if (ARC_RELAXED) {
+		for (int i : AllNodes) {
+			y[i] = new XPRBvar[Periods.size()];
+			for (int t : Periods) {
+				if (i > 0)
+					y[i][t] = prob.newVar(XPRBnewname("y_%d%d", i, t), XPRB_BV, 0, 1);
+				else
+					y[i][t] = prob.newVar(XPRBnewname("y_%d%d", 0, t), XPRB_UI, 0, nVehicles);
+			}
+		}
+	}
+	else
+	{
+		for (int i : AllNodes) {
+			y[i] = new XPRBvar[Periods.size()];
+			for (int t : Periods) {
+				if (i > 0)
+					y[i][t] = prob.newVar(XPRBnewname("y_%d%d", i, t), XPRB_PL, 0, 1);
+				else
+					y[i][t] = prob.newVar(XPRBnewname("y_%d%d", 0, t), XPRB_PL, 0, nVehicles);
+			}
 		}
 	}
 
@@ -680,6 +698,34 @@ bool IRP::inArcSet(int i, int j)
 int IRP::getNumOfCustomers()
 {
 	return NumOfCustomers;
+}
+
+
+//Construct vector of visited customers
+void IRP::getVisitedCustomers(int period, vector<CustomerIRP *> &custVisit)
+{
+
+
+	if (ARC_RELAXED == true) {
+		for (int i : Nodes) {
+			if (y[i][period].getSol() > 0.01)
+				custVisit.push_back(map.getCustomer(i));
+		}
+	}
+	else
+		cout << "Error, problem not solved when creating visited customers";
+}
+
+void IRP::getDemand(int t, vector<vector<int>>& demand, vector<CustomerIRP *> &customers)
+{
+	demand.resize(2);
+	demand[DELIVERY].resize(getNumOfCustomers());
+	demand[PICKUP].resize(getNumOfCustomers());
+	int node;
+	for (CustomerIRP* c : customers) {
+			demand[DELIVERY][c->getId()] = delivery[map.getDeliveryNode(c)][t].getSol();
+			demand[PICKUP][c->getId()] = pickup[map.getPickupNode(c)][t].getSol();
+	}
 }
 
 

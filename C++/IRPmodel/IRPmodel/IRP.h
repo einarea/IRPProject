@@ -28,6 +28,7 @@ private:
 	const int maxTime = 2000;
 	int Capacity = 1000;
 	int nVehicles = 4;
+	bool ARC_RELAXED;
 
 	int NumOfCustomers;
 	int NumOfPeriods;
@@ -77,8 +78,10 @@ private:
 	
 
 public:
+	static const int DELIVERY = 0;
+	static const int PICKUP = 1;
 
-	IRP(CustomerDB&);
+	IRP(CustomerDB&, bool);
 	void sepStrongComponents();
 	void addSubtourCut(vector<vector <Node>> &, int t);
 	void solveLP();
@@ -86,7 +89,8 @@ public:
 	CustomerDB * getDB();
 	int getNumOfPeriods();
 	int getNumOfCustomers();
-	
+	void getVisitedCustomers(int period, vector <CustomerIRP *> &);
+	void getDemand(int period, vector<vector<int>> &, vector <CustomerIRP *> &);
 
 	~IRP();
 };

@@ -7,27 +7,17 @@ using namespace ::std;
 
 
 
-Customer::Customer(int id, int holdCost, int lowLim, int uppLim, int ** dem, int * init, int coordinateX, int coordinateY)
+Customer::Customer(int id, int coordinateX, int coordinateY)
 	:
 	CustomerID(id),
-	HoldingCost(holdCost),
-	LowerLimit(lowLim),
-	UpperLimit(uppLim),
-	Demand(dem),
-	InitInventory(init),
 	posX(coordinateX),
 	posY(coordinateY)
 {
 }
 
-Customer::Customer(int id, int holdCost, int lowLim, int uppLim, int ** dem, int * init)
+Customer::Customer(int id)
 	:
-	CustomerID(id),
-	HoldingCost(holdCost),
-	LowerLimit(lowLim),
-	InitInventory(init),
-	UpperLimit(uppLim),
-	Demand(dem)
+	CustomerID(id)
 {
 	posX = (rand() % 1000 + 1)/10;
 	posY = (rand() % 1000 + 1)/10;
@@ -56,32 +46,8 @@ double Customer::getYpos()
 	return this->posY;
 }
 
-int Customer::getHoldCost()
+int Customer::getId()
 {
-	return this->HoldingCost;
-}
-
-int Customer::getUpperLimit()
-{
-	return UpperLimit;
-}
-
-int Customer::getLowerLimit()
-{
-	return LowerLimit;
-}
-
-int Customer::getDemand(int period, int indicator)
-{
-	if (indicator == Customer::PICKUP)
-		return  Demand[Customer::PICKUP][period];
-	else
-		return Demand[Customer::DELIVERY][period];
-
-}
-
-int Customer::getInitInventory(int indicator)
-{
-	return this->InitInventory[indicator];
+	return CustomerID;
 }
 

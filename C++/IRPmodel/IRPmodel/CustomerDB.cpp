@@ -62,7 +62,7 @@ CustomerDB::CustomerDB(string FileName)
 			InitInventory[i] = stoi(getNextToken(line, delimiter));
 		}
 
-		Customer cust(CustomerID, HoldingCost, LowerLimit, UpperLimit, Demand, InitInventory);
+		CustomerIRP cust(CustomerID, HoldingCost, LowerLimit, UpperLimit, Demand, InitInventory);
 		printf("%d ", cust.getInitInventory(Customer::PICKUP));
 		Customers.push_back(cust);
 		CustomerID++;
@@ -122,7 +122,7 @@ string CustomerDB::getNextToken(string &str, string& delimiter)
 	str.erase(0, pos + delimiter.length());
 	return token;
 }
-Customer * CustomerDB::getCustomer(int id)
+CustomerIRP * CustomerDB::getCustomer(int id)
 {
 	return &Customers[id-1];
 }

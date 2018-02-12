@@ -152,6 +152,9 @@
   <ItemGroup>
     <ClInclude Include="Customer.h" />
     <ClInclude Include="CustomerDB.h" />
+    <ClInclude Include="CustomerIRP.h" />
+    <ClInclude Include="CustomerVRP.h" />
+    <ClInclude Include="CustomerVRPDB.h" />
     <ClInclude Include="graphAlgorithm.h" />
     <ClInclude Include="IRP.h" />
     <ClInclude Include="Map.h" />
@@ -160,10 +163,14 @@
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="VRP.h" />
+    <ClInclude Include="VRPmodel.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Customer.cpp" />
     <ClCompile Include="CustomerDB.cpp" />
+    <ClCompile Include="CustomerIRP.cpp" />
+    <ClCompile Include="CustomerVRP.cpp" />
+    <ClCompile Include="CustomerVRPDB.cpp" />
     <ClCompile Include="graphAlgorithm.cpp" />
     <ClCompile Include="IRP.cpp" />
     <ClCompile Include="IRPmodel.cpp" />
@@ -176,6 +183,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="VRPmodel.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="customerData.txt" />

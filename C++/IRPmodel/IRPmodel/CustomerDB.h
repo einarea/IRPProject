@@ -2,7 +2,7 @@
 
 #include "stdafx.h"
 #include <vector>
-#include "Customer.h"
+#include "CustomerIRP.h"
 #include <iostream>
 #include <string>
 
@@ -15,13 +15,14 @@ private:
 	int nCustomers = 0;
 
 	
-	vector <Customer> Customers; //Vector of all customers 
+	vector <CustomerIRP> Customers; //Vector of all customers 
 
 	string getNextToken(string&, string&); //Helper function
-	Customer * getCustomer(int); 
+	
 
 public:
 	CustomerDB(string);
+	CustomerIRP * getCustomer(int);
 	int getnCustomers();
 	int getHoldCost(int);
 	int getnPeriods();

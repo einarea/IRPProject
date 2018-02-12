@@ -11,27 +11,17 @@ private:
 	static int nPeriods;
 	
 	int CustomerID;
-	int HoldingCost;
-	int LowerLimit;
-	int UpperLimit;
-	int ** Demand;
 	double posX;
 	double posY;
-	int *InitInventory;
-
 
 public:
-	Customer(int, int, int, int, int **, int *, int, int);
-	Customer(int, int, int, int, int **, int *);
 
-	Customer(int numberOfPeriods);
+	Customer(int CustomerID, int posX, int posY);
+	Customer(int id);
 	double getXpos();
 	double getYpos();
-	int getHoldCost();
-	int getUpperLimit();
-	int getLowerLimit();
-	int getDemand(int period, int indicator);
-	int getInitInventory(int indicator);
+	int getId();
+
 
 	const int static DELIVERY = 0;
 	const int static PICKUP = 1;

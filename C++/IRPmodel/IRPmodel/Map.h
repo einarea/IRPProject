@@ -23,7 +23,10 @@ public:
 	int getTransCost(int node1, int node2, int transCostMultiplier, int serviceCostMultipler);
 	int getDistance(int node1, int node2);
 	int getHoldCost(int);
+	int getDeliveryNode(CustomerIRP *);
+	int getPickupNode(CustomerIRP *);
 	int getNumCustomers();
+	CustomerIRP * getCustomer(int);
 	int getUpperLimit(int node);
 	int getLowerLimit(int node);
 	int getDemand(int node, int period, int indicator);
