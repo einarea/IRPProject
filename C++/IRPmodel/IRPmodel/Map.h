@@ -26,6 +26,7 @@ public:
 	int getPickupNode(Customer *);
 	int getNumCustomers();
 	bool isDelivery(int node);
+	
 	Customer * getCustomer(int);
 	
 	int getTravelTime(int node1, int node2, int timeParam, int serviceTimeParameter);

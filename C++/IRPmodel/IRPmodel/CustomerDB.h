@@ -21,7 +21,7 @@ public:
 	vector <Customer *> * getCustomers();
 	Customer * getCustomer(int);
 	int getnCustomers();
-	double getX(int);
-	double getY(int);
+	int getX(int);
+	int getY(int);
 
 };

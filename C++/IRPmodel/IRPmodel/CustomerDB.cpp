@@ -12,12 +12,12 @@ int CustomerDB::getnCustomers()
 }
 
 
-double CustomerDB::getX(int id)
+int CustomerDB::getX(int id)
 {
 	return getCustomer(id)->getXpos();
 }
 
-double CustomerDB::getY(int id)
+int CustomerDB::getY(int id)
 {
 	return getCustomer(id)->getYpos();
 }
@@ -35,5 +35,8 @@ vector<Customer*>* CustomerDB::getCustomers()
 
 Customer * CustomerDB::getCustomer(int id)
 {
-	return Customers[id-1];
+	for (Customer *c: Customers) {
+		if (c->getId()==id)
+			return c;
+	}
 }

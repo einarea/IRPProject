@@ -6,15 +6,17 @@
 #include "Node.h"
 #include "xprs.h"
 #include <string.h>
+#include "IRP.h"
 #include "ModelBase.h"
 
 using namespace dashoptimization;
 class VRPmodel
 {
 public:
-	VRPmodel(CustomerVRPDB & db);
+	VRPmodel(CustomerVRPDB & db, Map &map);
 	void solveModel();
 	~VRPmodel();
+	void addToIRPSolution(int t, IRP::Solution * sol);
 
 private:
 
@@ -54,6 +56,7 @@ private:
 	bool initializeParameters();
 	bool initializeVariables();
 	bool formulateProblem();
+
 
 	
 };

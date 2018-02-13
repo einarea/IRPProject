@@ -17,6 +17,7 @@ bool Map::isDelivery(int node)
 		return false;
 }
 
+
 Map::Map(CustomerDB& db)
 	:
 	database(db)
@@ -83,7 +84,7 @@ int Map::getDistance(int node1, int node2)
 		int x2 = database.getX(node2);
 		int y2 = database.getY(node2);
 
-		distance = floor(sqrt(pow(x2 - x1, 2) + pow(y2 - y1, 2)));
+		distance = (int) floor(sqrt(pow(x2 - x1, 2) + pow(y2 - y1, 2)));
 	}
 	return distance;
 }

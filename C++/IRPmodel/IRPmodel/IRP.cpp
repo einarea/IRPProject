@@ -33,17 +33,29 @@ int XPRS_CC cbmng(XPRSprob oprob, void * vd)
 }
 
 
+IRP::Solution * IRP::getSolution(int id)
+{
+	Solution * sol = solutions[id - 1];
+	return solutions[id - 1];
+}
+
 IRP::IRP(CustomerIRPDB& db, bool ArcRel = false)
 	:
 	database(db),
 	prob("IRP"),			//Initialize problem in BCL							
 	map(db),			//Set up map of all customers
-	ARC_RELAXED(ArcRel)
+	ARC_RELAXED(ArcRel),
+	SolutionCounter(0)
 {
-	
 	//Initialize sets
 	if(!initializeSets()) {
 		cout<<"Data Error: Could not initialize sets.";
+		return;
+	}
+
+	//Initialize parameters
+	if (!initializeParameters()) {
+		cout << "Data Error: Could not initialize parameters.";
 		return;
 	}
 	
@@ -53,15 +65,12 @@ IRP::IRP(CustomerIRPDB& db, bool ArcRel = false)
 		return;
 	}
 
-	//Initialize parameters
-	if (!initializeParameters()) {
-		cout << "Data Error: Could not initialize parameters.";
-		return;
-	}
+
 
 	formulateProblem();
 
 }
+
 
 
 void IRP::solveModel()
@@ -112,6 +121,94 @@ void IRP::solveModel()
 
 
 	int c = prob.getObjVal();
+}
+
+Map * IRP::getMap()
+{
+	return &map;
+}
+
+int IRP::allocateSolution()
+{
+	SolutionCounter++;
+	//Allocate x and loading solutions
+	Solution * sol = new Solution();
+	sol->SolID = SolutionCounter;
+
+	sol->xSol = new int **[AllNodes.size()];
+	sol->loadDelSol = new int **[AllNodes.size()];
+	sol->loadPickSol = new int **[AllNodes.size()];
+
+	for (int i : AllNodes) {
+		sol->xSol[i] = new int *[AllNodes.size()];
+		sol->loadDelSol[i] = new int *[AllNodes.size()];
+		sol->loadPickSol[i] = new int *[AllNodes.size()];
+
+		for (int j : AllNodes) {
+			if (map.inArcSet(i, j)) {
+				sol->xSol[i][j] = new int[Periods.size()];
+				sol->loadDelSol[i][j] = new int[Periods.size()];
+				sol->loadPickSol[i][j] = new int[Periods.size()];
+
+				for (int t : Periods) {
+					//Initialize solution to 0
+					sol->xSol[i][j][t] = 0;
+					sol->loadDelSol[i][j][t] = 0;
+					sol->loadPickSol[i][j][t] = 0;
+				}
+			} //endif
+		} //end for j
+	} // end x and loading
+
+	//Fill y, inventory and allocate time
+	sol->ySol = new int *[AllNodes.size()];
+	sol->timeSol = new int *[AllNodes.size()];
+	sol->invSol = new int *[AllNodes.size()];
+	for (int i : Nodes) {
+		sol->ySol[i] = new int [Periods.size()];
+		sol->timeSol[i] = new int [Periods.size()];
+		sol->invSol[i] = new int [Periods.size()];
+		for (int t : Periods) {
+			sol->ySol[i][t] = y[i][t].getSol();
+			sol->invSol[i][t] = inventory[i][t].getSol();
+			sol->timeSol[i][t] = 0;
+		}
+	}
+
+	//Depot
+	sol->ySol[0] = new int[Periods.size()];
+	sol->timeSol[0] = new int[Periods.size()];
+	for (int t : Periods) {
+		sol->ySol[0][t] = y[0][t].getSol();
+		sol->timeSol[0][t] = 0;
+	}
+	
+
+	//Fill delivery and pickup
+	sol->delSol = new int *[Nodes.size()];
+	sol->pickSol = new int *[Nodes.size()];
+	for (int i : Nodes) {
+		sol->delSol[i] = new int[Periods.size()];
+		sol->pickSol[i] = new int[Periods.size()];
+		for (int t : Periods) {
+			if (i <= DeliveryNodes.size()) {
+				if (delivery[i][t].getSol() > 0)
+					sol->delSol[i][t] = delivery[i][t].getSol();
+				else
+					sol->delSol[i][t] = 0;
+			}
+			else {
+				if (pickup[i][t].getSol() > 0)
+					sol->pickSol[i][t] = pickup[i][t].getSol();
+				else
+					sol->pickSol[i][t] = 0;
+			} //end else
+		} //end t
+	} //end i
+
+	solutions.push_back(sol);
+	//Return ID to solution
+	return getCounter();
 }
 
 void IRP::sepStrongComponents()
@@ -174,6 +271,11 @@ void IRP::printGraph(vector<Node> &graph)
 		
 	}
 		
+}
+
+int IRP::getCounter()
+{
+	return SolutionCounter;
 }
 
 void IRP::addSubtourCut(vector<vector<Node>>& strongComp, int t)
@@ -608,8 +710,8 @@ bool IRP::initializeVariables()
 				else
 					x[i][j][t] = prob.newVar(XPRBnewname("x%d-%d%d", i, j, t), XPRB_BV, 0, 1);
 
-				loadDelivery[i][j][t] = prob.newVar(XPRBnewname("lD_%d%d%d", i, j, t), XPRB_PL, 0, 100);
-				loadPickup[i][j][t] = prob.newVar(XPRBnewname("lP_%d%d%d", i, j, t), XPRB_PL, 0, 100);
+				loadDelivery[i][j][t] = prob.newVar(XPRBnewname("lD_%d%d%d", i, j, t), XPRB_PL, 0, ModelParameters::Capacity);
+				loadPickup[i][j][t] = prob.newVar(XPRBnewname("lP_%d%d%d", i, j, t), XPRB_PL, 0, ModelParameters::Capacity);
 			}
 			}
 		}
@@ -648,7 +750,7 @@ bool IRP::initializeVariables()
 	for (int i : Nodes) {
 		inventory[i] = new XPRBvar[Periods.size()];
 		for (int t : AllPeriods) {
-			inventory[i][t] = prob.newVar(XPRBnewname("i_%d%d", i, t), XPRB_PL, 0, 100);
+			inventory[i][t] = prob.newVar(XPRBnewname("i_%d%d", i, t), XPRB_PL, LowerLimit[i], UpperLimit[i]);
 		}
 	}
 
@@ -658,7 +760,7 @@ bool IRP::initializeVariables()
 	for (int i : DeliveryNodes) {
 		delivery[i] = new XPRBvar [Periods.size()+1];
 		for (int t : Periods) {
-			delivery[i][t] = prob.newVar(XPRBnewname("qD_%d%d", i, t), XPRB_PL, 0, 100);
+			delivery[i][t] = prob.newVar(XPRBnewname("qD_%d%d", i, t), XPRB_PL, 0, ModelParameters::Capacity);
 			
 		}
 	}
@@ -668,7 +770,7 @@ bool IRP::initializeVariables()
 	for (int i : PickupNodes){
 		pickup[i] = new  XPRBvar[Periods.size()+1];
 		for (int t : Periods) {
-			pickup[i][t] = prob.newVar(XPRBnewname("qP_%d%d", i, t), XPRB_PL, 0, 100);
+			pickup[i][t] = prob.newVar(XPRBnewname("qP_%d%d", i, t), XPRB_PL, 0, ModelParameters::Capacity);
 		}
 	}
 
@@ -732,3 +834,73 @@ int IRP::getNumOfPeriods()
 IRP::~IRP()
 {
 }
+
+
+IRP::Solution::Solution()
+{
+}
+
+IRP::Solution::Solution(int ** y, int *** x, int ** del, int ** pick, int *** loadDel, int *** loadPick, int **inv, int ** time)
+	:
+	ySol(y),
+	xSol(x),
+	delSol(del),
+	pickSol(pick),
+	loadDelSol(loadDel),
+	loadPickSol(loadPick),
+	timeSol(time)
+{
+}
+
+
+int IRP::Solution::getObjective(IRP *instance)
+{
+	int TravelCost = 0;
+	int HoldingCost = 0;
+	//Transportation cost
+	for (int i: instance->AllNodes) {
+		for (int j : instance->AllNodes) {
+			if(instance->map.inArcSet(i, j))
+				for (int t : instance->Periods) 
+				if (xSol[i][j][t] > 0.5) {
+					TravelCost += instance->TransCost[i][j] * xSol[i][j][t];
+				}
+		}
+	}
+
+	//Holding Cost
+	for (int i : instance->Nodes) {
+		for (int t : instance->Periods){
+				HoldingCost += instance->HoldCost[i] * invSol[i][t];
+			}
+	}
+
+	return TravelCost + HoldingCost;
+}
+
+void IRP::Solution::printSolution(IRP &instance)
+{
+	
+	for (int i : instance.AllNodes) {
+		for (int t : instance.Periods) {
+			printf("\n");
+			if (ySol[i][t] > 0.5) {
+				printf("y%d%d: %d\t", i, t, ySol[i][t]);
+				if (i > 0) {
+					if (i <= instance.DeliveryNodes.back())
+						printf("qD_%d%d: %d\t", i, t, delSol[i][t]);
+					else
+						printf("qP_%d%d: %d\t", i, t, pickSol[i][t]);
+				}
+				for (int j : instance.AllNodes) {
+					if (instance.map.inArcSet(i, j)) {
+						if (xSol[i][j][t] > 0.5)
+							printf("x%d%d%d: %d\t", i, j, t, xSol[i][j][t]);
+					}
+				} //end j
+			} // end if
+		} // end t
+	}
+}
+
+
