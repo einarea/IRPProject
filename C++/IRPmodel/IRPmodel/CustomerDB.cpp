@@ -28,6 +28,11 @@ CustomerDB::CustomerDB()
 {
 }
 
+vector<Customer*>* CustomerDB::getCustomers()
+{
+	return &Customers;
+}
+
 Customer * CustomerDB::getCustomer(int id)
 {
 	return Customers[id-1];

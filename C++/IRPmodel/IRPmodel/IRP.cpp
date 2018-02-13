@@ -3,6 +3,7 @@
 #include "ModelBase.h"
 #include <algorithm>
 #include "graphAlgorithm.h"
+#include "ModelParameters.h"
 
 using namespace ::dashoptimization;
 
@@ -148,7 +149,7 @@ void IRP::buildGraph(vector<Node> &graph, int t)
 		for (Node &node : graph) {
 			s = node.getId();
 			for (Node &endingNode : graph) {
-				if (inArcSet(s, endingNode.getId())) {
+				if (map.inArcSet(s, endingNode.getId())) {
 					edgeValue = x[s][endingNode.getId()][t].getSol();
 					if (edgeValue > 0.01) {
 						node.addEdge(edgeValue, endingNode);
@@ -250,7 +251,7 @@ bool IRP::formulateProblem()
 	for (int i : AllNodes)
 		for (int j : AllNodes)
 			for (int t : Periods) {
-				if (inArcSet(i, j))
+				if (map.inArcSet(i, j))
 					objective += TransCost[i][j] * x[i][j][t];
 			}
 	//Holding costs
@@ -269,10 +270,10 @@ bool IRP::formulateProblem()
 	for (int i : AllNodes){
 		for (int t : Periods) {
 			for (int j : AllNodes) {
-				if (inArcSet(i, j)) {
+				if (map.inArcSet(i, j)) {
 					p1 += x[i][j][t];
 				}
-				if (inArcSet(j, i)) {
+				if (map.inArcSet(j, i)) {
 					p2 += x[j][i][t];
 				}
 			}
@@ -286,7 +287,7 @@ bool IRP::formulateProblem()
 	for (int i : AllNodes){
 		for (int t : Periods) {
 			for (int j : AllNodes) {
-				if (inArcSet(i, j)) {
+				if (map.inArcSet(i, j)) {
 					p1 += x[i][j][t];
 				}
 			}
@@ -300,7 +301,7 @@ bool IRP::formulateProblem()
 	//Depot
 	for (int t : Periods) {
 		p1 = y[0][t];
-		prob.newCtr("Max vehicles", p1 <= nVehicles);
+		prob.newCtr("Max vehicles", p1 <= ModelParameters::nVehicles);
 		p1 = 0;
 	}
 
@@ -370,11 +371,11 @@ bool IRP::formulateProblem()
 	for (int i : AllNodes) {
 		for (int t : Periods) {
 			for (int j : Nodes){
-				if (inArcSet(i, j)) {
+				if (map.inArcSet(i, j)) {
 					p1 = time[i][t] - time[j][t] + TravelTime[i][j]
-						+ (maxTime + TravelTime[i][j]) * x[i][j][t];
+						+ (ModelParameters::maxTime + TravelTime[i][j]) * x[i][j][t];
 
-					p2 = maxTime + TravelTime[i][j];
+					p2 = ModelParameters::maxTime + TravelTime[i][j];
 					prob.newCtr("Time flow", p1 <= p2);
 					p1 = 0;
 					p2 = 0;
@@ -382,9 +383,9 @@ bool IRP::formulateProblem()
 	
 				}
 
-			if (inArcSet(i, 0)) {
+			if (map.inArcSet(i, 0)) {
 				p1 = time[i][t] + TravelTime[i][0] * x[i][0][t];
-				prob.newCtr("Final time", p1 <= maxTime);
+				prob.newCtr("Final time", p1 <= ModelParameters::maxTime);
 				p1 = 0;
 			}
 			}
@@ -397,11 +398,11 @@ bool IRP::formulateProblem()
 	for (int i : DeliveryNodes) {
 		for (int t : Periods) {
 			for (int j : AllNodes) {
-				if (inArcSet(j, i)) {
+				if (map.inArcSet(j, i)) {
 					p1 += loadDelivery[j][i][t];
 					p2 -= loadPickup[j][i][t];
 				}
-				if (inArcSet(i, j)) {
+				if (map.inArcSet(i, j)) {
 					p1 -= loadDelivery[i][j][t];
 					p2 += loadPickup[i][j][t];
 				}
@@ -419,11 +420,11 @@ bool IRP::formulateProblem()
 	for (int i : PickupNodes) {
 		for (int t : Periods) {
 			for (int j : AllNodes) {
-				if (inArcSet(j, i)) {
+				if (map.inArcSet(j, i)) {
 					p1 += loadPickup[j][i][t];
 					p2 += loadDelivery[j][i][t];
 				}
-				if (inArcSet(i, j)) {
+				if (map.inArcSet(i, j)) {
 					p1 -= loadPickup[i][j][t];
 					p2 -= loadDelivery[i][j][t];
 				}
@@ -441,9 +442,9 @@ bool IRP::formulateProblem()
 	//Arc capacity
 	for (int i : AllNodes) {
 		for (int j : AllNodes) {
-			if (inArcSet(i, j)) {
+			if (map.inArcSet(i, j)) {
 				for (int t : Periods) {
-					p1 = loadDelivery[i][j][t] + loadPickup[i][j][t] - Capacity * x[i][j][t];
+					p1 = loadDelivery[i][j][t] + loadPickup[i][j][t] - ModelParameters::Capacity * x[i][j][t];
 					prob.newCtr("ArcCapacity", p1 <= 0);
 					p1 = 0;
 				}
@@ -454,7 +455,7 @@ bool IRP::formulateProblem()
 	//Vehicle capacity
 	for (int i : DeliveryNodes) {
 		for (int t : Periods) {
-			p1 = delivery[i][t] - min(Capacity, UpperLimit[i] - LowerLimit[i])*y[i][t];
+			p1 = delivery[i][t] - min(ModelParameters::Capacity, UpperLimit[i] - LowerLimit[i])*y[i][t];
 
 			prob.newCtr("Vehicle capacity delivert", p1 <= 0);
 			p1 = 0;
@@ -463,7 +464,7 @@ bool IRP::formulateProblem()
 
 	for (int i : PickupNodes) {
 		for (int t : Periods) {
-			p1 = pickup[i][t] - min(Capacity, UpperLimit[i] - LowerLimit[i])*y[i][t];
+			p1 = pickup[i][t] - min(ModelParameters::Capacity, UpperLimit[i] - LowerLimit[i])*y[i][t];
 
 			prob.newCtr("Vehicle capacity pickup", p1 <= 0);
 			p1 = 0;
@@ -493,9 +494,9 @@ bool IRP::initializeParameters() {
 		TransCost[i] = new  int[AllNodes.size()];
 		TravelTime[i] = new  int[AllNodes.size()];
 		for (int j : AllNodes) {
-			if (inArcSet(i, j)) {
-				TravelTime[i][j] = map.getTravelTime(i, j, TRAVELTIME_MULTIPLIER);
-				TransCost[i][j] = map.getTransCost(i, j, TRANSCOST_MULTIPLIER, SERVICECOST_MULTIPLIER);
+			if (map.inArcSet(i, j)) {
+				TravelTime[i][j] = map.getTravelTime(i, j, ModelParameters:: TRAVELTIME_MULTIPLIER, ModelParameters::SERVICETIME);
+				TransCost[i][j] = map.getTransCost(i, j, ModelParameters::TRANSCOST_MULTIPLIER, ModelParameters::SERVICECOST_MULTIPLIER);
 				printf("%-10d", TravelTime[i][j]);
 			}
 			else {
@@ -530,6 +531,7 @@ bool IRP::initializeParameters() {
 	printf("Demand Delivery");
 
 	Demand = new int * [Nodes.size()];
+	int customer;
 
 	for (int i : DeliveryNodes) {
 		printf("\n");
@@ -599,7 +601,7 @@ bool IRP::initializeVariables()
 			loadDelivery[i][j] = new	XPRBvar[Periods.size()];
 			loadPickup[i][j] = new	XPRBvar[Periods.size()];
 
-			if (inArcSet(i, j)) {
+			if (map.inArcSet(i, j)) {
 			for (int t : Periods) {
 				if (ARC_RELAXED)
 					x[i][j][t] = prob.newVar(XPRBnewname("x%d-%d%d", i, j, t), XPRB_PL, 0, 1);
@@ -623,7 +625,7 @@ bool IRP::initializeVariables()
 				if (i > 0)
 					y[i][t] = prob.newVar(XPRBnewname("y_%d%d", i, t), XPRB_BV, 0, 1);
 				else
-					y[i][t] = prob.newVar(XPRBnewname("y_%d%d", 0, t), XPRB_UI, 0, nVehicles);
+					y[i][t] = prob.newVar(XPRBnewname("y_%d%d", 0, t), XPRB_UI, 0, ModelParameters::nVehicles);
 			}
 		}
 	}
@@ -635,7 +637,7 @@ bool IRP::initializeVariables()
 				if (i > 0)
 					y[i][t] = prob.newVar(XPRBnewname("y_%d%d", i, t), XPRB_PL, 0, 1);
 				else
-					y[i][t] = prob.newVar(XPRBnewname("y_%d%d", 0, t), XPRB_PL, 0, nVehicles);
+					y[i][t] = prob.newVar(XPRBnewname("y_%d%d", 0, t), XPRB_PL, 0, ModelParameters::nVehicles);
 			}
 		}
 	}
@@ -685,13 +687,6 @@ bool IRP::initializeVariables()
 }// end initialize variables
 
 
-bool IRP::inArcSet(int i, int j)
-{
-	
-	bool a = (i == j || (i == getNumOfCustomers() + j && j != 0));
-	return !a;
-}
-
 
 
 
@@ -717,12 +712,12 @@ void IRP::getVisitedCustomers(int period, vector<Customer *> &custVisit)
 void IRP::getDemand(int t, vector<vector<int>>& demand, vector<Customer *> &customers)
 {
 	demand.resize(2);
-	demand[DELIVERY].resize(getNumOfCustomers()+1);
-	demand[PICKUP].resize(getNumOfCustomers()+1);
+	demand[Customer::DELIVERY].resize(getNumOfCustomers()+1);
+	demand[Customer::PICKUP].resize(getNumOfCustomers()+1);
 	int node;
 	for (Customer* c : customers) {
-			demand[DELIVERY][c->getId()] = delivery[map.getDeliveryNode(c)][t].getSol();
-			demand[PICKUP][c->getId()] = pickup[map.getPickupNode(c)][t].getSol();
+			demand[Customer::DELIVERY][c->getId()] = delivery[map.getDeliveryNode(c)][t].getSol();
+			demand[Customer::PICKUP][c->getId()] = pickup[map.getPickupNode(c)][t].getSol();
 	}
 }
 

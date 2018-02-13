@@ -44,10 +44,8 @@ int Map::getPickupNode(Customer * c)
 	return c->getId()+getNumCustomers();
 }
 
-int Map::CustomerToPickup(Customer * cust)
-{
-	return (cust->getId() + 1);
-}
+
+
 
 int Map::getNumCustomers()
 {
@@ -62,16 +60,16 @@ Customer * Map::getCustomer(int id)
 
 
 
-int Map::getTravelTime(int node1, int node2, int travelTimeParam)
+int Map::getTravelTime(int node1, int node2, int travelTimeParam, int serviceTimeParam)
 {
-	return getDistance(node1, node2) * travelTimeParam;
+	return getDistance(node1, node2) * travelTimeParam + serviceTimeParam;
 }
 
 int Map::getDistance(int node1, int node2)
 {
 	int distance;
-	nodeToCustomer(node1);
-	nodeToCustomer(node2);
+	node1 = nodeToCustomer(node1);
+	node2 = nodeToCustomer(node2);
 
 	if (node1 == 0 || node2 == 0) {
 		int x = database.getX(max(node1, node2));
@@ -90,9 +88,20 @@ int Map::getDistance(int node1, int node2)
 	return distance;
 }
 
-void Map::nodeToCustomer(int & node)
+
+bool Map::inArcSet(int i, int j)
 {
-	if (node > database.getnCustomers()) { node = node - database.getnCustomers(); };
+	bool a = (i == j || (i == database.getnCustomers() + j && j != 0));
+	return !a;
+}
+
+
+int Map::nodeToCustomer(int node)
+{
+	if (node > database.getnCustomers())
+		return node - database.getnCustomers();
+	else
+		return node;
 }
 
 Map::~Map()

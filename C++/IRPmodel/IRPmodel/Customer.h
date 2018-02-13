@@ -22,7 +22,7 @@ public:
 	double getYpos();
 	int getId();	
 
-	const int static DELIVERY = 0;
-	const int static PICKUP = 1;
+	static const int  DELIVERY = 0;
+	static const int PICKUP = 1;
 
 };

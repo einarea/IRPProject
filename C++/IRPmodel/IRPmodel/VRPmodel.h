@@ -12,7 +12,8 @@ using namespace dashoptimization;
 class VRPmodel
 {
 public:
-	VRPmodel(CustomerVRPDB db);
+	VRPmodel(CustomerVRPDB & db);
+	void solveModel();
 	~VRPmodel();
 
 private:
@@ -26,18 +27,26 @@ private:
 	vector <int> PickupNodes;
 	vector <int> Nodes;
 	vector <int> AllNodes;
+	vector <int> Depot;
 
 	//Variables
 	XPRBvar **x;
 	XPRBvar *y;
 	XPRBvar **loadDelivery;
-	XPRBvar **loadPikcup;
+	XPRBvar **loadPickup;
+	XPRBvar *time;
 
 	//Parameters
 	int Capacity;
+	int MaxTime;
+	int nVehicles;
 	int * Demand;
-	int ** Dist;
 	int ** TransCost;
+	int ** TravelTime;
+
+	//Linear expreassions;
+	XPRBexpr objective;
+
 
 
 	//Helper functions

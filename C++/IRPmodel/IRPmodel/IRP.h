@@ -22,12 +22,6 @@ private:
 	XPRSprob oprob;		//Express problem to use with cuts
 
 	//Parameters
-	static const int TRANSCOST_MULTIPLIER = 4;
-	static const int SERVICECOST_MULTIPLIER = 2;
-	static const int TRAVELTIME_MULTIPLIER = 1;
-	const int maxTime = 2000;
-	int Capacity = 1000;
-	int nVehicles = 4;
 	bool ARC_RELAXED;
 
 	int NumOfCustomers;
@@ -69,7 +63,6 @@ private:
 	//Utility functions
 	bool initializeSets();
 	bool initializeVariables();
-	bool inArcSet(int, int);
 	bool initializeParameters();
 	bool formulateProblem();
 	void buildGraph(vector <Node> &, int);
@@ -78,9 +71,6 @@ private:
 	
 
 public:
-	static const int DELIVERY = 0;
-	static const int PICKUP = 1;
-
 	IRP(CustomerIRPDB&, bool);
 	void sepStrongComponents();
 	void addSubtourCut(vector<vector <Node>> &, int t);

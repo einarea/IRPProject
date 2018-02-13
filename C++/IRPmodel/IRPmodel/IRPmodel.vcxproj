@@ -161,6 +161,7 @@
     <ClInclude Include="Map.h" />
     <ClInclude Include="MapIRP.h" />
     <ClInclude Include="ModelBase.h" />
+    <ClInclude Include="ModelParameters.h" />
     <ClInclude Include="Node.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
@@ -180,6 +181,7 @@
     <ClCompile Include="Map.cpp" />
     <ClCompile Include="MapIRP.cpp" />
     <ClCompile Include="ModelBase.cpp" />
+    <ClCompile Include="ModelParameters.cpp" />
     <ClCompile Include="Node.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

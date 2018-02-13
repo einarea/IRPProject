@@ -18,6 +18,7 @@ protected:
 
 public:
 	CustomerDB();
+	vector <Customer *> * getCustomers();
 	Customer * getCustomer(int);
 	int getnCustomers();
 	double getX(int);

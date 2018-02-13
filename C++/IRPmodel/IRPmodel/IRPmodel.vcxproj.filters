@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Source Files\Customer">
+      <UniqueIdentifier>{2c4a9309-1b4e-4115-85be-d8a0c1e66fc8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -63,18 +66,15 @@
     <ClInclude Include="CustomerIRPDB.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ModelParameters.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="IRPmodel.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Customer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="CustomerDB.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="IRP.cpp">
@@ -95,19 +95,28 @@
     <ClCompile Include="VRPmodel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CustomerVRP.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="CustomerIRP.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="CustomerVRPDB.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="MapIRP.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CustomerVRPDB.cpp">
+      <Filter>Source Files\Customer</Filter>
+    </ClCompile>
+    <ClCompile Include="CustomerDB.cpp">
+      <Filter>Source Files\Customer</Filter>
+    </ClCompile>
+    <ClCompile Include="CustomerIRP.cpp">
+      <Filter>Source Files\Customer</Filter>
+    </ClCompile>
     <ClCompile Include="CustomerIRPDB.cpp">
+      <Filter>Source Files\Customer</Filter>
+    </ClCompile>
+    <ClCompile Include="CustomerVRP.cpp">
+      <Filter>Source Files\Customer</Filter>
+    </ClCompile>
+    <ClCompile Include="Customer.cpp">
+      <Filter>Source Files\Customer</Filter>
+    </ClCompile>
+    <ClCompile Include="ModelParameters.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
