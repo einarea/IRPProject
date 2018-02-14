@@ -827,7 +827,7 @@ double IRP::Solution::getObjective(IRP *instance)
 
 void IRP::Solution::printSolution(IRP &instance)
 {
-	printf("\nObjective value: %.2f\n", getObjective(&instance));
+	printf("\n\n\nObjective value: %.2f\n", getObjective(&instance));
 	printf("Transporationcost: %.2f\n", getTransportationCost(&instance));
 	printf("Holding cost: %.2f\n", getHoldingCost(&instance));
 	
