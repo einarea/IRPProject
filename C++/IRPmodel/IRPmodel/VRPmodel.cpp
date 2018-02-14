@@ -336,7 +336,7 @@ void VRPmodel::addToIRPSolution(int t, IRP::Solution * sol)
 		for (int j : AllNodes) {
 			if (map.inArcSet(i, j)) {
 				//get solution from VRP
-				sol->xSol[i][j][t] = (int)x[i][j].getSol();
+				sol->xSol[i][j][t] = x[i][j].getSol();
 				sol->loadDelSol[i][j][t] = (int)loadDelivery[i][j].getSol();
 				int a = (int)loadPickup[i][j].getSol();
 				sol->loadPickSol[i][j][t] = (int)loadPickup[i][j].getSol();

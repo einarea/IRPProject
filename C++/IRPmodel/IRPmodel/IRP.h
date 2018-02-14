@@ -86,19 +86,21 @@ public:
 	class Solution {
 	public:
 		Solution();
-		Solution(int ** y, int ***x, int **del, int **pic, int ***loadDel, int ***loadPic, int **inv, int ** time);
+		Solution(double ** y, double ***x, double **del, double **pic, double ***loadDel, double ***loadPic, double **inv, double ** time);
 		int SolID;
-		int **ySol;
-		int ***xSol;
-		int **delSol;
-		int **pickSol;
-		int	***loadDelSol;
-		int ***loadPickSol;
-		int **invSol;
-		int **timeSol;
+		double **ySol;
+		double ***xSol;
+		double **delSol;
+		double **pickSol;
+		double	***loadDelSol;
+		double ***loadPickSol;
+		double **invSol;
+		double **timeSol;
 
-		int getObjective(IRP * instance);
+		double getObjective(IRP * instance);
 		void printSolution(IRP &instance);
+		double getTransportationCost(IRP * instance);
+		double getHoldingCost(IRP * instance);
 	
 	};
 
@@ -109,7 +111,7 @@ public:
 	int allocateSolution();
 	void sepStrongComponents();
 	void addSubtourCut(vector<vector <Node>> &, int t);
-	void solveModel();
+	IRP::Solution * solveModel();
 	XPRBprob * getProblem();
 	CustomerDB * getDB();
 	int getNumOfPeriods();

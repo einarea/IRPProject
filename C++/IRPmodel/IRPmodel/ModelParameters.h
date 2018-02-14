@@ -3,7 +3,7 @@ class ModelParameters
 {
 public:
 	ModelParameters();
-	static const int TRANSCOST_MULTIPLIER = 4;
+	static const int TRANSCOST_MULTIPLIER = 10;
 	static const int SERVICECOST_MULTIPLIER = 2;
 	static const int TRAVELTIME_MULTIPLIER = 1;
 	static const int SERVICETIME = 10;

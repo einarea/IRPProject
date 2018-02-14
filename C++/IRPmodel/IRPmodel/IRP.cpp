@@ -73,7 +73,7 @@ IRP::IRP(CustomerIRPDB& db, bool ArcRel = false)
 
 
 
-void IRP::solveModel()
+IRP::Solution * IRP::solveModel()
 {
 
 	oprob = prob.getXPRSprob();
@@ -83,44 +83,10 @@ void IRP::solveModel()
 	//prob.lpOptimize();
 	//int b = prob.getLPStat();
 	
-	int d = prob.solve("g");
+	int d = prob.mipOptimise();
 	//prob.print();
-	for (int i : AllNodes)
-		for (int t : Periods){
-			y[i][t].print();
-			printf("\t");
-			/*for (int j : AllNodes) {
-				if (inArcSet(i, j)) {
-					XPRBvar temp = prob.getVarByName(XPRBnewname("x%d-%d%d", i, j, t));
-					(x[i][j][t]).print();
-					printf("\t");
-					/*(loadDelivery[i][j][t]).print();
-					printf("\t");
-					(loadPickup[i][j][t]).print();
-					printf("\t"); 
-				}
-			}*/
-			
-			(time[i][t]).print();
-			printf("\t");
-
-			if (i > 0 ){
-				if (i <= DeliveryNodes.size()) {
-					(delivery[i][t]).print();
-				}
-				else {
-					printf("\t\t\t\t\t\t");
-					(pickup[i][t]).print();
-				}
-				
-				printf("\n");
-				}
-			else
-				printf("\n");
-	}
-
-
-	int c = prob.getObjVal();
+	int SolID = allocateSolution();
+	return getSolution(SolID);
 }
 
 Map * IRP::getMap()
@@ -135,39 +101,39 @@ int IRP::allocateSolution()
 	Solution * sol = new Solution();
 	sol->SolID = SolutionCounter;
 
-	sol->xSol = new int **[AllNodes.size()];
-	sol->loadDelSol = new int **[AllNodes.size()];
-	sol->loadPickSol = new int **[AllNodes.size()];
+	sol->xSol = new double **[AllNodes.size()];
+	sol->loadDelSol = new double **[AllNodes.size()];
+	sol->loadPickSol = new double **[AllNodes.size()];
 
 	for (int i : AllNodes) {
-		sol->xSol[i] = new int *[AllNodes.size()];
-		sol->loadDelSol[i] = new int *[AllNodes.size()];
-		sol->loadPickSol[i] = new int *[AllNodes.size()];
+		sol->xSol[i] = new double *[AllNodes.size()];
+		sol->loadDelSol[i] = new double *[AllNodes.size()];
+		sol->loadPickSol[i] = new double *[AllNodes.size()];
 
 		for (int j : AllNodes) {
 			if (map.inArcSet(i, j)) {
-				sol->xSol[i][j] = new int[Periods.size()];
-				sol->loadDelSol[i][j] = new int[Periods.size()];
-				sol->loadPickSol[i][j] = new int[Periods.size()];
+				sol->xSol[i][j] = new double[Periods.size()];
+				sol->loadDelSol[i][j] = new double[Periods.size()];
+				sol->loadPickSol[i][j] = new double[Periods.size()];
 
 				for (int t : Periods) {
 					//Initialize solution to 0
-					sol->xSol[i][j][t] = 0;
-					sol->loadDelSol[i][j][t] = 0;
-					sol->loadPickSol[i][j][t] = 0;
+					sol->xSol[i][j][t] = x[i][j][t].getSol();
+					sol->loadDelSol[i][j][t] = loadDelivery[i][j][t].getSol();
+					sol->loadPickSol[i][j][t] = loadPickup[i][j][t].getSol();
 				}
 			} //endif
 		} //end for j
 	} // end x and loading
 
 	//Fill y, inventory and allocate time
-	sol->ySol = new int *[AllNodes.size()];
-	sol->timeSol = new int *[AllNodes.size()];
-	sol->invSol = new int *[AllNodes.size()];
+	sol->ySol = new double *[AllNodes.size()];
+	sol->timeSol = new double *[AllNodes.size()];
+	sol->invSol = new double *[AllNodes.size()];
 	for (int i : Nodes) {
-		sol->ySol[i] = new int [Periods.size()];
-		sol->timeSol[i] = new int [Periods.size()];
-		sol->invSol[i] = new int [Periods.size()];
+		sol->ySol[i] = new double [Periods.size()];
+		sol->timeSol[i] = new double [Periods.size()];
+		sol->invSol[i] = new double [Periods.size()];
 		for (int t : Periods) {
 			sol->ySol[i][t] = y[i][t].getSol();
 			sol->invSol[i][t] = inventory[i][t].getSol();
@@ -176,8 +142,8 @@ int IRP::allocateSolution()
 	}
 
 	//Depot
-	sol->ySol[0] = new int[Periods.size()];
-	sol->timeSol[0] = new int[Periods.size()];
+	sol->ySol[0] = new double[Periods.size()];
+	sol->timeSol[0] = new double[Periods.size()];
 	for (int t : Periods) {
 		sol->ySol[0][t] = y[0][t].getSol();
 		sol->timeSol[0][t] = 0;
@@ -185,11 +151,11 @@ int IRP::allocateSolution()
 	
 
 	//Fill delivery and pickup
-	sol->delSol = new int *[Nodes.size()];
-	sol->pickSol = new int *[Nodes.size()];
+	sol->delSol = new double *[Nodes.size()];
+	sol->pickSol = new double *[Nodes.size()];
 	for (int i : Nodes) {
-		sol->delSol[i] = new int[Periods.size()];
-		sol->pickSol[i] = new int[Periods.size()];
+		sol->delSol[i] = new double[Periods.size()];
+		sol->pickSol[i] = new double[Periods.size()];
 		for (int t : Periods) {
 			if (i <= DeliveryNodes.size()) {
 				if (delivery[i][t].getSol() > 0)
@@ -359,7 +325,7 @@ bool IRP::formulateProblem()
 	//Holding costs
 	for (int i : Nodes)
 		for (int t : Periods)
-			objective += HoldCost[i] * y[i][t];
+			objective += HoldCost[i] * inventory[i][t];
 
 	prob.setObj(prob.newCtr("OBJ", objective));  /* Set the objective function */
 	//end objective
@@ -840,7 +806,7 @@ IRP::Solution::Solution()
 {
 }
 
-IRP::Solution::Solution(int ** y, int *** x, int ** del, int ** pick, int *** loadDel, int *** loadPick, int **inv, int ** time)
+IRP::Solution::Solution(double ** y, double *** x, double ** del, double ** pick, double *** loadDel, double *** loadPick, double **inv, double ** time)
 	:
 	ySol(y),
 	xSol(x),
@@ -853,54 +819,76 @@ IRP::Solution::Solution(int ** y, int *** x, int ** del, int ** pick, int *** lo
 }
 
 
-int IRP::Solution::getObjective(IRP *instance)
+double IRP::Solution::getObjective(IRP *instance)
 {
-	int TravelCost = 0;
-	int HoldingCost = 0;
-	//Transportation cost
-	for (int i: instance->AllNodes) {
-		for (int j : instance->AllNodes) {
-			if(instance->map.inArcSet(i, j))
-				for (int t : instance->Periods) 
-				if (xSol[i][j][t] > 0.5) {
-					TravelCost += instance->TransCost[i][j] * xSol[i][j][t];
-				}
-		}
-	}
-
-	//Holding Cost
-	for (int i : instance->Nodes) {
-		for (int t : instance->Periods){
-				HoldingCost += instance->HoldCost[i] * invSol[i][t];
-			}
-	}
-
-	return TravelCost + HoldingCost;
+	return getHoldingCost(instance) + getTransportationCost(instance);
+	
 }
 
 void IRP::Solution::printSolution(IRP &instance)
 {
+	printf("\nObjective value: %.2f\n", getObjective(&instance));
+	printf("Transporationcost: %.2f\n", getTransportationCost(&instance));
+	printf("Holding cost: %.2f\n", getHoldingCost(&instance));
 	
-	for (int i : instance.AllNodes) {
-		for (int t : instance.Periods) {
+
+	for (int t : instance.Periods) {
+		printf("\n\nPeriod %d:", t);
+		for (int i : instance.AllNodes) {
 			printf("\n");
+			if (i > 0) {
+				printf("Inv_%d: %.2f\t", i, invSol[i][t]);
+			}
 			if (ySol[i][t] > 0.5) {
-				printf("y%d%d: %d\t", i, t, ySol[i][t]);
+				printf("y%d: %.2f\t", i, ySol[i][t]);
+				double a = ySol[i][t];
+			
 				if (i > 0) {
 					if (i <= instance.DeliveryNodes.back())
-						printf("qD_%d%d: %d\t", i, t, delSol[i][t]);
+						printf("qD_%d: %.2f\t", i, delSol[i][t]);
 					else
-						printf("qP_%d%d: %d\t", i, t, pickSol[i][t]);
+						printf("qP_%d: %.2f\t", i, pickSol[i][t]);
 				}
 				for (int j : instance.AllNodes) {
 					if (instance.map.inArcSet(i, j)) {
-						if (xSol[i][j][t] > 0.5)
-							printf("x%d%d%d: %d\t", i, j, t, xSol[i][j][t]);
+						if (xSol[i][j][t] > 0.01)
+							printf("x%d%d: %.2f\t", i, j, xSol[i][j][t]);
 					}
 				} //end j
 			} // end if
 		} // end t
 	}
+}
+
+double IRP::Solution::getTransportationCost(IRP * instance)
+{
+	int TravelCost = 0;
+	for (int i : instance->AllNodes) {
+		for (int j : instance->AllNodes) {
+			if (instance->map.inArcSet(i, j))
+				for (int t : instance->Periods)
+					if (xSol[i][j][t] > 0.01) {
+						TravelCost += instance->TransCost[i][j] * xSol[i][j][t];
+					}
+		}
+	}
+	return TravelCost;
+}
+
+double IRP::Solution::getHoldingCost(IRP * instance)
+{
+	int HoldingCost = 0;
+	//Transportation cost
+
+
+	//Holding Cost
+	for (int i : instance->Nodes) {
+		for (int t : instance->Periods) {
+			HoldingCost += instance->HoldCost[i] * invSol[i][t];
+		}
+	}
+
+	return HoldingCost;
 }
 
 
