@@ -80,11 +80,11 @@ IRP::Solution * IRP::solveModel()
 	int a=prob.setCutMode(1); // Enable the cut mode
 	XPRSsetcbcutmgr(oprob, cbmng, &(*this));
 
-	//prob.lpOptimize();
+	//double b =prob.lpOptimize();
 	//int b = prob.getLPStat();
 	
 	int d = prob.mipOptimise();
-	//prob.print();
+	prob.print();
 	int SolID = allocateSolution();
 	return getSolution(SolID);
 }
@@ -565,12 +565,12 @@ bool IRP::initializeParameters() {
 			if (map.inArcSet(i, j)) {
 				TravelTime[i][j] = map.getTravelTime(i, j, ModelParameters:: TRAVELTIME_MULTIPLIER, ModelParameters::SERVICETIME);
 				TransCost[i][j] = map.getTransCost(i, j, ModelParameters::TRANSCOST_MULTIPLIER, ModelParameters::SERVICECOST_MULTIPLIER);
-				printf("%-10d", TravelTime[i][j]);
+				printf("%-5d", TransCost[i][j]);
 			}
 			else {
-				TransCost[i][j] = 0;
-				TravelTime[i][j] = 0;
-				printf("%-10d", TravelTime[i][j]);
+				TransCost[i][j] = -1;
+				TravelTime[i][j] = -1;
+				printf("%-5d", TravelTime[i][j]);
 			}
 			
 		}

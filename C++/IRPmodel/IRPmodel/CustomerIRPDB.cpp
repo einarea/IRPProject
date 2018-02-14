@@ -2,7 +2,7 @@
 #include "CustomerIRPDB.h"
 
 
-CustomerIRPDB::CustomerIRPDB(string FileName)
+CustomerIRPDB::CustomerIRPDB(string FileName, bool COORDINATE_INPUT)
 {
 	ifstream CustomerRecords(FileName, ios::in);
 
@@ -25,11 +25,11 @@ CustomerIRPDB::CustomerIRPDB(string FileName)
 	getline(CustomerRecords, line);
 
 	int CustomerID = 1;
-	int HoldingCost;
+	int * HoldingCost;
 	int ** Demand;
 	int * InitInventory;
-	int LowerLimit;
-	int UpperLimit;
+	int * LowerLimit;
+	int * UpperLimit;
 
 
 	while (!getline(CustomerRecords, line).eof()) {
@@ -37,9 +37,22 @@ CustomerIRPDB::CustomerIRPDB(string FileName)
 		size_t pos = 0;
 		string token;
 		delimiter = "\t";
-		HoldingCost = stoi(getNextToken(line, delimiter));
-		LowerLimit = stoi(getNextToken(line, delimiter));
-		UpperLimit = stoi(getNextToken(line, delimiter));
+
+		//Inventory parameters
+		HoldingCost = new int[2];
+		LowerLimit = new int[2];
+		UpperLimit = new int[2];
+
+		for (int i = 0; i < 2; i++) {
+			HoldingCost[i] = stoi(getNextToken(line, delimiter));
+		}
+
+		for (int i = 0; i < 2; i++) {
+			LowerLimit[i] = stoi(getNextToken(line, delimiter));
+		}
+		for (int i = 0; i < 2; i++) {
+			UpperLimit[i] = stoi(getNextToken(line, delimiter));
+		}
 
 		//Dynamically allocated array
 		Demand = new int *[2]; //pickup and delivery demand
@@ -48,7 +61,6 @@ CustomerIRPDB::CustomerIRPDB(string FileName)
 			Demand[i] = new int[nPeriods];
 			for (int t = 0; t < nPeriods; t++) {
 				Demand[i][t] = stoi(getNextToken(line, delimiter));
-
 			}
 		}
 
@@ -58,10 +70,20 @@ CustomerIRPDB::CustomerIRPDB(string FileName)
 			InitInventory[i] = stoi(getNextToken(line, delimiter));
 		}
 
-		CustomerIRP * cust = new CustomerIRP(CustomerID, HoldingCost, LowerLimit, UpperLimit, Demand, InitInventory);
-		printf("%d ", cust->getInitInventory(Customer::PICKUP));
-		Customers.push_back(cust);
-		CustomerID++;
+		//If datafile provide coordinates
+		if (COORDINATE_INPUT) {
+			int x = stoi(getNextToken(line, delimiter));
+			int y = stoi(getNextToken(line, delimiter));
+			CustomerIRP * cust = new CustomerIRP(CustomerID, HoldingCost, LowerLimit, UpperLimit, Demand, InitInventory, x, y);
+			Customers.push_back(cust);
+			CustomerID++;
+		}
+
+		else {
+			CustomerIRP * cust = new CustomerIRP(CustomerID, HoldingCost, LowerLimit, UpperLimit, Demand, InitInventory);
+			Customers.push_back(cust);
+			CustomerID++;
+		}
 	}
 }
 
@@ -70,14 +92,14 @@ int CustomerIRPDB::getnPeriods()
 	return nPeriods;
 }
 
-int CustomerIRPDB::getHoldCost(int id)
+int CustomerIRPDB::getHoldCost(int id, int indicator)
 {
-	return getCustomer(id)->getHoldCost();
+	return getCustomer(id)->getHoldCost(indicator);
 }
 
-int CustomerIRPDB::getUpperLimit(int id)
+int CustomerIRPDB::getUpperLimit(int id, int indicator)
 {
-	return getCustomer(id)->getUpperLimit();
+	return getCustomer(id)->getUpperLimit(indicator);
 }
 
 
@@ -86,10 +108,10 @@ int CustomerIRPDB::getInitInventory(int id, int indicator)
 	return getCustomer(id)->getInitInventory(indicator);
 }
 
-int CustomerIRPDB::getLowerLimit(int id)
+int CustomerIRPDB::getLowerLimit(int id, int indicator)
 {
 	
-	return getCustomer(id)->getLowerLimit();
+	return getCustomer(id)->getLowerLimit(indicator);
 }
 
 CustomerIRP * CustomerIRPDB::getCustomer(int id) {

@@ -4,7 +4,7 @@
 
 
 
-CustomerIRP::CustomerIRP(int id, int holdCost, int lowLim, int uppLim, int ** dem, int * init, int coordinateX, int coordinateY)
+CustomerIRP::CustomerIRP(int id, int * holdCost, int * lowLim, int * uppLim, int ** dem, int * init, int coordinateX, int coordinateY)
 	:
 	Customer(id, coordinateX, coordinateY),
 	HoldingCost(holdCost),
@@ -16,7 +16,7 @@ CustomerIRP::CustomerIRP(int id, int holdCost, int lowLim, int uppLim, int ** de
 }
 
 //randomly generated coordinates
-CustomerIRP::CustomerIRP(int id, int holdCost, int lowLim, int uppLim, int ** dem, int * init)
+CustomerIRP::CustomerIRP(int id, int * holdCost, int * lowLim, int * uppLim, int ** dem, int * init)
 	:
 	Customer(id),
 	HoldingCost(holdCost),
@@ -27,19 +27,19 @@ CustomerIRP::CustomerIRP(int id, int holdCost, int lowLim, int uppLim, int ** de
 {
 }
 
-int CustomerIRP::getHoldCost()
+int CustomerIRP::getHoldCost(int indicator)
 {
-	return this->HoldingCost;
+	return this->HoldingCost[indicator];
 }
 
-int CustomerIRP::getUpperLimit()
+int CustomerIRP::getUpperLimit(int indicator)
 {
-	return UpperLimit;
+	return UpperLimit[indicator];
 }
 
-int CustomerIRP::getLowerLimit()
+int CustomerIRP::getLowerLimit(int indicator)
 {
-	return LowerLimit;
+	return LowerLimit[indicator];
 }
 
 int CustomerIRP::getDemand(int period, int indicator)

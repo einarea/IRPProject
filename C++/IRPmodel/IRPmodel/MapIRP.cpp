@@ -11,20 +11,26 @@ database(db)
 
 int MapIRP::getHoldCost(int node)
 {
-	node = nodeToCustomer(node);
-	return database.getHoldCost(node);
+	if (isDelivery(node))
+		return database.getHoldCost(nodeToCustomer(node), Customer::DELIVERY);
+	else
+		return database.getHoldCost(nodeToCustomer(node), Customer::PICKUP);
 }
 
 int MapIRP::getUpperLimit(int node)
 {
-	node = nodeToCustomer(node);
-	return database.getUpperLimit(node);
+	if (isDelivery(node))
+		return database.getUpperLimit(nodeToCustomer(node), Customer::DELIVERY);
+	else
+		return database.getUpperLimit(nodeToCustomer(node), Customer::PICKUP);
 }
 
 int MapIRP::getLowerLimit(int node)
 {
-	node = nodeToCustomer(node);
-	return database.getLowerLimit(node);
+	if (isDelivery(node))
+		return database.getLowerLimit(nodeToCustomer(node), Customer::DELIVERY);
+	else
+		return database.getLowerLimit(nodeToCustomer(node), Customer::PICKUP);
 }
 
 int MapIRP::getDemand(int node, int period, int indicator)

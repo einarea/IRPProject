@@ -63,6 +63,7 @@ Customer * Map::getCustomer(int id)
 
 int Map::getTravelTime(int node1, int node2, int travelTimeParam, int serviceTimeParam)
 {
+	int a = getDistance(node1, node2) * travelTimeParam + serviceTimeParam;
 	return getDistance(node1, node2) * travelTimeParam + serviceTimeParam;
 }
 

@@ -11,14 +11,14 @@ private:
 	string getNextToken(string&, string&); //Helper function
 	int nPeriods;
 public:
-	CustomerIRPDB(string Filename);
+	CustomerIRPDB(string Filename, bool COORDINATE_INPUT);
 	~CustomerIRPDB();
-	int getHoldCost(int);
-	int getUpperLimit(int);
+	int getHoldCost(int id, int indicator);
+	int getUpperLimit(int id, int indicator);
 	int getnPeriods();
 	CustomerIRP * getCustomer(int id);
 	int getInitInventory(int id, int indicator);
-	int getLowerLimit(int);
+	int getLowerLimit(int id, int indicator);
 	int getDemand(int id, int period, int INDICATOR);
 };
 

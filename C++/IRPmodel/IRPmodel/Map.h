@@ -27,7 +27,7 @@ public:
 	int getNumCustomers();
 	bool isDelivery(int node);
 	
-	Customer * getCustomer(int);
+	Customer * getCustomer(int id);
 	
 	int getTravelTime(int node1, int node2, int timeParam, int serviceTimeParameter);
 	~Map();
