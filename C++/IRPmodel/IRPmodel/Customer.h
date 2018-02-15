@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include "ModelParameters.h"
 #include "stdafx.h"
 
 using namespace::std;
@@ -17,10 +18,11 @@ private:
 public:
 
 	Customer(int CustomerID, int posX, int posY);
-	Customer(int id);
+	Customer(int id, int randSeed);
 	double getXpos();
 	double getYpos();
 	int getId();	
+	void print();
 
 	static const int  DELIVERY = 0;
 	static const int PICKUP = 1;

@@ -23,7 +23,6 @@ void VRPmodel::solveModel()
 	//prob.lpOptimize();
 	//int b = prob.getLPStat();
 
-	//prob.print();
 	int d = prob.mipOptimise();
 	for (int i : AllNodes)
 	{
@@ -83,7 +82,7 @@ bool VRPmodel::initializeParameters()
 	for (int i : DeliveryNodes) {
 		cust = map.nodeToCustomer(i);
 		Demand[i] = database.getDemand(cust, Customer::DELIVERY);
-		printf("%-10d", Demand[i]);
+		//printf("%-10d", Demand[i]);
 			
 		}
 
@@ -94,7 +93,7 @@ bool VRPmodel::initializeParameters()
 
 	TransCost = new int *[AllNodes.back()];
 	for (int i : AllNodes) {
-		printf("\n");
+		//printf("\n");
 		TransCost[i] = new int[AllNodes.back()];
 		for (int j : AllNodes)
 			if (map.inArcSet(i, j))

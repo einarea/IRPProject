@@ -87,6 +87,56 @@ CustomerIRPDB::CustomerIRPDB(string FileName, bool COORDINATE_INPUT)
 	}
 }
 
+CustomerIRPDB::CustomerIRPDB(int numberOfCustomers, int nPer)
+{
+	nPeriods = nPer;
+	for (int i = 1; i <= numberOfCustomers; i++){
+		Customers.push_back(generateCustomer(i, nPeriods, i));
+	}
+	
+}
+
+void CustomerIRPDB::writeInstanceToFile(ofstream &instanceFile, string Filename)
+{
+	instanceFile.open(Filename);
+	instanceFile << "nPeriods = " << getnPeriods() << "\n";
+	instanceFile << "HD\tHP\tLLD\tLLP\tULD\tULP\t";	
+
+	for (int t = 1 ; t <= getnPeriods(); t++) {
+		instanceFile << "D" << t << "\t";
+	}
+
+	for (int t = 1; t <= getnPeriods(); t++) {
+		instanceFile << "P" << t << "\t";
+	}
+
+	instanceFile << "I01\tI02\tX\tY\n";
+
+	for (Customer *c : Customers) {
+		CustomerIRP * cust = getCustomer(c);
+
+		instanceFile << cust->getHoldCost(Customer::DELIVERY) << "\t" << cust->getHoldCost(Customer::PICKUP)
+			<< "\t" << cust->getLowerLimit(Customer::DELIVERY) << "\t" <<cust->getLowerLimit(Customer::PICKUP)
+			<< "\t" << cust->getUpperLimit(Customer::DELIVERY) << "\t" << cust->getUpperLimit(Customer::PICKUP) << "\t";
+
+		for (int t = 1; t <= getnPeriods(); t++) {
+			instanceFile << cust->getDemand(t, Customer::DELIVERY) << "\t";
+		}
+		for (int t = 1; t <= getnPeriods(); t++) {
+			instanceFile << cust->getDemand(t, Customer::PICKUP) << "\t";
+		}
+
+		instanceFile << cust->getInitInventory(Customer::DELIVERY)<<"\t";
+		instanceFile << cust->getInitInventory(Customer::PICKUP)<<"\t";
+		instanceFile << cust->getXpos() << "\t" << cust->getYpos() << "\n";
+	}
+	
+	instanceFile << "end-of-file";
+	instanceFile.close();
+}
+
+
+
 int CustomerIRPDB::getnPeriods()
 {
 	return nPeriods;
@@ -122,7 +172,14 @@ CustomerIRP * CustomerIRPDB::getCustomer(int id) {
 
 int CustomerIRPDB::getDemand(int id, int period, int indicator)
 {
-	return getCustomer(id)->getDemand(period - 1, indicator);
+	return getCustomer(id)->getDemand(period, indicator);
+}
+
+CustomerIRP * CustomerIRPDB::getCustomer(Customer * c)
+{
+	CustomerIRP * derivedPtr = static_cast <CustomerIRP *> (c);
+	if (derivedPtr != 0)
+		return derivedPtr;
 }
 
 string CustomerIRPDB::getNextToken(string &str, string& delimiter)
@@ -139,3 +196,9 @@ string CustomerIRPDB::getNextToken(string &str, string& delimiter)
 CustomerIRPDB::~CustomerIRPDB()
 {
 }
+
+CustomerIRP * CustomerIRPDB::generateCustomer(int id, int periods, int randSeed)
+{
+	return new CustomerIRP(id, periods, randSeed);
+}
+

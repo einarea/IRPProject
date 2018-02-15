@@ -1,8 +1,9 @@
 #include "stdafx.h"
 #include <algorithm>
-using namespace ::std;
 #include "Customer.h"
 #include <fstream>
+#include <time.h>
+using namespace ::std;
 
 
 
@@ -15,12 +16,13 @@ Customer::Customer(int id, int coordinateX, int coordinateY)
 {
 }
 
-Customer::Customer(int id)
+Customer::Customer(int id, int randSeed)
 	:
 	CustomerID(id)
 {
-	posX = (rand() % 1000 + 1)/10;
-	posY = (rand() % 1000 + 1)/10;
+	srand(time(0) + randSeed);
+	posX = (rand() % 200 + 0) - 100;
+	posY = (rand() % 200 + 0) - 100;
 }
 
 
@@ -49,5 +51,10 @@ double Customer::getYpos()
 int Customer::getId()
 {
 	return CustomerID;
+}
+
+void Customer::print()
+{
+	printf("\nCustomer Id: %d, x: %.0f, y: %.0f", getId(), getXpos(), getYpos());
 }
 

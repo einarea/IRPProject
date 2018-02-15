@@ -560,19 +560,19 @@ bool IRP::initializeParameters() {
 	TravelTime = new int *[AllNodes.size()];
 
 	for (int i : AllNodes) {
-		printf("\n");
+		//printf("\n");
 		TransCost[i] = new  int[AllNodes.size()];
 		TravelTime[i] = new  int[AllNodes.size()];
 		for (int j : AllNodes) {
 			if (map.inArcSet(i, j)) {
 				TravelTime[i][j] = map.getTravelTime(i, j, ModelParameters:: TRAVELTIME_MULTIPLIER, ModelParameters::SERVICETIME);
 				TransCost[i][j] = map.getTransCost(i, j, ModelParameters::TRANSCOST_MULTIPLIER, ModelParameters::SERVICECOST_MULTIPLIER);
-				printf("%-5d", TravelTime[i][j]);
+				//printf("%-5d", TransCost[i][j]);
 			}
 			else {
 				TransCost[i][j] = -1;
 				TravelTime[i][j] = -1;
-				printf("%-5d", TravelTime[i][j]);
+				//printf("%-5d", TransCost[i][j]);
 			}
 			
 		}
@@ -581,12 +581,14 @@ bool IRP::initializeParameters() {
 	HoldCost = new int [Nodes.size()];
 	for (int i : Nodes) {
 		HoldCost[i] = map.getHoldCost(i);
+		
 	} //end initialization HoldCost
 
 	InitInventory = new int[Nodes.size()];
 
 	for (int i : Nodes) {
 		InitInventory[i] = map.getInitInventory(i);
+		//printf("%-5d", InitInventory[i]);
 	} //end initialization initial inventory
 
 
@@ -597,33 +599,33 @@ bool IRP::initializeParameters() {
 		LowerLimit[i] = map.getLowerLimit(i);
 	} //end limit initialization
 
-	printf("\n");
-	printf("Demand Delivery");
+	//printf("\n");
+	//printf("Demand Delivery");
 
 	Demand = new int * [Nodes.size()];
 	int customer;
 
 	for (int i : DeliveryNodes) {
-		printf("\n");
+		//printf("\n");
 		Demand[i] = new int [Periods.size()];
 		for (int t : Periods) {
 			if (t > 0) {
 				Demand[i][t] = map.getDemand(i, t, Customer::DELIVERY);
-				printf("%-10d", Demand[i][t]);
+				//printf("%-10d", Demand[i][t]);
 			}
 		}
 	} //end demand delivery nodes
 
-	printf("\n");
-	printf("Pickup Delivery");
+	//printf("\n");
+	//printf("Pickup Delivery");
 
 	for (int i : PickupNodes) {
-		printf("\n");
+		//printf("\n");
 		Demand[i] = new int[Periods.size()];
 		for (int t : Periods) {
 			if (t > 0) {
 				Demand[i][t] = map.getDemand(i, t, Customer::PICKUP);
-				printf("%-10d", Demand[i][t]);
+				//printf("%-10d", Demand[i][t]);
 			}
 		}
 	} //end demand pickup Nodes
@@ -853,8 +855,11 @@ void IRP::Solution::printSolution(IRP &instance)
 				}
 				for (int j : instance.AllNodes) {
 					if (instance.map.inArcSet(i, j)) {
-						if (xSol[i][j][t] > 0.01)
+						if (xSol[i][j][t] > 0.01) {
 							printf("x%d%d: %.2f\t", i, j, xSol[i][j][t]);
+							printf("loadDel%d%d: %.2f\t", i, j, loadDelSol[i][j][t]);
+							printf("loadPick%d%d: %.2f\t", i, j, loadPickSol[i][j][t]);
+						}
 					}
 				} //end j
 			} // end if
