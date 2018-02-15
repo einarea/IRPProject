@@ -91,7 +91,7 @@ CustomerIRPDB::CustomerIRPDB(int numberOfCustomers, int nPer)
 {
 	nPeriods = nPer;
 	for (int i = 1; i <= numberOfCustomers; i++){
-		Customers.push_back(generateCustomer(i, nPeriods, i));
+		Customers.push_back(generateCustomer(i, nPeriods, i*10));
 	}
 	
 }

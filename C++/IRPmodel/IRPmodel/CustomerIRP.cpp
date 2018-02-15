@@ -74,6 +74,7 @@ CustomerIRP::CustomerIRP(int id, int periods, int randSeed)
 		while (UpperLimit[DELIVERY] - LowerLimit[DELIVERY] <= maxDemandDel);
 
 
+		int a = ModelParameters::LBPick;
 		LowerLimit[PICKUP] = (rand() % 10 + 1)*ModelParameters::LBPick;	
 		do {
 			UpperLimit[PICKUP] = LowerLimit[PICKUP] + (rand() % 10 + 1)*ModelParameters::UBPick;
