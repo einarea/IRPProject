@@ -42,11 +42,12 @@ IRP::Solution * IRP::getSolution(int id)
 IRP::IRP(CustomerIRPDB& db, bool ArcRel = false)
 	:
 	database(db),
-	prob("IRP"),			//Initialize problem in BCL							
+	prob("IRP"),			//Initialize problem in BCL	
 	map(db),			//Set up map of all customers
 	ARC_RELAXED(ArcRel),
 	SolutionCounter(0)
 {
+
 	//Initialize sets
 	if(!initializeSets()) {
 		cout<<"Data Error: Could not initialize sets.";
@@ -75,16 +76,17 @@ IRP::IRP(CustomerIRPDB& db, bool ArcRel = false)
 
 IRP::Solution * IRP::solveModel()
 {
-
+	
 	oprob = prob.getXPRSprob();
-	int a=prob.setCutMode(1); // Enable the cut mode
-	XPRSsetcbcutmgr(oprob, cbmng, &(*this));
+	
+	//int a=prob.setCutMode(1); // Enable the cut mode
+	//XPRSsetcbcutmgr(oprob, cbmng, &(*this));
 
 	//double b =prob.lpOptimize();
 	//int b = prob.getLPStat();
 	
 	int d = prob.mipOptimise();
-	prob.print();
+	//prob.print();
 	int SolID = allocateSolution();
 	return getSolution(SolID);
 }
@@ -565,7 +567,7 @@ bool IRP::initializeParameters() {
 			if (map.inArcSet(i, j)) {
 				TravelTime[i][j] = map.getTravelTime(i, j, ModelParameters:: TRAVELTIME_MULTIPLIER, ModelParameters::SERVICETIME);
 				TransCost[i][j] = map.getTransCost(i, j, ModelParameters::TRANSCOST_MULTIPLIER, ModelParameters::SERVICECOST_MULTIPLIER);
-				printf("%-5d", TransCost[i][j]);
+				printf("%-5d", TravelTime[i][j]);
 			}
 			else {
 				TransCost[i][j] = -1;
@@ -862,13 +864,13 @@ void IRP::Solution::printSolution(IRP &instance)
 
 double IRP::Solution::getTransportationCost(IRP * instance)
 {
-	int TravelCost = 0;
+	double TravelCost = 0;
 	for (int i : instance->AllNodes) {
 		for (int j : instance->AllNodes) {
 			if (instance->map.inArcSet(i, j))
 				for (int t : instance->Periods)
 					if (xSol[i][j][t] > 0.01) {
-						TravelCost += instance->TransCost[i][j] * xSol[i][j][t];
+						TravelCost = TravelCost + instance->TransCost[i][j] * xSol[i][j][t];
 					}
 		}
 	}
@@ -877,7 +879,7 @@ double IRP::Solution::getTransportationCost(IRP * instance)
 
 double IRP::Solution::getHoldingCost(IRP * instance)
 {
-	int HoldingCost = 0;
+	double HoldingCost = 0;
 	//Transportation cost
 
 
