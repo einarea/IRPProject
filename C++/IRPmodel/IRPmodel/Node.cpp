@@ -92,6 +92,11 @@ double Node::Edge::getValue()
 	return Value;
 }
 
+void Node::Edge::setValue(double v)
+{
+	Value = v;
+}
+
 Node *Node::Edge::getEndNode()
 {
 	return &EndNode;

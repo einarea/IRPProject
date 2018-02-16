@@ -10,7 +10,7 @@ public:
 	~graphAlgorithm();
 
 private:
-	static void strongConnect(Node&, int&, stack <Node> &, vector<vector<Node>> &result);
+	static void strongConnect(Node&, int&, stack <Node*> &, vector<vector<Node>> &result);
 	
 };
 

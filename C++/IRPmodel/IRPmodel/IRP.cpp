@@ -79,8 +79,8 @@ IRP::Solution * IRP::solveModel()
 	
 	oprob = prob.getXPRSprob();
 	
-	//int a=prob.setCutMode(1); // Enable the cut mode
-	//XPRSsetcbcutmgr(oprob, cbmng, &(*this));
+	int a=prob.setCutMode(1); // Enable the cut mode
+	XPRSsetcbcutmgr(oprob, cbmng, &(*this));
 
 	//double b =prob.lpOptimize();
 	//int b = prob.getLPStat();
@@ -182,12 +182,11 @@ int IRP::allocateSolution()
 void IRP::sepStrongComponents()
 {
 	vector <vector<Node>> result; //matrix to store strong components
-	vector <Node> graph;		//Grpah to store nodes
+	vector <Node> graph;		//Graph to store nodes
 
 	for (int t : Periods) {
-		double a = prob.getObjVal();
 		buildGraph(graph, t);
-		//printGraph(graph);
+		printGraph(graph);
 		graphAlgorithm::sepByStrongComp(graph, result);
 		addSubtourCut(result, t);
 		graph.clear();
@@ -201,27 +200,26 @@ void IRP::buildGraph(vector<Node> &graph, int t)
 {
 	int s;
 	double edgeValue;
-							//Create nodes for each visited customer
-		for (int i : Nodes) {
-			if (y[i][t].getSol() >= 0.01){
-				double a = y[i][t].getSol();
-				Node node(i);
-				graph.push_back(node);
-			}
+	//Create nodes for each visited customer
+	for (int i : Nodes) {
+		if (y[i][t].getSol() >= 0.01){
+			Node node(i);
+			graph.push_back(node);
 		}
+	}
 
-		//Add outgoing edges from each visited node
-		for (Node &node : graph) {
-			s = node.getId();
-			for (Node &endingNode : graph) {
-				if (map.inArcSet(s, endingNode.getId())) {
-					edgeValue = x[s][endingNode.getId()][t].getSol();
-					if (edgeValue > 0.01) {
-						node.addEdge(edgeValue, endingNode);
-					}
+	//Add outgoing edges from each visited node
+	for (Node &node : graph) {
+		s = node.getId();
+		for (Node &endingNode : graph) {
+			if (map.inArcSet(s, endingNode.getId())) {
+				edgeValue = x[s][endingNode.getId()][t].getSol();
+				if (edgeValue > 0.01) {
+					node.addEdge(edgeValue, endingNode);
 				}
 			}
 		}
+	}
 }
 
 void IRP::printGraph(vector<Node> &graph)
@@ -232,9 +230,9 @@ void IRP::printGraph(vector<Node> &graph)
 
 		for (Node::Edge &edge : (*node.getEdges())) {
 			Node * endNode = edge.getEndNode();
-			printf("Node: %d with edges to ", id);
+			/*printf("Node: %d with edges to ", id);
 			printf("%d with flow %f" , (*endNode).getId(), edge.getValue());
-			printf("\n");
+			printf("\n");*/
 		}
 		
 	}
@@ -251,61 +249,66 @@ void IRP::addSubtourCut(vector<vector<Node>>& strongComp, int t)
 	XPRBcut subtourCut[1];
 	//Check if SEC is violated
 	for (int i = 0; i < strongComp.size(); i++) {
-		double circleFlow = 0;
-		double nodeFlow = 0;
-		double visit = 0;
-		double tempNodeVisit = 0;
-		double tempNodeFlow = 0;
-		int maxVisit = -1;
-		for (Node &node : strongComp[i]) {
-			for (Node::Edge &edge : (*node.getEdges())) {
-				circleFlow += edge.getValue();
-				tempNodeFlow += edge.getValue();
-			}
-			//Add flow to depot for the node
-			
-			tempNodeVisit = y[node.getId()][t].getSol();
-			
-			if (tempNodeVisit >= visit) {
-				maxVisit = node.getId();
-			}
-			tempNodeFlow += x[node.getId()][0][t].getSol();
-
-			if (tempNodeFlow >= nodeFlow) {
-				nodeFlow = tempNodeFlow;
-			}
-			tempNodeFlow = 0;
-		}
-
-		if (circleFlow >= nodeFlow + 0.1) {
-			//addSubtour constraint
-			//printf("Circleflow: %d:		NodeFlow: %d\n", circleFlow, nodeFlow);
-			XPRBexpr rSide;
-			XPRBexpr cut;
-			//cout << "LP relaxation before cut: " << prob.getObjVal() << "\n";
-			string rSideStr = "<=";
-			//printf("Added subtour cut: ");
-
+		if (strongComp[i].size() >= 2) {// only cut for subsets of size 2 or greater
+			double circleFlow = 0;
+			double visitSum = 0;
+			double maxVisitSum = 0;
+			double tempNodeVisit = 0;
+			//double tempNodeFlow = 0;
+			int maxVisitID = -1;
 			for (Node &node : strongComp[i]) {
-				rSide += y[node.getId()][t];
-				rSideStr = rSideStr + " + " + "y_" + to_string(node.getId()) + to_string(t);
-				for (Node::Edge &edge : *(node.getEdges())) {
-					int u = node.getId();
-					int v = edge.getEndNode()->getId();
-					//printf("x_%d%d%d + ", u, v, t);
-					cut += x[node.getId()][(*edge.getEndNode()).getId()][t];
-				}
-			}
-			
-		
-			subtourCut[0] = prob.newCut(cut <= rSide - y[maxVisit][t]);
-			rSideStr = rSideStr + " - " + "y_" + to_string(maxVisit) + to_string(t);
-			//cout << rSideStr << "\n";
-			prob.addCuts(subtourCut, 1);
-			
-			maxVisit = -1;
-			subtourCut[0] = 0;
 
+				//Value for y variable in the strong component
+				tempNodeVisit = y[node.getId()][t].getSol();
+			//	printf("y%d%d: %.2f\t", node.getId(), t, y[node.getId()][t].getSol());
+				visitSum += tempNodeVisit;
+
+				for (Node::Edge &edge : (*node.getEdges())) {
+					if(edge.getValue() >= 0) //only inlude edges in strong component
+						circleFlow += edge.getValue();
+						int u = node.getId();
+						int v = edge.getEndNode()->getId();
+					//	printf("x_%d%d: %.2f\t + ", u, v, x[u][v][t].getSol());
+				}
+
+				if (tempNodeVisit >= maxVisitSum) {
+					maxVisitID = node.getId();
+					maxVisitSum = tempNodeVisit;
+				}
+
+			}
+
+			if (circleFlow >= visitSum - maxVisitSum + 0.5) {
+				//addSubtour constraint
+				//printf("Circleflow: %d:		NodeFlow: %d\n", circleFlow, nodeFlow);
+				XPRBexpr rSide;
+				XPRBexpr cut;
+				//cout << "LP relaxation before cut: " << prob.getObjVal() << "\n";
+				string rSideStr = "<=";
+				printf("\nAdded subtour cut: ");
+
+				for (Node &node : strongComp[i]) {
+					rSide += y[node.getId()][t];
+					rSideStr = rSideStr + " + " + "y_" + to_string(node.getId());
+					for (Node::Edge &edge : *(node.getEdges())) {
+						if (edge.getValue() >= 0) {
+							int u = node.getId();
+							int v = edge.getEndNode()->getId();
+							printf("x_%d%d + ", u, v);
+							cut += x[node.getId()][(*edge.getEndNode()).getId()][t];
+						}
+					}
+				}
+
+
+				subtourCut[0] = prob.newCut(cut <= rSide - y[maxVisitID][t]);
+				rSideStr = rSideStr + " - " + "y_" + to_string(maxVisitID);
+				cout << rSideStr << "\n";
+				prob.addCuts(subtourCut, 1);
+
+				maxVisitID = -1;
+				subtourCut[0] = 0;
+			}
 		}
 	}
 }

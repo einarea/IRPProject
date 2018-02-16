@@ -10,6 +10,7 @@ public:
 	public:
 		Edge(Node& endNode, double value);
 		double getValue();
+		void setValue(double);
 		Node *getEndNode();
 	private:
 		double Value;
