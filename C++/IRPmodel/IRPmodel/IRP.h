@@ -109,11 +109,13 @@ public:
 
 	Map * getMap();
 	int allocateSolution();
-	void sepStrongComponents();
-	void addSubtourCut(vector<vector <Node>> &, int t);
+	bool sepStrongComponents(vector<XPRBcut> &);
+	void addSubtourCut(vector<vector <Node>> &, int t, bool &, vector<XPRBcut> &);
 	IRP::Solution * solveModel();
 	XPRBprob * getProblem();
 	CustomerDB * getDB();
+	vector <XPRBbasis> SavedBasis;
+	int nSubtourCuts;
 	int getNumOfPeriods();
 	int getNumOfCustomers();
 	void getVisitedCustomers(int period, vector <Customer *> &);
