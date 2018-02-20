@@ -145,35 +145,25 @@ void IRP::calculateExcess()
 		ExcessConsumption[i] = new double[Periods.size()];
 		excess = LowerLimit[i] - InitInventory[i];
 		for (int t : Periods) {
-			int p = 1;
-			do {
-				excess += Demand[i][t];
-				p++;
-			} while (p <= t);
-
+			excess += Demand[i][t];
 			if (excess >= 1) ExcessConsumption[i][t] = excess;
 			else  ExcessConsumption[i][t] = 0;
 
-			cout << "Node: " << i << "\tperiod: " << t << "\tExcess: " << ExcessConsumption[i][t]<<"\n";
+			cout << "Node: " << i << "\tperiod: " << t << "\tExcessDelivery: " << ExcessConsumption[i][t]<<"\n";
 		}
 	}
-
+	
 	excess = 0;
-	ExcessProd = new double *[PickupNodes.size()];
+	ExcessProd = new double *[Nodes.size()+1];
 	for (int i : PickupNodes) {
 		ExcessProd[i] = new double[Periods.size()];
 		excess = InitInventory[i] - UpperLimit[i];
 		for (int t : Periods) {
-			int p = 1;
-			do {
-				excess += Demand[i][t];
-				p++;
-			} while (p <= t);
-
+			excess += Demand[i][t];
 			if (excess >= 1) ExcessProd[i][t] = excess;
 			else  ExcessProd[i][t] = 0;
 
-			cout << "Node: " << i << "\tperiod: " << t << "\tExcess: " << ExcessProd[i][t] << "\n";
+			cout << "Node: " << i << "\tperiod: " << t << "\tExcessPickup: " << ExcessProd[i][t] << "\n";
 		}
 	}
 
@@ -404,7 +394,6 @@ void IRP::addSubtourCut(vector<vector<Node>>& strongComp, int t, bool &newCut, v
 
 bool IRP::formulateProblem()
 {
-
 	/****OBJECTIVE****/
 
 	//Transportation costs
@@ -692,12 +681,12 @@ bool IRP::initializeParameters() {
 	//printf("\n");
 	//printf("Demand Delivery");
 
-	Demand = new int * [Nodes.size()];
+	Demand = new int * [Nodes.size()+1];
 	int customer;
 
 	for (int i : DeliveryNodes) {
 		//printf("\n");
-		Demand[i] = new int [Periods.size()];
+		Demand[i] = new int [Periods.size()+1];
 		for (int t : Periods) {
 			if (t > 0) {
 				Demand[i][t] = map.getDemand(i, t, Customer::DELIVERY);
@@ -925,6 +914,7 @@ void IRP::addValidIneq()
 	XPRBexpr p1;
 
 	//Minimum visit
+
 	calculateExcess();
 
 	double minVisit;
@@ -932,17 +922,16 @@ void IRP::addValidIneq()
 	for (int i : DeliveryNodes) {
 		minVisit = 0;
 		p1 = 0;
-		for (int t : Periods) {
+	/*	for (int t : Periods) {
 			p1 += y[i][t];
 			minVisit = ExcessConsumption[i][t] / min(ModelParameters::Capacity, UpperLimit[i] - LowerLimit[i]);
 			if (ceil(minVisit) - minVisit >= 0.3) 
 			{
-				prob.newCtr("MinVisitDelivery", p1 >= ceil(minVisit));
+				//prob.newCtr("MinVisitDelivery", p1 >= ceil(minVisit));
 			}
-		}
+		}*/
 	}
-
-	for (int i : PickupNodes) {
+	/*for (int i : PickupNodes) {
 		minVisit = 0;
 		p1 = 0;
 		for (int t : Periods) {
@@ -950,10 +939,10 @@ void IRP::addValidIneq()
 			minVisit = ExcessProd[i][t] / min(ModelParameters::Capacity, UpperLimit[i] - LowerLimit[i]);
 			if (ceil(minVisit) - minVisit >= 0.3)
 			{
-				prob.newCtr("MinVisitPickup", p1 >= ceil(minVisit));
+				//prob.newCtr("MinVisitPickup", p1 >= ceil(minVisit));
 			}
 		}
-	}
+	}*/
 
 }
 
