@@ -17,7 +17,9 @@ int XPRS_CC cbmng(XPRSprob oprob, void * vd)
 
 	XPRSgetintattrib(oprob, XPRS_NODEDEPTH, &depth);
 	XPRSgetintattrib(oprob, XPRS_NODES, &node);
-	
+	double objval;
+	XPRSgetdblattrib(oprob, XPRS_LPOBJVAL, &objval);
+
 	vector<XPRBcut> subtourCut;
 	
 	IRP * modelInstance;
@@ -29,21 +31,28 @@ int XPRS_CC cbmng(XPRSprob oprob, void * vd)
 	double a = modelInstance->getProblem()->getObjVal();
 	//Add subtourconstraints
 	bool addedCuts = modelInstance->sepStrongComponents(subtourCut);
-	double objval;
-	XPRSgetdblattrib(oprob, XPRS_LPOBJVAL, &objval);
 
+	
 	if (addedCuts) {
 		int node;
+		/*double *lBound;
+		double *uBound;
+		int bb;
+		int *cutPtr = &bb;
+		XPRScut m[10];
+		modelInstance->printBounds();*/ 
 		XPRSgetintattrib(oprob, XPRS_NODES, &node);
 		XPRSgetdblattrib(oprob, XPRS_LPOBJVAL, &objval);
 		cout << "Added at node ";
 		cout << node << "), obj. " << objval << endl;
-		
+
 		for (XPRBcut cut : subtourCut)
 		{
+			cut.print();
+			modelInstance->nSubtourCuts += 1;
 			modelInstance->getProblem()->addCuts(&cut, 1);
 		}
-	
+
 	}
 	
 	modelInstance->getProblem()->endCB(); //Unload LP relaxation
@@ -56,6 +65,17 @@ IRP::Solution * IRP::getSolution(int id)
 {
 	Solution * sol = solutions[id - 1];
 	return solutions[id - 1];
+}
+
+void IRP::printBounds()
+{
+	double *lbd;
+	double *upd;
+	for (int i : Nodes) {
+		for (int t : Periods)
+			if(y[i][t].getUB()<=0.5)
+				cout<<y[i][t].getSol();
+	}
 }
 
 IRP::IRP(CustomerIRPDB& db, bool ArcRel = false)
@@ -98,6 +118,7 @@ IRP::Solution * IRP::solveModel()
 	
 	oprob = prob.getXPRSprob();
 	
+	//Enable subtour elimination
 	int a=prob.setCutMode(1); // Enable the cut mode
 	XPRSsetcbcutmgr(oprob, cbmng, &(*this));
 
@@ -105,11 +126,8 @@ IRP::Solution * IRP::solveModel()
 	//int b = prob.getLPStat();
 	
 	int d = prob.mipOptimise();
-	//prob.print();
+	prob.print();
 	int SolID = allocateSolution();
-
-	prob.loadBasis(SavedBasis[2]);
-	prob.lpOptimise();
 
 	return getSolution(SolID);
 }
@@ -117,6 +135,48 @@ IRP::Solution * IRP::solveModel()
 Map * IRP::getMap()
 {
 	return &map;
+}
+
+void IRP::calculateExcess()
+{
+	int excess = 0;
+	ExcessConsumption = new double *[DeliveryNodes.size()];
+	for (int i : DeliveryNodes) {
+		ExcessConsumption[i] = new double[Periods.size()];
+		excess = LowerLimit[i] - InitInventory[i];
+		for (int t : Periods) {
+			int p = 1;
+			do {
+				excess += Demand[i][t];
+				p++;
+			} while (p <= t);
+
+			if (excess >= 1) ExcessConsumption[i][t] = excess;
+			else  ExcessConsumption[i][t] = 0;
+
+			cout << "Node: " << i << "\tperiod: " << t << "\tExcess: " << ExcessConsumption[i][t]<<"\n";
+		}
+	}
+
+	excess = 0;
+	ExcessProd = new double *[PickupNodes.size()];
+	for (int i : PickupNodes) {
+		ExcessProd[i] = new double[Periods.size()];
+		excess = InitInventory[i] - UpperLimit[i];
+		for (int t : Periods) {
+			int p = 1;
+			do {
+				excess += Demand[i][t];
+				p++;
+			} while (p <= t);
+
+			if (excess >= 1) ExcessProd[i][t] = excess;
+			else  ExcessProd[i][t] = 0;
+
+			cout << "Node: " << i << "\tperiod: " << t << "\tExcess: " << ExcessProd[i][t] << "\n";
+		}
+	}
+
 }
 
 int IRP::allocateSolution()
@@ -301,10 +361,10 @@ void IRP::addSubtourCut(vector<vector<Node>>& strongComp, int t, bool &newCut, v
 
 			}
 
-			if (circleFlow >= visitSum - maxVisitSum + 0.5) {
+			if (circleFlow >= visitSum - maxVisitSum + 0.7) {
 
 				// save current basis
-				SavedBasis.push_back(prob.saveBasis());
+				//SavedBasis.push_back(prob.saveBasis());
 				//addSubtour constraint
 				//printf("Circleflow: %d:		NodeFlow: %d\n", circleFlow, nodeFlow);
 				XPRBexpr rSide;
@@ -419,7 +479,7 @@ bool IRP::formulateProblem()
 	//Inventory constraints
 	for (int i : Nodes) {
 		p1 = inventory[i][0];
-		printf("%d", InitInventory[i]);
+		//printf("%d", InitInventory[i]);
 		prob.newCtr("Initial inventory", inventory[i][0] == InitInventory[i]);
 		p1 = 0;
 	}
@@ -438,7 +498,7 @@ bool IRP::formulateProblem()
 
 	for (int i : PickupNodes) {
 		for (int t : Periods) {
-			printf("%d", Demand[i][t]);
+			//printf("%d", Demand[i][t]);
 			p1 = inventory[i][t] - inventory[i][t - 1] - Demand[i][t] + pickup[i][t];
 			prob.newCtr("Pickup Inventory balance", p1 == 0);
 			p1 = 0;
@@ -857,6 +917,44 @@ double IRP::Solution::getObjective(IRP *instance)
 {
 	return getHoldingCost(instance) + getTransportationCost(instance);
 	
+}
+
+void IRP::addValidIneq()
+
+{
+	XPRBexpr p1;
+
+	//Minimum visit
+	calculateExcess();
+
+	double minVisit;
+
+	for (int i : DeliveryNodes) {
+		minVisit = 0;
+		p1 = 0;
+		for (int t : Periods) {
+			p1 += y[i][t];
+			minVisit = ExcessConsumption[i][t] / min(ModelParameters::Capacity, UpperLimit[i] - LowerLimit[i]);
+			if (ceil(minVisit) - minVisit >= 0.3) 
+			{
+				prob.newCtr("MinVisitDelivery", p1 >= ceil(minVisit));
+			}
+		}
+	}
+
+	for (int i : PickupNodes) {
+		minVisit = 0;
+		p1 = 0;
+		for (int t : Periods) {
+			p1 += y[i][t];
+			minVisit = ExcessProd[i][t] / min(ModelParameters::Capacity, UpperLimit[i] - LowerLimit[i]);
+			if (ceil(minVisit) - minVisit >= 0.3)
+			{
+				prob.newCtr("MinVisitPickup", p1 >= ceil(minVisit));
+			}
+		}
+	}
+
 }
 
 void IRP::Solution::printSolution(IRP &instance)

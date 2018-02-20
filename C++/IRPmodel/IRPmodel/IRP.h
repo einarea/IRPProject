@@ -81,6 +81,10 @@ public:
 	vector  <int> AllNodes;
 	vector  <int> Depot;
 	vector <int> integers1;
+	
+	//For valid ineq
+	double ** ExcessConsumption;
+	double ** ExcessProd;
 
 	//Class to store solutions to the instance
 	class Solution {
@@ -107,7 +111,10 @@ public:
 	IRP(CustomerIRPDB&, bool);
 	//void addSolution(int ** y, int ***x, int **d, int **pic, int ***loadDel, int ***loadPic, int **inv, int ** t);
 
+
+	void addValidIneq();
 	Map * getMap();
+	void calculateExcess();
 	int allocateSolution();
 	bool sepStrongComponents(vector<XPRBcut> &);
 	void addSubtourCut(vector<vector <Node>> &, int t, bool &, vector<XPRBcut> &);
@@ -121,6 +128,7 @@ public:
 	void getVisitedCustomers(int period, vector <Customer *> &);
 	void getDemand(int period, vector<vector<int>> &, vector <Customer *> &);
 	Solution * getSolution(int id);
+	void printBounds();
 
 	~IRP();
 };
