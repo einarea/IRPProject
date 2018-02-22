@@ -3,18 +3,16 @@
 
 
 
-Node::Node(int id, vector<Edge> edges)
+Node::Node(int id)
 	:
-	Edges(edges),
-	NodeID(id),
-	onStack(true)
+	NodeID(id)
 {
 }
 
-Node::Node(int id)
+Node::Node(int id, vector<Edge> edges)
 	:
 	NodeID(id),
-	onStack(false)
+	Edges(edges)
 {
 }
 
@@ -32,42 +30,10 @@ vector<Node::Edge>* Node::getEdges()
 	return &Edges;
 }
 
-void Node::addEdge(double value, Node &child)
-{
-	this->Edges.push_back(Edge(child, value));
-}
-
-int Node::getIndex()
-{
-	return Index;
-}
-
-void Node::setIndex(int ind)
-{
-	Index = ind;
-}
-
-void Node::setLowLink(int lnk)
-{
-	LowLink = lnk;
-}
-
-void Node::setOnStack(bool bl)
-{
-	onStack = bl;
-}
-
-int Node::getLowLink()
-{
-	return LowLink;
-}
-
-bool Node::isOnStack()
-{
-	return onStack;
-}
-
-Node::~Node()
+Node::Edge::Edge(Node & endNode, double value)
+	:
+	EndNode(endNode),
+	Value(value)
 {
 }
 
@@ -79,25 +45,13 @@ bool Node::operator==(const Node & node) const
 		return false;
 }
 
-
-Node::Edge::Edge(Node & endNode, double value)
-	:
-	EndNode(endNode),
-	Value(value)
+void Node::addEdge(double value, Node &child)
 {
+	this->Edges.push_back(Edge(child, value));
 }
 
-double Node::Edge::getValue()
-{
-	return Value;
-}
 
-void Node::Edge::setValue(double v)
-{
-	Value = v;
-}
 
-Node *Node::Edge::getEndNode()
+Node::~Node()
 {
-	return &EndNode;
 }

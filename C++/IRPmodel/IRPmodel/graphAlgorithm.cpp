@@ -73,13 +73,13 @@ void graphAlgorithm::printGraph(vector<Node>& graph, IRP &instance) {
 }
 
 //Tarjans strongly connected components algorithm, sets value of edges not in strong components to -1.
-void graphAlgorithm::sepByStrongComp(vector<Node>& graph, vector<vector<Node>> & result)
+void graphAlgorithm::sepByStrongComp(vector<NodeStrong>& graph, vector<vector<Node>> & result)
 {
 	
 	int index = 0;
 
 	stack <Node *> S;
-	for (Node &node : graph) {
+	for (NodeStrong &node : graph) {
 		if (node.getIndex() == -1) {
 			strongConnect(node, index, S, result);
 		}
@@ -87,16 +87,16 @@ void graphAlgorithm::sepByStrongComp(vector<Node>& graph, vector<vector<Node>> &
 }
 
 
-void graphAlgorithm::strongConnect(Node & node, int &index, stack <Node*> &S, vector<vector<Node>> & result)
+void graphAlgorithm::strongConnect(NodeStrong & node, int &index, stack <NodeStrong*> &S, vector<vector<Node>> & result)
 {
-	Node *endNode;
+	NodeStrong *endNode;
 	node.setIndex(index);
 	node.setLowLink(index);
 	index += 1;
 	S.push(&node);
 	node.setOnStack(true);
 	
-	for (Node::Edge &edge : (*node.getEdges())) {
+	for (NodeStrong::EdgeStrong &edge : (*node.getEdges())) {
 		endNode = edge.getEndNode();
 		if (endNode->getIndex() == -1) {
 			strongConnect(*endNode, index, S, result);
