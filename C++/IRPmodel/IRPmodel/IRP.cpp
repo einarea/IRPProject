@@ -902,6 +902,11 @@ IRP::Solution::Solution(double ** y, double *** x, double ** del, double ** pick
 }
 
 
+void IRP::Solution::print(IRP &)
+{
+
+}
+
 double IRP::Solution::getObjective(IRP *instance)
 {
 	return getHoldingCost(instance) + getTransportationCost(instance);
