@@ -59,7 +59,7 @@ private:
 	bool initializeVariables();
 	bool initializeParameters();
 	bool formulateProblem();
-	void buildGraph(vector <Node> &, int);
+	void buildGraph(vector <Node> &, int, bool includeDepot);
 	void printGraph(vector <Node> &);
 
 	int SolutionCounter; // Tracks number of solutions, solution's ID equals the counter value at the time added

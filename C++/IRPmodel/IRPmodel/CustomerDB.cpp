@@ -8,8 +8,10 @@ using namespace std;
 
 int CustomerDB::getnCustomers()
 {
-	return (int) Customers.size();
+	return (int) Customers.size()-1;
 }
+
+
 
 
 int CustomerDB::getX(int id)

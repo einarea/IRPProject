@@ -21,6 +21,9 @@ CustomerIRPDB::CustomerIRPDB(string FileName, bool COORDINATE_INPUT)
 	getNextToken(line, delimiter);
 	nPeriods = stoi(getNextToken(line, delimiter));
 
+
+	//Push back depot
+	Customers.push_back(new Customer(0, 0, 0));
 	//check file for errors
 	getline(CustomerRecords, line);
 
@@ -89,6 +92,9 @@ CustomerIRPDB::CustomerIRPDB(string FileName, bool COORDINATE_INPUT)
 
 CustomerIRPDB::CustomerIRPDB(int numberOfCustomers, int nPer)
 {
+	//Push back depot
+	Customers.push_back(new Customer(0, 0, 0));
+
 	nPeriods = nPer;
 	for (int i = 1; i <= numberOfCustomers; i++){
 		Customers.push_back(generateCustomer(i, nPeriods, i*10));

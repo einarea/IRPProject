@@ -264,9 +264,13 @@ bool IRP::sepStrongComponents(vector<XPRBcut> & cut)
 
 	bool newCut = false;
 	for (int t : Periods) {
-		buildGraph(graph, t);
-		printGraph(graph);
+		buildGraph(graph, t, true); //include depot
+		graphAlgorithm::printGraph(graph, *this);
+		graph.clear();
+		buildGraph(graph, t, false); //Do not include depot in graph
+		graphAlgorithm::printGraph(graph, *this);
 		graphAlgorithm::sepByStrongComp(graph, result);
+		graphAlgorithm::printGraph(graph, *this);
 		addSubtourCut(result, t, newCut, cut);
 		graph.clear();
 		result.clear();
@@ -275,10 +279,15 @@ bool IRP::sepStrongComponents(vector<XPRBcut> & cut)
 }
 
 
-void IRP::buildGraph(vector<Node> &graph, int t)
+void IRP::buildGraph(vector<Node> &graph, int t, bool Depot)
 {
 	int s;
 	double edgeValue;
+
+	if (Depot){
+		Node node(0);
+		graph.push_back(node);
+	}
 	//Create nodes for each visited customer
 	for (int i : Nodes) {
 		if (y[i][t].getSol() >= 0.01){
@@ -913,7 +922,7 @@ void IRP::Solution::print(IRP & instance)
 	Gnuplot gp(gnuplotPipe);
 
 	vector<boost::tuple<int, int, int, int> > pts_A;
-	vector < boost::tuple<int, int>> custPoints;
+	vector < pair<int, int>> custPoints;
 
 	int x1;
 	int y1;
@@ -923,11 +932,12 @@ void IRP::Solution::print(IRP & instance)
 	int xLoc;
 	int yLoc;
 
+	custPoints.push_back(make_pair(0, 0));
 	for (int i : instance.DeliveryNodes) {
 			xLoc = instance.map.getX(i);
 			yLoc = instance.map.getY(i);
 
-			custPoints.push_back(boost::make_tuple(
+			custPoints.push_back(make_pair(
 				xLoc,
 				yLoc ));
 	}
@@ -971,12 +981,12 @@ void IRP::Solution::print(IRP & instance)
 			}
 		}
 
-		gp << "set xrange [-100:100]\nset yrange [-100:100]\n";
+		gp << "set xrange [-100:100]\nset yrange [-120:120]\n";
 		// '-' means read from stdin.  The send1d() function sends data to gnuplot's stdin.
-		gp << "plot '-' with points title 'poi'\n ";
-		gp.send1d(custPoints);
-		gp << "replot '-' with vectors title 'pts_A";
+		gp << "plot '-' with vectors title 'pts_A', '-' with points lt rgb 'violet'   pointtype 7 pointsize 2 title 'poi'\n";	//gp << "plot '-' with lines title 'cubic', '-' with points lt rgb 'violet'   pointtype 7 pointsize 2 title 'circle'\n";
 		gp.send1d(pts_A);
+		gp.send1d(custPoints);
+		
 	
 		//gp.send1d(custPoints);
 		int a = 1;

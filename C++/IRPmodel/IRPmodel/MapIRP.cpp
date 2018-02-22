@@ -11,7 +11,7 @@ database(db)
 
 int MapIRP::getHoldCost(int node)
 {
-	if (isDelivery(node))
+	if (isDelivery(node))		
 		return database.getHoldCost(nodeToCustomer(node), Customer::DELIVERY);
 	else
 		return database.getHoldCost(nodeToCustomer(node), Customer::PICKUP);
