@@ -5,6 +5,7 @@
 #include "graphAlgorithm.h"
 #include "ModelParameters.h"
 
+
 using namespace ::dashoptimization;
 
 //Global callBack manager
@@ -904,7 +905,56 @@ IRP::Solution::Solution(double ** y, double *** x, double ** del, double ** pick
 
 void IRP::Solution::print(IRP &)
 {
+	FILE *gnuplotPipe = _popen("C:\\Octave\\3.2.4_gcc-4.4.0\\bin\\gnuplot", "w");
+	Gnuplot gp(gnuplotPipe);
 
+	std::vector<boost::tuple<double, double, double, double> > pts_A;
+	double x1;
+	double y1;
+	double x2;
+	double y2;
+
+	for (int t : instance.Periods) {
+		for (int i : instance.AllNodes) {
+			for (int j : instance.AllNodes) {
+				if (instance.map.inArcSet(i, j))
+					if (xSol[i][j][t] >= 0.01)
+						if (i > 0 && j > 0) {
+							x1 = instance.getDB()->getX(i);
+							y1 = instance.getDB()->getY(i);
+							x2 = instance.getDB()->getX(i);
+							y2 = instance.getDB()->getY(i);
+						}
+
+						else if (i == 0) {
+							x1 = 0;
+							y1 = 0;
+							x2 = instance.getDB()->getX(j);
+							y2 = instance.getDB()->getY(j);
+						}
+
+						else {
+							x2 = 0;
+							y2 = 0;
+							x1 = instance.getDB()->getX(i);
+							y1 = instance.getDB()->getY(i);
+
+						}
+
+						pts_A.push_back(boost::make_tuple(
+							x1,
+							y1,
+							x2 - x1,
+							y2 - y1
+							));
+			}
+		}
+
+		gp << "set xrange [-100:100]\nset yrange [-100:100]\n";
+		// '-' means read from stdin.  The send1d() function sends data to gnuplot's stdin.
+		gp << "plot '-' with vectors title 'pts_A'";
+		gp.send1d(pts_A);
+	}
 }
 
 double IRP::Solution::getObjective(IRP *instance)
