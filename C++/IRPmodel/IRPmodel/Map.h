@@ -22,6 +22,8 @@ public:
 	CustomerDB & database;
 	int getTransCost(int node1, int node2, int transCostMultiplier, int serviceCostMultipler);
 	int getDistance(int node1, int node2);
+	int getX(int id);
+	int getY(int id);
 	int getDeliveryNode(Customer *);
 	int getPickupNode(Customer *);
 	int getNumCustomers();

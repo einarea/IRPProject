@@ -90,6 +90,18 @@ int Map::getDistance(int node1, int node2)
 	return distance;
 }
 
+int Map::getX(int id)
+{
+	id = nodeToCustomer(id);
+	return database.getCustomer(id)->getXpos();
+}
+
+int Map::getY(int id)
+{
+	id = nodeToCustomer(id);
+	return database.getCustomer(id)->getYpos();
+}
+
 
 bool Map::inArcSet(int i, int j)
 {

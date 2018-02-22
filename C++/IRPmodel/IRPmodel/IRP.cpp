@@ -5,6 +5,10 @@
 #include "graphAlgorithm.h"
 #include "ModelParameters.h"
 
+#include <boost/tuple/tuple.hpp>
+
+#include "gnuplot-iostream.h"
+
 
 using namespace ::dashoptimization;
 
@@ -903,41 +907,55 @@ IRP::Solution::Solution(double ** y, double *** x, double ** del, double ** pick
 }
 
 
-void IRP::Solution::print(IRP &)
+void IRP::Solution::print(IRP & instance)
 {
 	FILE *gnuplotPipe = _popen("C:\\Octave\\3.2.4_gcc-4.4.0\\bin\\gnuplot", "w");
 	Gnuplot gp(gnuplotPipe);
 
-	std::vector<boost::tuple<double, double, double, double> > pts_A;
-	double x1;
-	double y1;
-	double x2;
-	double y2;
+	vector<boost::tuple<int, int, int, int> > pts_A;
+	vector < boost::tuple<int, int>> custPoints;
+
+	int x1;
+	int y1;
+	int	x2;
+	int y2;
+
+	int xLoc;
+	int yLoc;
+
+	for (int i : instance.DeliveryNodes) {
+			xLoc = instance.map.getX(i);
+			yLoc = instance.map.getY(i);
+
+			custPoints.push_back(boost::make_tuple(
+				xLoc,
+				yLoc ));
+	}
 
 	for (int t : instance.Periods) {
 		for (int i : instance.AllNodes) {
 			for (int j : instance.AllNodes) {
 				if (instance.map.inArcSet(i, j))
-					if (xSol[i][j][t] >= 0.01)
+					if (xSol[i][j][t] >= 0.01) {
 						if (i > 0 && j > 0) {
-							x1 = instance.getDB()->getX(i);
-							y1 = instance.getDB()->getY(i);
-							x2 = instance.getDB()->getX(i);
-							y2 = instance.getDB()->getY(i);
+							x1 = instance.map.getX(i);
+							y1 = instance.map.getY(i);
+							x2 = instance.map.getX(j);
+							y2 = instance.map.getY(j);
 						}
 
 						else if (i == 0) {
 							x1 = 0;
 							y1 = 0;
-							x2 = instance.getDB()->getX(j);
-							y2 = instance.getDB()->getY(j);
+							x2 = instance.map.getX(j);
+							y2 = instance.map.getY(j);
 						}
 
 						else {
 							x2 = 0;
 							y2 = 0;
-							x1 = instance.getDB()->getX(i);
-							y1 = instance.getDB()->getY(i);
+							x1 = instance.map.getX(i);
+							y1 = instance.map.getY(i);
 
 						}
 
@@ -947,13 +965,21 @@ void IRP::Solution::print(IRP &)
 							x2 - x1,
 							y2 - y1
 							));
+						
+					
+					}
 			}
 		}
 
 		gp << "set xrange [-100:100]\nset yrange [-100:100]\n";
 		// '-' means read from stdin.  The send1d() function sends data to gnuplot's stdin.
-		gp << "plot '-' with vectors title 'pts_A'";
+		gp << "plot '-' with points title 'poi'\n ";
+		gp.send1d(custPoints);
+		gp << "replot '-' with vectors title 'pts_A";
 		gp.send1d(pts_A);
+	
+		//gp.send1d(custPoints);
+		int a = 1;
 	}
 }
 
@@ -977,14 +1003,14 @@ void IRP::addValidIneq()
 	for (int i : DeliveryNodes) {
 		minVisit = 0;
 		p1 = 0;
-	/*	for (int t : Periods) {
-			p1 += y[i][t];
-			minVisit = ExcessConsumption[i][t] / min(ModelParameters::Capacity, UpperLimit[i] - LowerLimit[i]);
-			if (ceil(minVisit) - minVisit >= 0.3) 
-			{
-				//prob.newCtr("MinVisitDelivery", p1 >= ceil(minVisit));
-			}
-		}*/
+		/*	for (int t : Periods) {
+				p1 += y[i][t];
+				minVisit = ExcessConsumption[i][t] / min(ModelParameters::Capacity, UpperLimit[i] - LowerLimit[i]);
+				if (ceil(minVisit) - minVisit >= 0.3)
+				{
+					//prob.newCtr("MinVisitDelivery", p1 >= ceil(minVisit));
+				}
+			}*/
 	}
 	/*for (int i : PickupNodes) {
 		minVisit = 0;

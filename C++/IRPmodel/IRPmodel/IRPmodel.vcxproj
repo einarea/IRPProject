@@ -75,8 +75,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>\\sambaad.stud.ntnu.no\einarea\Documents\Visual Studio 2015\Projects\IRP\XpressFiles\include;$(IncludePath)</IncludePath>
-    <LibraryPath>\\sambaad.stud.ntnu.no\einarea\Documents\Visual Studio 2015\Projects\IRP\XpressFiles\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Users\einarea\Source\Repos\IRPProject\Exlibs\gnuplot-iostrea;C:\Users\einarea\Source\Repos\IRPProject\boost\boost_1_60_0;\\sambaad.stud.ntnu.no\einarea\Documents\Visual Studio 2015\Projects\IRP\XpressFiles\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Users\einarea\Source\Repos\IRPProject\boost\boost_1_60_0\lib64-msvc-14.0;\\sambaad.stud.ntnu.no\einarea\Documents\Visual Studio 2015\Projects\IRP\XpressFiles\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
