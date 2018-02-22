@@ -260,7 +260,7 @@ int IRP::allocateSolution()
 bool IRP::sepStrongComponents(vector<XPRBcut> & cut)
 {
 	vector <vector<Node>> result; //matrix to store strong components
-	vector <Node> graph;		//Graph to store nodes
+	vector <NodeStrong> graph;		//Graph to store nodes
 
 	bool newCut = false;
 	for (int t : Periods) {

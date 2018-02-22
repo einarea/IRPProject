@@ -78,7 +78,7 @@ void graphAlgorithm::sepByStrongComp(vector<NodeStrong>& graph, vector<vector<No
 	
 	int index = 0;
 
-	stack <Node *> S;
+	stack <NodeStrong *> S;
 	for (NodeStrong &node : graph) {
 		if (node.getIndex() == -1) {
 			strongConnect(node, index, S, result);
@@ -96,8 +96,8 @@ void graphAlgorithm::strongConnect(NodeStrong & node, int &index, stack <NodeStr
 	S.push(&node);
 	node.setOnStack(true);
 	
-	for (NodeStrong::EdgeStrong &edge : (*node.getEdges())) {
-		endNode = edge.getEndNode();
+	for (NodeStrong::Edge &edge : (*node.getEdges())) {
+		endNode = NodeStrong::getStrongNode(edge.getEndNode());
 		if (endNode->getIndex() == -1) {
 			strongConnect(*endNode, index, S, result);
 			node.setLowLink(min(node.getLowLink(), endNode->getLowLink()));
@@ -120,7 +120,7 @@ void graphAlgorithm::strongConnect(NodeStrong & node, int &index, stack <NodeStr
 
 	if (node.getLowLink() == node.getIndex()) {
 	vector <Node> StrongComponent;
-	Node * NodePtr;
+	NodeStrong * NodePtr;
 		do{
 			//Add strong component to result
 			NodePtr = S.top();

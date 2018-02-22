@@ -50,6 +50,16 @@ void Node::addEdge(double value, Node &child)
 	this->Edges.push_back(Edge(child, value));
 }
 
+void Node::Edge::setValue(double v)
+{
+	Value = v;
+}
+
+Node *Node::Edge::getEndNode()
+{
+	return &EndNode;
+}
+
 
 
 Node::~Node()
