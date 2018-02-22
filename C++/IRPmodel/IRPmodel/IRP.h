@@ -96,6 +96,7 @@ public:
 		double ***loadPickSol;
 		double **invSol;
 		double **timeSol;
+		void print(IRP &instance);
 
 		double getObjective(IRP * instance);
 		void printSolution(IRP &instance);
