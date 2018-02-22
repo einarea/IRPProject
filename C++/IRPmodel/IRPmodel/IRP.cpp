@@ -126,7 +126,7 @@ IRP::Solution * IRP::solveModel()
 	//int b = prob.getLPStat();
 	
 	int d = prob.mipOptimise();
-	prob.print();
+	//prob.print();
 	int SolID = allocateSolution();
 
 	return getSolution(SolID);
@@ -351,7 +351,7 @@ void IRP::addSubtourCut(vector<vector<Node>>& strongComp, int t, bool &newCut, v
 
 			}
 
-			if (circleFlow >= visitSum - maxVisitSum + 0.7) {
+			if (circleFlow >= visitSum - maxVisitSum + 0.1) {
 
 				// save current basis
 				//SavedBasis.push_back(prob.saveBasis());
