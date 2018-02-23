@@ -75,8 +75,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>\\sambaad.stud.ntnu.no\einarea\Documents\Visual Studio 2015\Projects\IRP\XpressFiles\include;$(IncludePath)</IncludePath>
-    <LibraryPath>\\sambaad.stud.ntnu.no\einarea\Documents\Visual Studio 2015\Projects\IRP\XpressFiles\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Users\simentv\Downloads\IRPProject-SepByStrongComp\include;\\sambaad.stud.ntnu.no\einarea\Documents\Visual Studio 2015\Projects\IRP\XpressFiles\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Users\simentv\Downloads\IRPProject-SepByStrongComp\lib;\\sambaad.stud.ntnu.no\einarea\Documents\Visual Studio 2015\Projects\IRP\XpressFiles\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
