@@ -124,8 +124,8 @@ IRP::Solution * IRP::solveModel()
 	oprob = prob.getXPRSprob();
 	
 	//Enable subtour elimination
-	int a=prob.setCutMode(1); // Enable the cut mode
-	XPRSsetcbcutmgr(oprob, cbmng, &(*this));
+	//int a=prob.setCutMode(1); // Enable the cut mode
+	//XPRSsetcbcutmgr(oprob, cbmng, &(*this));
 
 	//double b =prob.lpOptimize();
 	//int b = prob.getLPStat();
@@ -365,7 +365,7 @@ void IRP::addSubtourCut(vector<vector<Node *>>& strongComp, int t, bool &newCut,
 
 			}
 
-			if (circleFlow >= visitSum - maxVisitSum + 0.1) {
+			if (circleFlow >= visitSum - maxVisitSum + 0.7) {
 				//print subtour
 				//graphAlgorithm::printGraph(strongComp[i], *this);
 				// save current basis

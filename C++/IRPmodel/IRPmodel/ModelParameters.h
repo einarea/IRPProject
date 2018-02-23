@@ -10,7 +10,7 @@ public:
 	static const int maxTime = 2000;
 	static const int Capacity = 300;
 	static const int CapacityPenalty = 10;
-	static const int nVehicles = 12;
+	static const int nVehicles = 3;
 
 	//For generating customers
 	//multiplied with number between 1 and 10
