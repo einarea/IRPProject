@@ -919,7 +919,7 @@ IRP::Solution::Solution(double ** y, double *** x, double ** del, double ** pick
 
 
 
-void IRP::Solution::print(IRP & instance)
+void IRP::Solution::print(IRP & instance, string filename)
 {
 	vector<Node *> graph;
 	for (int t : instance.Periods) {

@@ -8,7 +8,7 @@ graphAlgorithm::graphAlgorithm()
 {
 }
 
-void graphAlgorithm::printGraph(vector<Node*>& graph, IRP &instance) {
+void graphAlgorithm::printGraph(vector<Node*>& graph, IRP &instance, string filename) {
 
 	static int i = 0;
 	
@@ -66,7 +66,7 @@ void graphAlgorithm::printGraph(vector<Node*>& graph, IRP &instance) {
 		}
 	}
 
-	string file = "set term pngcairo size 700, 700\nset output 'graph" + to_string(i) + ".png'\n";
+	string file = "set term pngcairo size 700, 700\nset output '"+filename+ to_string(i) + ".png'\n";
 	gp << file;
 	gp << "set xrange [-110:110]\nset yrange [-110:110]\n";
 	gp << "unset tics\n";
