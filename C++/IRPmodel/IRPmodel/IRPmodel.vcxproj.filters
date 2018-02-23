@@ -66,10 +66,10 @@
     <ClInclude Include="ModelParameters.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="NodeStrong.h">
+    <ClInclude Include="Node.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Node.h">
+    <ClInclude Include="NodeStrong.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -119,10 +119,10 @@
     <ClCompile Include="ModelParameters.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="NodeStrong.cpp">
+    <ClCompile Include="Node.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Node.cpp">
+    <ClCompile Include="NodeStrong.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

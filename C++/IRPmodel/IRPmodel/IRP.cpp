@@ -924,7 +924,7 @@ void IRP::Solution::print(IRP & instance, string filename)
 	vector<Node *> graph;
 	for (int t : instance.Periods) {
 		buildGraph(graph, t, instance);
-		graphAlgorithm::printGraph(graph, instance);
+		graphAlgorithm::printGraph(graph, instance, filename);
 		graph.clear();
 	}
 }
