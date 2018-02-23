@@ -259,18 +259,18 @@ int IRP::allocateSolution()
 
 bool IRP::sepStrongComponents(vector<XPRBcut> & cut)
 {
-	vector <vector<Node>> result; //matrix to store strong components
-	vector <NodeStrong> graph;		//Graph to store nodes
+	vector <vector<Node*>> result; //matrix to store strong components
+	vector <Node*> graph;		//Graph to store nodes
 
 	bool newCut = false;
 	for (int t : Periods) {
 		buildGraph(graph, t, true); //include depot
-		graphAlgorithm::printGraph(graph, *this);
+		//graphAlgorithm::printGraph(graph, *this);
 		graph.clear();
 		buildGraph(graph, t, false); //Do not include depot in graph
-		graphAlgorithm::printGraph(graph, *this);
+		//graphAlgorithm::printGraph(graph, *this);
 		graphAlgorithm::sepByStrongComp(graph, result);
-		graphAlgorithm::printGraph(graph, *this);
+		//graphAlgorithm::printGraph(graph, *this);
 		addSubtourCut(result, t, newCut, cut);
 		graph.clear();
 		result.clear();
@@ -279,31 +279,31 @@ bool IRP::sepStrongComponents(vector<XPRBcut> & cut)
 }
 
 
-void IRP::buildGraph(vector<Node> &graph, int t, bool Depot)
+void IRP::buildGraph(vector<Node*> &graph, int t, bool Depot)
 {
 	int s;
 	double edgeValue;
 
 	if (Depot){
-		Node node(0);
+		Node * node = new Node(0);
 		graph.push_back(node);
 	}
 	//Create nodes for each visited customer
 	for (int i : Nodes) {
 		if (y[i][t].getSol() >= 0.01){
-			Node node(i);
+			Node * node = new Node(i);
 			graph.push_back(node);
 		}
 	}
 
 	//Add outgoing edges from each visited node
-	for (Node &node : graph) {
-		s = node.getId();
-		for (Node &endingNode : graph) {
-			if (map.inArcSet(s, endingNode.getId())) {
-				edgeValue = x[s][endingNode.getId()][t].getSol();
+	for (Node *node : graph) {
+		s = node->getId();
+		for (Node *endingNode : graph) {
+			if (map.inArcSet(s, endingNode->getId())) {
+				edgeValue = x[s][endingNode->getId()][t].getSol();
 				if (edgeValue > 0.01) {
-					node.addEdge(edgeValue, endingNode);
+					node->addEdge(edgeValue, *endingNode);
 				}
 			}
 		}
@@ -332,7 +332,7 @@ int IRP::getCounter()
 	return SolutionCounter;
 }
 
-void IRP::addSubtourCut(vector<vector<Node>>& strongComp, int t, bool &newCut, vector<XPRBcut> &SubtourCut)
+void IRP::addSubtourCut(vector<vector<Node *>>& strongComp, int t, bool &newCut, vector<XPRBcut> &SubtourCut)
 {
 	//Check if SEC is violated
 	for (int i = 0; i < strongComp.size(); i++) {
@@ -343,30 +343,31 @@ void IRP::addSubtourCut(vector<vector<Node>>& strongComp, int t, bool &newCut, v
 			double tempNodeVisit = 0;
 			//double tempNodeFlow = 0;
 			int maxVisitID = -1;
-			for (Node &node : strongComp[i]) {
+			for (Node *node : strongComp[i]) {
 
 				//Value for y variable in the strong component
-				tempNodeVisit = y[node.getId()][t].getSol();
+				tempNodeVisit = y[node->getId()][t].getSol();
 			//	printf("y%d%d: %.2f\t", node.getId(), t, y[node.getId()][t].getSol());
 				visitSum += tempNodeVisit;
 
-				for (Node::Edge &edge : (*node.getEdges())) {
+				for (Node::Edge &edge : *(node->getEdges())) {
 					if(edge.getValue() >= 0) //only inlude edges in strong component
 						circleFlow += edge.getValue();
-						int u = node.getId();
+						int u = node->getId();
 						int v = edge.getEndNode()->getId();
 					//	printf("x_%d%d: %.2f\t + ", u, v, x[u][v][t].getSol());
 				}
 
 				if (tempNodeVisit >= maxVisitSum) {
-					maxVisitID = node.getId();
+					maxVisitID = node->getId();
 					maxVisitSum = tempNodeVisit;
 				}
 
 			}
 
 			if (circleFlow >= visitSum - maxVisitSum + 0.1) {
-
+				//print subtour
+				//graphAlgorithm::printGraph(strongComp[i], *this);
 				// save current basis
 				//SavedBasis.push_back(prob.saveBasis());
 				//addSubtour constraint
@@ -378,15 +379,15 @@ void IRP::addSubtourCut(vector<vector<Node>>& strongComp, int t, bool &newCut, v
 				string rSideStr = "<=";
 				printf("\nAdded subtour cut: ");
 
-				for (Node &node : strongComp[i]) {
-					rSide += y[node.getId()][t];
-					rSideStr = rSideStr + " + " + "y_" + to_string(node.getId());
-					for (Node::Edge &edge : *(node.getEdges())) {
+				for (Node *node : strongComp[i]) {
+					rSide += y[node->getId()][t];
+					rSideStr = rSideStr + " + " + "y_" + to_string(node->getId());
+					for (Node::Edge &edge : *(node->getEdges())) {
 						if (edge.getValue() >= 0) {
-							int u = node.getId();
+							int u = node->getId();
 							int v = edge.getEndNode()->getId();
 							printf("x_%d%d + ", u, v);
-							lSide += x[node.getId()][(*edge.getEndNode()).getId()][t];
+							lSide += x[node->getId()][(*edge.getEndNode()).getId()][t];
 						}
 					}
 				}
@@ -916,80 +917,15 @@ IRP::Solution::Solution(double ** y, double *** x, double ** del, double ** pick
 }
 
 
+
+
 void IRP::Solution::print(IRP & instance)
 {
-	FILE *gnuplotPipe = _popen("C:\\Octave\\3.2.4_gcc-4.4.0\\bin\\gnuplot", "w");
-	Gnuplot gp(gnuplotPipe);
-
-	vector<boost::tuple<int, int, int, int> > pts_A;
-	vector < pair<int, int>> custPoints;
-
-	int x1;
-	int y1;
-	int	x2;
-	int y2;
-
-	int xLoc;
-	int yLoc;
-
-	custPoints.push_back(make_pair(0, 0));
-	for (int i : instance.DeliveryNodes) {
-			xLoc = instance.map.getX(i);
-			yLoc = instance.map.getY(i);
-
-			custPoints.push_back(make_pair(
-				xLoc,
-				yLoc ));
-	}
-
+	vector<Node *> graph;
 	for (int t : instance.Periods) {
-		for (int i : instance.AllNodes) {
-			for (int j : instance.AllNodes) {
-				if (instance.map.inArcSet(i, j))
-					if (xSol[i][j][t] >= 0.01) {
-						if (i > 0 && j > 0) {
-							x1 = instance.map.getX(i);
-							y1 = instance.map.getY(i);
-							x2 = instance.map.getX(j);
-							y2 = instance.map.getY(j);
-						}
-
-						else if (i == 0) {
-							x1 = 0;
-							y1 = 0;
-							x2 = instance.map.getX(j);
-							y2 = instance.map.getY(j);
-						}
-
-						else {
-							x2 = 0;
-							y2 = 0;
-							x1 = instance.map.getX(i);
-							y1 = instance.map.getY(i);
-
-						}
-
-						pts_A.push_back(boost::make_tuple(
-							x1,
-							y1,
-							x2 - x1,
-							y2 - y1
-							));
-						
-					
-					}
-			}
-		}
-
-		gp << "set xrange [-100:100]\nset yrange [-120:120]\n";
-		// '-' means read from stdin.  The send1d() function sends data to gnuplot's stdin.
-		gp << "plot '-' with vectors title 'pts_A', '-' with points lt rgb 'violet'   pointtype 7 pointsize 2 title 'poi'\n";	//gp << "plot '-' with lines title 'cubic', '-' with points lt rgb 'violet'   pointtype 7 pointsize 2 title 'circle'\n";
-		gp.send1d(pts_A);
-		gp.send1d(custPoints);
-		
-	
-		//gp.send1d(custPoints);
-		int a = 1;
+		buildGraph(graph, t, instance);
+		graphAlgorithm::printGraph(graph, instance);
+		graph.clear();
 	}
 }
 
@@ -1106,4 +1042,31 @@ double IRP::Solution::getHoldingCost(IRP * instance)
 	return HoldingCost;
 }
 
+void IRP::Solution::buildGraph(vector<Node*>& graph, int t, IRP & instance)
+{
+	int s;
+	double edgeValue;
+
+	Node * node = new Node(0);
+	graph.push_back(node);
+
+	//Create nodes for each visited customer
+	for (int i : instance.Nodes) {
+		Node * node = new Node(i);
+		graph.push_back(node);
+	}
+
+	//Add outgoing edges from each visited node
+	for (Node *node : graph) {
+		s = node->getId();
+		for (Node *endingNode : graph) {
+			if (instance.map.inArcSet(s, endingNode->getId())) {
+				edgeValue = xSol[s][endingNode->getId()][t];
+				if (edgeValue > 0.01) {
+					node->addEdge(edgeValue, *endingNode);
+				}
+			}
+		}
+	}
+}
 

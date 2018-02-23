@@ -59,7 +59,7 @@ private:
 	bool initializeVariables();
 	bool initializeParameters();
 	bool formulateProblem();
-	void buildGraph(vector <Node> &, int, bool includeDepot);
+	void buildGraph(vector <Node*> &, int, bool includeDepot);
 	void printGraph(vector <Node> &);
 
 	int SolutionCounter; // Tracks number of solutions, solution's ID equals the counter value at the time added
@@ -100,6 +100,7 @@ public:
 		double ***loadPickSol;
 		double **invSol;
 		double **timeSol;
+		void buildGraph(vector<Node*> &graph, int t, IRP &);
 		void print(IRP &);
 
 		double getObjective(IRP * instance);
@@ -118,7 +119,7 @@ public:
 	void calculateExcess();
 	int allocateSolution();
 	bool sepStrongComponents(vector<XPRBcut> &);
-	void addSubtourCut(vector<vector <Node>> &, int t, bool &, vector<XPRBcut> &);
+	void addSubtourCut(vector<vector <Node *>> &, int t, bool &, vector<XPRBcut> &);
 	IRP::Solution * solveModel();
 	XPRBprob * getProblem();
 	CustomerDB * getDB();

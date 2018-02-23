@@ -8,13 +8,16 @@ graphAlgorithm::graphAlgorithm()
 {
 }
 
-void graphAlgorithm::printGraph(vector<Node>& graph, IRP &instance) {
+void graphAlgorithm::printGraph(vector<Node*>& graph, IRP &instance) {
+
+	static int i = 0;
 	
 	FILE *gnuplotPipe = _popen("C:\\Octave\\3.2.4_gcc-4.4.0\\bin\\gnuplot", "w");
 	Gnuplot gp(gnuplotPipe);
 
 	vector < pair<int, int>> custPoints;
 	vector < pair<int, int>> coPoints;
+	vector < pair<int, int>> Depot;
 	vector<boost::tuple<int, int, int, int> > arcs;
 
 	int x1;
@@ -25,19 +28,25 @@ void graphAlgorithm::printGraph(vector<Node>& graph, IRP &instance) {
 	int xLoc;
 	int yLoc;
 
-	for (Node node : graph) {
+	for (Node *node : graph) {
 
-		xLoc = instance.getMap()->getX(node.getId());
-		yLoc = instance.getMap()->getY(node.getId());
+		xLoc = instance.getMap()->getX(node->getId());
+		yLoc = instance.getMap()->getY(node->getId());
 
+		if (xLoc == 0 && yLoc == 0) {
+			Depot.push_back(make_pair(xLoc, yLoc));
+		}
+
+		else {
 		custPoints.push_back(make_pair(
 			xLoc,
 			yLoc));
+		}
 	}
-	for (Node node : graph) {
-		x1 = instance.getMap()->getX(node.getId());
-		y1 = instance.getMap()->getY(node.getId());
-		for (Node::Edge &edge : *node.getEdges()) {
+	for (Node *node : graph) {
+		x1 = instance.getMap()->getX(node->getId());
+		y1 = instance.getMap()->getY(node->getId());
+		for (Node::Edge &edge : *node->getEdges()) {
 			if (edge.getValue() != -1) {
 				x2 = instance.getMap()->getX(edge.getEndNode()->getId());
 				y2 = instance.getMap()->getY(edge.getEndNode()->getId());
@@ -57,37 +66,58 @@ void graphAlgorithm::printGraph(vector<Node>& graph, IRP &instance) {
 		}
 	}
 
+	string file = "set term pngcairo size 700, 700\nset output 'graph" + to_string(i) + ".png'\n";
+	gp << file;
 	gp << "set xrange [-110:110]\nset yrange [-110:110]\n";
 	gp << "unset tics\n";
 	gp << "set size ratio -1\n";
 	// '-' means read from stdin.  The send1d() function sends data to gnuplot's stdin.
 	
-	gp << "plot '-' with vectors notitle lt rgb '#2980b9' filled ,\
-		 '-' with points lt rgb '#e74c3c' pointtype 7 pointsize 2 notitle,\
-		'-' with points lt rgb '#e67e22' pointtype 7 pointsize 2 notitle \n";	//gp << "plot '-' with lines title 'cubic', '-' with points lt rgb 'violet'   pointtype 7 pointsize 2 title 'circle'\n";
-	gp.send1d(arcs);
-	gp.send1d(custPoints);
-	gp.send1d(custPoints);
-
+	if (!Depot.empty()) {
+		gp << "plot '-' with vectors notitle lw 2 lt rgb '#2980b9' filled ,\
+		 '-' with points lt rgb '#e74c3c' pointtype 7 pointsize 2.5 notitle,\
+		'-' with points lt rgb '#e67e22' pointtype 7 pointsize 2.5 notitle,\
+		'-' with points lt rgb '#16a085' pointtype 7 pointsize 3.3 notitle \n";	
+		gp.send1d(arcs);
+		gp.send1d(custPoints);
+		gp.send1d(custPoints);
+		gp.send1d(Depot);
+	}
+	else {
+		gp << "plot '-' with vectors notitle lw 2 lt rgb '#2980b9' filled ,\
+		 '-' with points lt rgb '#e74c3c' pointtype 7 pointsize 2.5 notitle,\
+		'-' with points lt rgb '#e67e22' pointtype 7 pointsize 2.5 notitle\n";
+		gp.send1d(arcs);
+		gp.send1d(custPoints);
+		gp.send1d(custPoints);
+	}
+	
+	i++;
 
 }
 
 //Tarjans strongly connected components algorithm, sets value of edges not in strong components to -1.
-void graphAlgorithm::sepByStrongComp(vector<NodeStrong>& graph, vector<vector<Node>> & result)
-{
-	
+void graphAlgorithm::sepByStrongComp(vector<Node*>& graph, vector<vector<Node*>> & result)
+{	
+	//Initialize graph
+	for (Node *node : graph) {
+		NodeStrong * nodeStr = NodeStrong::getStrongNode(node);
+		nodeStr->setIndex(-1);
+	}
+
 	int index = 0;
 
 	stack <NodeStrong *> S;
-	for (NodeStrong &node : graph) {
-		if (node.getIndex() == -1) {
-			strongConnect(node, index, S, result);
+	for (Node *node : graph) {
+		NodeStrong *nodeStr = NodeStrong::getStrongNode(node);
+		if (nodeStr->getIndex() == -1) {
+			strongConnect(*nodeStr, index, S, result);
 		}
 	}
 }
 
 
-void graphAlgorithm::strongConnect(NodeStrong & node, int &index, stack <NodeStrong*> &S, vector<vector<Node>> & result)
+void graphAlgorithm::strongConnect(NodeStrong & node, int &index, stack <NodeStrong*> &S, vector<vector<Node*>> & result)
 {
 	NodeStrong *endNode;
 	node.setIndex(index);
@@ -119,12 +149,12 @@ void graphAlgorithm::strongConnect(NodeStrong & node, int &index, stack <NodeStr
 
 
 	if (node.getLowLink() == node.getIndex()) {
-	vector <Node> StrongComponent;
+	vector <Node*> StrongComponent;
 	NodeStrong * NodePtr;
 		do{
 			//Add strong component to result
 			NodePtr = S.top();
-			StrongComponent.push_back(*NodePtr);
+			StrongComponent.push_back(NodePtr);
 			S.pop();
 			NodePtr->setOnStack(false);
 			int a = 1;
