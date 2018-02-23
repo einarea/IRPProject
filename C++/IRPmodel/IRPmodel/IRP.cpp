@@ -918,17 +918,6 @@ IRP::Solution::Solution(double ** y, double *** x, double ** del, double ** pick
 
 
 
-
-void IRP::Solution::print(IRP & instance)
-{
-	vector<Node *> graph;
-	for (int t : instance.Periods) {
-		buildGraph(graph, t, instance);
-		graphAlgorithm::printGraph(graph, instance);
-		graph.clear();
-	}
-}
-
 double IRP::Solution::getObjective(IRP *instance)
 {
 	return getHoldingCost(instance) + getTransportationCost(instance);

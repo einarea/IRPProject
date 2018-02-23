@@ -101,7 +101,6 @@ public:
 		double **invSol;
 		double **timeSol;
 		void buildGraph(vector<Node*> &graph, int t, IRP &);
-		void print(IRP &);
 
 		double getObjective(IRP * instance);
 		void printSolution(IRP &instance);
