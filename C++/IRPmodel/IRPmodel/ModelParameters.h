@@ -12,6 +12,9 @@ public:
 	static const int CapacityPenalty = 10;
 	static const int nVehicles = 3;
 
+	//Heurestic
+	//static const double VisitRatio = 0.5;
+
 	//For generating customers
 	//multiplied with number between 1 and 10
 	static const int HoldingCost = 2; 
@@ -23,6 +26,7 @@ public:
 	static const int LBPick = 0;			//Lower bound pickup
 	static const int UBDel = 30;				//Lower bound pickup
 	static const int UBPick = 38;			//Lower bound pickup
+
 
 	//Valid inequalitites
 	static const int MinimumNodeVisit = 1;

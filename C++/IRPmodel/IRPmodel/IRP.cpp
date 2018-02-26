@@ -83,19 +83,24 @@ void IRP::printBounds()
 	}
 }
 
-IRP::IRP(CustomerIRPDB& db, bool ArcRel = false)
+IRP::IRP(CustomerIRPDB& db, bool ArcRel, bool VisitCustomer)
 	:
 	database(db),
 	prob("IRP"),			//Initialize problem in BCL	
 	map(db),			//Set up map of all customers
 	ARC_RELAXED(ArcRel),
-	SolutionCounter(0)
+	SolutionCounter(0),
+	MaskOn(VisitCustomer)
 {
 
 	//Initialize sets
 	if(!initializeSets()) {
 		cout<<"Data Error: Could not initialize sets.";
 		return;
+	}
+
+	if (MaskOn) {
+		generateMask();
 	}
 
 	//Initialize parameters
@@ -131,7 +136,7 @@ IRP::Solution * IRP::solveModel()
 	//int b = prob.getLPStat();
 	
 	int d = prob.mipOptimise();
-	//prob.print();
+	prob.print();
 	int SolID = allocateSolution();
 
 	return getSolution(SolID);
@@ -427,6 +432,22 @@ bool IRP::formulateProblem()
 	//end objective
 
 	/**** CONSTRAINTS ****/
+
+	if (MaskOn) {
+		XPRBexpr p1;
+		int visits;
+		for (int t : Periods) {
+			p1 = 0;
+			visits = 0;
+			for (int i : Nodes) {
+				if (VisitNode[i][t] == 1) {
+					visits += 1;
+					p1 += y[i][t];
+				}
+			}
+			prob.newCtr("MinVisits", p1 >= floor(visits*0.6));
+		}
+	}
 
 	//Routing constraints
 	XPRBexpr p1;
@@ -749,6 +770,20 @@ bool IRP::initializeSets()
 
 	//for (int i = 0; i < AllNodes.size(); i++) printf("%d", AllNodes[i]);
 	return true;
+}
+
+void IRP::generateMask()
+{
+	VisitNode = new int *[Nodes.size()];
+	for (int i : Nodes) {
+		VisitNode[i] = new int[Periods.size()];
+		//cout<<"\n";
+		for (int t : Periods) {
+			VisitNode[i][t] = (rand() % 2 + 0);
+			//cout << VisitNode[i][t]<<"\t";
+
+		}
+	}
 }
 
 bool IRP::initializeVariables()

@@ -20,9 +20,11 @@ private:
 	MapIRP map;
 	XPRBprob prob;
 	XPRSprob oprob;		//Express problem to use with cuts
+	bool MaskOn;
 
 	//Parameters
 	bool ARC_RELAXED;
+	int ** VisitNode; //Crossover mask. Which customer to visit.
 
 	int NumOfCustomers;
 	int NumOfPeriods;
@@ -56,6 +58,7 @@ private:
 
 	//Utility functions
 	bool initializeSets();
+	void generateMask();
 	bool initializeVariables();
 	bool initializeParameters();
 	bool formulateProblem();
@@ -110,7 +113,7 @@ public:
 	
 	};
 
-	IRP(CustomerIRPDB&, bool);
+	IRP(CustomerIRPDB&, bool relaxed = false, bool VisitCustomer = false);
 	//void addSolution(int ** y, int ***x, int **d, int **pic, int ***loadDel, int ***loadPic, int **inv, int ** t);
 
 
