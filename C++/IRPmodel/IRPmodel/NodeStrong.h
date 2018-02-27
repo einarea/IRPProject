@@ -8,7 +8,7 @@ class NodeStrong: public Node
 {
 public:
 
-	NodeStrong(int id, vector <Edge> edges);
+	NodeStrong(int id, vector <Edge*> edges);
 	NodeStrong(int id);
 	NodeStrong(Node * node);
 

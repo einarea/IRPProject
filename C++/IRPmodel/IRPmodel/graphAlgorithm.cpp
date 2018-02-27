@@ -46,10 +46,10 @@ void graphAlgorithm::printGraph(vector<Node*>& graph, IRP &instance, string file
 	for (Node *node : graph) {
 		x1 = instance.getMap()->getX(node->getId());
 		y1 = instance.getMap()->getY(node->getId());
-		for (Node::Edge &edge : *node->getEdges()) {
-			if (edge.getValue() != -1) {
-				x2 = instance.getMap()->getX(edge.getEndNode()->getId());
-				y2 = instance.getMap()->getY(edge.getEndNode()->getId());
+		for (Node::Edge* edge : *node->getEdges()) {
+			if (edge->getValue() != -1) {
+				x2 = instance.getMap()->getX(edge->getEndNode()->getId());
+				y2 = instance.getMap()->getY(edge->getEndNode()->getId());
 
 				if (x1 == x2 && y1 == y2) { //Co-located node
 					coPoints.push_back(make_pair(x1, y1));
@@ -100,21 +100,22 @@ void graphAlgorithm::getRoutes(vector<Node*>& graph, vector<vector<Node*>>& rout
 {
 	// Do a depth-first-search to identify routes.
 	Node *depot = graph[0];
-	vector <Node::Edge> *edges = depot->getEdges();
+	vector <Node::Edge*> *edges = depot->getEdges();
+	//edges->erase(edges->begin());
 	
 
-
 	vector<Node*> route;
-	for (Node::Edge edge : *edges) {
+	for (Node::Edge* edge : *edges) {
 		Node * start = new Node(0);
-		Node * v = edge.getEndNode();
+		Node * v = edge->getEndNode();
 		start->addEdge(*v);
 
 		route.push_back(start);
 		while (v->getId() != 0) {
-			route.push_back(v);
-			Node * u = v->getEdge(0)->getEndNode();
-			v = u;
+			Node * const u = new Node(*v);
+			route.push_back(u);
+			Node * temp = v->getEdge(0)->getEndNode();
+			v = temp;
 		}
 
 		routes.push_back(route);
@@ -152,15 +153,15 @@ void graphAlgorithm::strongConnect(NodeStrong & node, int &index, stack <NodeStr
 	S.push(&node);
 	node.setOnStack(true);
 	
-	for (NodeStrong::Edge &edge : (*node.getEdges())) {
-		endNode = NodeStrong::getStrongNode(edge.getEndNode());
+	for (NodeStrong::Edge *edge : (*node.getEdges())) {
+		endNode = NodeStrong::getStrongNode(edge->getEndNode());
 		if (endNode->getIndex() == -1) {
 			strongConnect(*endNode, index, S, result);
 			node.setLowLink(min(node.getLowLink(), endNode->getLowLink()));
 
 			if (!endNode->isOnStack()) { //End node is finished and part of strong component. No edge between strong components
 				
-				edge.setValue(-1);
+				edge->setValue(-1);
 			}
 		}
 		else if (endNode->isOnStack())
@@ -169,7 +170,7 @@ void graphAlgorithm::strongConnect(NodeStrong & node, int &index, stack <NodeStr
 		}
 
 		else {//Cross edge in tree. Set edge value to -1
-			edge.setValue(-1);
+			edge->setValue(-1);
 		}
 	}
 

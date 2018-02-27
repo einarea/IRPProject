@@ -3,7 +3,7 @@
 
 
 
-NodeStrong::NodeStrong(int id, vector<Edge> edges)
+NodeStrong::NodeStrong(int id, vector<Edge*> edges)
 	:
 	Node(id, edges),
 	onStack(true)

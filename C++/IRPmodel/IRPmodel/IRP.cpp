@@ -348,10 +348,10 @@ void IRP::printGraph(vector<Node> &graph)
 {
 	for (Node node : graph) {
 		int id = node.getId();
-		vector<Node::Edge> edges = (*node.getEdges());
+		vector<Node::Edge*> edges = (*node.getEdges());
 
-		for (Node::Edge &edge : (*node.getEdges())) {
-			Node * endNode = edge.getEndNode();
+		for (Node::Edge* edge : (*node.getEdges())) {
+			Node * endNode = edge->getEndNode();
 			/*printf("Node: %d with edges to ", id);
 			printf("%d with flow %f" , (*endNode).getId(), edge.getValue());
 			printf("\n");*/
@@ -384,11 +384,11 @@ void IRP::addSubtourCut(vector<vector<Node *>>& strongComp, int t, bool &newCut,
 			//	printf("y%d%d: %.2f\t", node.getId(), t, y[node.getId()][t].getSol());
 				visitSum += tempNodeVisit;
 
-				for (Node::Edge &edge : *(node->getEdges())) {
-					if(edge.getValue() >= 0) //only inlude edges in strong component
-						circleFlow += edge.getValue();
+				for (Node::Edge *edge : *(node->getEdges())) {
+					if(edge->getValue() >= 0) //only inlude edges in strong component
+						circleFlow += edge->getValue();
 						int u = node->getId();
-						int v = edge.getEndNode()->getId();
+						int v = edge->getEndNode()->getId();
 					//	printf("x_%d%d: %.2f\t + ", u, v, x[u][v][t].getSol());
 				}
 
@@ -416,12 +416,12 @@ void IRP::addSubtourCut(vector<vector<Node *>>& strongComp, int t, bool &newCut,
 				for (Node *node : strongComp[i]) {
 					rSide += y[node->getId()][t];
 					rSideStr = rSideStr + " + " + "y_" + to_string(node->getId());
-					for (Node::Edge &edge : *(node->getEdges())) {
-						if (edge.getValue() >= 0) {
+					for (Node::Edge *edge : *(node->getEdges())) {
+						if (edge->getValue() >= 0) {
 							int u = node->getId();
-							int v = edge.getEndNode()->getId();
+							int v = edge->getEndNode()->getId();
 							printf("x_%d%d + ", u, v);
-							lSide += x[node->getId()][(*edge.getEndNode()).getId()][t];
+							lSide += x[node->getId()][edge->getEndNode()->getId()][t];
 						}
 					}
 				}

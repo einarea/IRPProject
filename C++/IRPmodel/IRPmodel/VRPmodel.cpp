@@ -24,6 +24,7 @@ void VRPmodel::solveModel()
 	//int b = prob.getLPStat();
 
 	int d = prob.mipOptimise();
+	prob.print();
 	for (int i : AllNodes)
 	{
 		y[i].print();
@@ -358,7 +359,7 @@ void VRPmodel::addRoutesToIRP(IRP & instance, int t,  IRP::Solution * sol)
 	instance.buildGraph(graph, t, sol);
 	graphAlgorithm::getRoutes(graph, routes);
 
-	for (int i = 0; i <= routes.size(); i++) {
+	for (int i = 0; i < routes.size(); i++) {
 		int id = instance.newRoute(routes[i]);
 		graphAlgorithm::printGraph(instance.getRoute(id)->route, instance, "route"+to_string(i));
 

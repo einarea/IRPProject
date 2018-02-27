@@ -21,9 +21,9 @@ public:
 
 
 	Node(int id);
-	Node(int id, vector<Edge> edges);
+	Node(int id, vector<Edge*> edges);
 	Edge * getEdge(int);
-	vector <Edge> * getEdges();
+	vector <Edge*> * getEdges();
 	void addEdge(double value, Node & child);
 	void addEdge(Node& child);
 	void removeEdge(Node &child);
@@ -42,7 +42,7 @@ public:
 
 private:
 	int NodeID;
-	vector <Edge> Edges;
+	vector <Edge*> Edges;
 
 };
 

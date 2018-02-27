@@ -9,7 +9,7 @@ Node::Node(int id)
 {
 }
 
-Node::Node(int id, vector<Edge> edges)
+Node::Node(int id, vector<Edge*> edges)
 	:
 	NodeID(id),
 	Edges(edges)
@@ -22,10 +22,10 @@ int Node::getId() const {
 
 Node::Edge * Node::getEdge(int id)
 {
-	return &Edges[id];
+	return Edges[id];
 }
 
-vector<Node::Edge>* Node::getEdges()
+vector<Node::Edge*>* Node::getEdges()
 {
 	return &Edges;
 }
@@ -47,7 +47,7 @@ bool Node::operator==(const Node & node) const
 
 void Node::addEdge(double value, Node &child)
 {
-	this->Edges.push_back(Edge(child, value));
+	this->Edges.push_back(new Edge(child, value));
 }
 
 void Node::addEdge(Node & child)
@@ -58,8 +58,9 @@ void Node::addEdge(Node & child)
 void Node::removeEdge(Node & child)
 {
 	for (int i = 0; i <= Edges.size(); i++) {
-		if (child.getId() == Edges[i].getEndNode()->getId()) {
-			Edges.erase(Edges.begin() + i);
+		if (child.getId() == Edges[i]->getEndNode()->getId()) {
+			Edges.erase(Edges.begin() + i );
+			delete Edges[i];
 		}
 	}
 }
