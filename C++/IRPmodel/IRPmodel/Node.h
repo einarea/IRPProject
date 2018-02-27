@@ -8,23 +8,25 @@ class Node
 public:
 	class Edge {
 	public:
-		Edge(Node& endNode, double value);
-		double getValue();
-		void setValue(double);
+		Edge(Node& endNode);
 		Node *getEndNode();
 
 	private:
-		double Value;
 		Node &EndNode;
-
 	};
 
 
 	Node(int id);
 	Node(int id, vector<Edge> edges);
 	Edge * getEdge(int);
+	int getEdge(Node & child);
+
+	//Used when linked to one other node. i.e. a route
+	Node * getNextNode();
+
 	vector <Edge> * getEdges();
-	void addEdge(double value, Node & child);
+	void addEdge(Node & child);
+	void removeEdge(Node & child);
 	int getId() const;
 	~Node();
 
@@ -38,7 +40,7 @@ public:
 
 	
 
-private:
+protected:
 	int NodeID;
 	vector <Edge> Edges;
 

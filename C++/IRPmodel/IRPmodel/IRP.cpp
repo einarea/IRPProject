@@ -319,6 +319,8 @@ void IRP::buildGraph(vector<Node*> &graph, int t, bool Depot)
 
 void IRP::buildGraph(vector<Node*> &graph, int t, IRP::Solution *solution)
 {
+	NodeStrong node(0);
+	Node * ptr = &node;
 	int s;
 	double edgeValue;
 
@@ -385,8 +387,9 @@ void IRP::addSubtourCut(vector<vector<Node *>>& strongComp, int t, bool &newCut,
 				visitSum += tempNodeVisit;
 
 				for (Node::Edge &edge : *(node->getEdges())) {
-					if(edge.getValue() >= 0) //only inlude edges in strong component
-						circleFlow += edge.getValue();
+					NodeStrong::EdgeStrong * edgePtr = NodeStrong::EdgeStrong::getStrongEdge(&edge);
+					if(edgePtr->getValue() >= 0) //only inlude edges in strong component
+						circleFlow += edgePtr->getValue();
 						int u = node->getId();
 						int v = edge.getEndNode()->getId();
 					//	printf("x_%d%d: %.2f\t + ", u, v, x[u][v][t].getSol());
@@ -417,7 +420,9 @@ void IRP::addSubtourCut(vector<vector<Node *>>& strongComp, int t, bool &newCut,
 					rSide += y[node->getId()][t];
 					rSideStr = rSideStr + " + " + "y_" + to_string(node->getId());
 					for (Node::Edge &edge : *(node->getEdges())) {
-						if (edge.getValue() >= 0) {
+						NodeStrong::EdgeStrong * edgePtr = NodeStrong::EdgeStrong::getStrongEdge(&edge);
+
+						if (edgePtr->getValue() >= 0) {
 							int u = node->getId();
 							int v = edge.getEndNode()->getId();
 							printf("x_%d%d + ", u, v);

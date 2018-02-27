@@ -50,6 +50,11 @@ int NodeStrong::getLowLink()
 	return LowLink;
 }
 
+void NodeStrong::addEdge(double value, Node & child)
+{
+	this->Edges.push_back(EdgeStrong(child, value));
+}
+
 NodeStrong * NodeStrong::getStrongNode(Node* node)
 {
 	NodeStrong * derivedPtr = static_cast <NodeStrong *> (node);
@@ -70,9 +75,27 @@ NodeStrong::~NodeStrong()
 }
 
 
+NodeStrong::EdgeStrong::EdgeStrong(Node & child, double value)
+	:
+Edge(child),
+Value(value)
+{
+}
 
-double NodeStrong::Edge::getValue()
+double NodeStrong::EdgeStrong::getValue()
 {
 	return Value;
 }
 
+NodeStrong::EdgeStrong * NodeStrong::EdgeStrong::getStrongEdge(Edge * edge)
+{
+	EdgeStrong * derivedPtr = static_cast <EdgeStrong *> (edge);
+	if (derivedPtr != 0) {
+		return derivedPtr;
+	}
+}
+
+void NodeStrong::EdgeStrong::setValue(double v)
+{
+ Value = v;
+}
