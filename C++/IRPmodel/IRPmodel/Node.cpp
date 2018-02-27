@@ -50,6 +50,20 @@ void Node::addEdge(double value, Node &child)
 	this->Edges.push_back(Edge(child, value));
 }
 
+void Node::addEdge(Node & child)
+{
+	addEdge(1, child);
+}
+
+void Node::removeEdge(Node & child)
+{
+	for (int i = 0; i <= Edges.size(); i++) {
+		if (child.getId() == Edges[i].getEndNode()->getId()) {
+			Edges.erase(Edges.begin() + i);
+		}
+	}
+}
+
 void Node::Edge::setValue(double v)
 {
 	Value = v;

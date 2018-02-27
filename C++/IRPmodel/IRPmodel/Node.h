@@ -25,6 +25,8 @@ public:
 	Edge * getEdge(int);
 	vector <Edge> * getEdges();
 	void addEdge(double value, Node & child);
+	void addEdge(Node& child);
+	void removeEdge(Node &child);
 	int getId() const;
 	~Node();
 

@@ -101,21 +101,20 @@ void graphAlgorithm::getRoutes(vector<Node*>& graph, vector<vector<Node*>>& rout
 	// Do a depth-first-search to identify routes.
 	Node *depot = graph[0];
 	vector <Node::Edge> *edges = depot->getEdges();
+	
 
 
-	//Initialize edges  from depot
+	vector<Node*> route;
 	for (Node::Edge edge : *edges) {
-		edge.setValue(-1);
-	}
+		Node * start = new Node(0);
+		Node * v = edge.getEndNode();
+		start->addEdge(*v);
 
-	vector<Node *> route;
-	for (Node::Edge edge : *edges) {
-		Node * u = edge.getEndNode();
-		route.push_back(u);
-		while (u->getId() != 0) {
-			Node * v = u->getEdge(0)->getEndNode();
+		route.push_back(start);
+		while (v->getId() != 0) {
 			route.push_back(v);
-			u = v;
+			Node * u = v->getEdge(0)->getEndNode();
+			v = u;
 		}
 
 		routes.push_back(route);
