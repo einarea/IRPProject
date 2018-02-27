@@ -53,24 +53,27 @@ private:
 	int ** t;
 
 
-
+	//Forward declaration
+	class Solution;
+	class Route;
 
 
 	//Utility functions
 	bool initializeSets();
 	void generateMask();
+	void generateMask(int ** mask);
 	bool initializeVariables();
 	bool initializeParameters();
 	bool formulateProblem();
 	void buildGraph(vector <Node*> &, int, bool includeDepot);
+
 	void printGraph(vector <Node> &);
 
 	int SolutionCounter; // Tracks number of solutions, solution's ID equals the counter value at the time added
 	int getCounter();
+	
 
-	//Forward declaration
-	class Solution;
-
+	vector <Route *> routes;
 	vector <Solution *> solutions;
 
 
@@ -88,6 +91,16 @@ public:
 	//For valid ineq
 	double ** ExcessConsumption;
 	double ** ExcessProd;
+
+	
+	//Class to store routes and cost of routes
+	class Route {
+	public:
+	int getCost();
+	Route(vector <Node*> & path);
+	//Graph 
+	vector <Node*> route;
+	};
 
 	//Class to store solutions to the instance
 	class Solution {
@@ -113,13 +126,16 @@ public:
 	
 	};
 
-	IRP(CustomerIRPDB&, bool relaxed = false, bool VisitCustomer = false);
+	IRP(CustomerIRPDB&, bool relaxed = false, bool maskOn = false, int ** VisitMask = 0);
 	//void addSolution(int ** y, int ***x, int **d, int **pic, int ***loadDel, int ***loadPic, int **inv, int ** t);
 
 
+	Route * getRoute(int id);
+	int newRoute(vector <Node*> &path);
 	void addValidIneq();
 	Map * getMap();
 	void calculateExcess();
+	void IRP::buildGraph(vector<Node*> &graph, int t, Solution * solution);
 	int allocateSolution();
 	bool sepStrongComponents(vector<XPRBcut> &);
 	void addSubtourCut(vector<vector <Node *>> &, int t, bool &, vector<XPRBcut> &);

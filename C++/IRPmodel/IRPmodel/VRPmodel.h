@@ -8,6 +8,7 @@
 #include <string.h>
 #include "IRP.h"
 #include "ModelBase.h"
+#include "graphAlgorithm.h"
 
 using namespace dashoptimization;
 class VRPmodel
@@ -17,6 +18,7 @@ public:
 	void solveModel();
 	~VRPmodel();
 	void addToIRPSolution(int t, IRP::Solution * sol);
+	void addRoutesToIRP(IRP& instance, int t, IRP::Solution * sol);
 
 private:
 

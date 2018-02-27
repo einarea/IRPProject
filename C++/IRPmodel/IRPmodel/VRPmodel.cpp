@@ -350,4 +350,18 @@ void VRPmodel::addToIRPSolution(int t, IRP::Solution * sol)
 		sol->timeSol[i][t] = time[i].getSol();
 		}
 }
+
+void VRPmodel::addRoutesToIRP(IRP & instance, int t,  IRP::Solution * sol)
+{
+	vector<Node*> graph;
+	vector<vector<Node*>> routes;
+	instance.buildGraph(graph, t, sol);
+	graphAlgorithm::getRoutes(graph, routes);
+
+	for (int i = 0; i <= routes.size(); i++) {
+		int id = instance.newRoute(routes[i]);
+		graphAlgorithm::printGraph(instance.getRoute(id)->route, instance, "route"+to_string(i));
+
+	}
+}
 		

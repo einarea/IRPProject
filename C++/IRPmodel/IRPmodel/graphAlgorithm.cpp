@@ -96,6 +96,33 @@ void graphAlgorithm::printGraph(vector<Node*>& graph, IRP &instance, string file
 
 }
 
+void graphAlgorithm::getRoutes(vector<Node*>& graph, vector<vector<Node*>>& routes)
+{
+	// Do a depth-first-search to identify routes.
+	Node *depot = graph[0];
+	vector <Node::Edge> *edges = depot->getEdges();
+
+
+	//Initialize edges  from depot
+	for (Node::Edge edge : *edges) {
+		edge.setValue(-1);
+	}
+
+	vector<Node *> route;
+	for (Node::Edge edge : *edges) {
+		Node * u = edge.getEndNode();
+		route.push_back(u);
+		while (u->getId() != 0) {
+			Node * v = u->getEdge(0)->getEndNode();
+			route.push_back(v);
+			u = v;
+		}
+
+		routes.push_back(route);
+		route.clear();
+	}
+}
+
 //Tarjans strongly connected components algorithm, sets value of edges not in strong components to -1.
 void graphAlgorithm::sepByStrongComp(vector<Node*>& graph, vector<vector<Node*>> & result)
 {	

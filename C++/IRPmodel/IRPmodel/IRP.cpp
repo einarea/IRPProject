@@ -55,7 +55,9 @@ int XPRS_CC cbmng(XPRSprob oprob, void * vd)
 		{
 			cut.print();
 			modelInstance->nSubtourCuts += 1;
-			modelInstance->getProblem()->addCuts(&cut, 1);
+			//XPRSstorecuts(oprob, 1, 1, , 
+
+			//Local cuts: modelInstance->getProblem()->addCuts(&cut, 1);
 		}
 
 	}
@@ -83,14 +85,14 @@ void IRP::printBounds()
 	}
 }
 
-IRP::IRP(CustomerIRPDB& db, bool ArcRel, bool VisitCustomer)
+IRP::IRP(CustomerIRPDB& db, bool ArcRel, bool maskOn, int ** VisitMask)
 	:
 	database(db),
 	prob("IRP"),			//Initialize problem in BCL	
 	map(db),			//Set up map of all customers
 	ARC_RELAXED(ArcRel),
 	SolutionCounter(0),
-	MaskOn(VisitCustomer)
+	MaskOn(maskOn)
 {
 
 	//Initialize sets
@@ -100,7 +102,7 @@ IRP::IRP(CustomerIRPDB& db, bool ArcRel, bool VisitCustomer)
 	}
 
 	if (MaskOn) {
-		generateMask();
+		generateMask(VisitMask);
 	}
 
 	//Initialize parameters
@@ -136,7 +138,7 @@ IRP::Solution * IRP::solveModel()
 	//int b = prob.getLPStat();
 	
 	int d = prob.mipOptimise();
-	prob.print();
+	//prob.print();
 	int SolID = allocateSolution();
 
 	return getSolution(SolID);
@@ -307,6 +309,33 @@ void IRP::buildGraph(vector<Node*> &graph, int t, bool Depot)
 		for (Node *endingNode : graph) {
 			if (map.inArcSet(s, endingNode->getId())) {
 				edgeValue = x[s][endingNode->getId()][t].getSol();
+				if (edgeValue > 0.01) {
+					node->addEdge(edgeValue, *endingNode);
+				}
+			}
+		}
+	}
+}
+
+void IRP::buildGraph(vector<Node*> &graph, int t, IRP::Solution *solution)
+{
+	int s;
+	double edgeValue;
+
+	//Create nodes for each visited customer
+	for (int i : AllNodes) {
+		if (solution->ySol[i][t] >= 0.01) {
+			Node * node = new Node(i);
+			graph.push_back(node);
+		}
+	}
+
+	//Add outgoing edges from each visited node
+	for (Node *node : graph) {
+		s = node->getId();
+		for (Node *endingNode : graph) {
+			if (map.inArcSet(s, endingNode->getId())) {
+				edgeValue = solution->xSol[s][endingNode->getId()][t];
 				if (edgeValue > 0.01) {
 					node->addEdge(edgeValue, *endingNode);
 				}
@@ -786,6 +815,20 @@ void IRP::generateMask()
 	}
 }
 
+void IRP::generateMask(int ** mask)
+{
+	VisitNode = new int *[Nodes.size()];
+	for (int i : Nodes) {
+		VisitNode[i] = new int[Periods.size()];
+		//cout<<"\n";
+		for (int t : Periods) {
+			VisitNode[i][t] = mask[i][t];
+			//cout << VisitNode[i][t]<<"\t";
+
+		}
+	}
+}
+
 bool IRP::initializeVariables()
 {
 	x = new XPRBvar **[AllNodes.size()];
@@ -970,6 +1013,18 @@ double IRP::Solution::getObjective(IRP *instance)
 	
 }
 
+
+IRP::Route * IRP::getRoute(int id)
+{
+	return routes[id];
+}
+
+int IRP::newRoute(vector <Node*> & route)
+{
+	routes.push_back(new Route(route));
+	return routes.size()-1;
+}
+
 void IRP::addValidIneq()
 
 {
@@ -1105,3 +1160,8 @@ void IRP::Solution::buildGraph(vector<Node*>& graph, int t, IRP & instance)
 	}
 }
 
+IRP::Route::Route(vector<Node*>& path)
+	:
+	route(path)
+{
+}
