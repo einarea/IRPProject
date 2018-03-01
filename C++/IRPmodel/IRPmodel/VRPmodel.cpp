@@ -24,7 +24,7 @@ void VRPmodel::solveModel()
 	//int b = prob.getLPStat();
 
 	int d = prob.mipOptimise();
-	prob.print();
+	//prob.print();
 	for (int i : AllNodes)
 	{
 		y[i].print();
@@ -329,15 +329,17 @@ VRPmodel::~VRPmodel()
 {
 }
 
-void VRPmodel::addToIRPSolution(int t, IRP::Solution * sol)
+void VRPmodel::addToIRPSolution(int t, IRP::Solution * sol, IRP &instance)
 {
 	//Add arc and load variables
 	for (int i : AllNodes) {
-		sol->ySol[0][t] = y[0].getSol();
+		sol->ySol[i][t] = y[i].getSol();
 		for (int j : AllNodes) {
 			if (map.inArcSet(i, j)) {
 				//get solution from VRP
 				sol->xSol[i][j][t] = x[i][j].getSol();
+				x[i][j].print();
+				cout << "\n";
 				sol->loadDelSol[i][j][t] = (int)loadDelivery[i][j].getSol();
 				int a = (int)loadPickup[i][j].getSol();
 				sol->loadPickSol[i][j][t] = (int)loadPickup[i][j].getSol();

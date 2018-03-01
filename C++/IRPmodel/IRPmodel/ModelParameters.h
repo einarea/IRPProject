@@ -2,6 +2,9 @@
 class ModelParameters
 {
 public:
+
+	static const int MAX_RUNNING_TIME = 20; //seconds
+
 	ModelParameters();
 	static const int TRANSCOST_MULTIPLIER = 15;
 	static const int SERVICECOST_MULTIPLIER =50;
@@ -10,7 +13,7 @@ public:
 	static const int maxTime = 2000;
 	static const int Capacity = 300;
 	static const int CapacityPenalty = 10;
-	static const int nVehicles = 3;
+	static const int nVehicles = 4;
 
 	//Heurestic
 	//static const double VisitRatio = 0.5;

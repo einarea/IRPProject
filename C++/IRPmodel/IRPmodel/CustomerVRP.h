@@ -6,12 +6,12 @@ class CustomerVRP:
 	public Customer
 {
 private:
-	int Delivery;
-	int Pickup;
+	double Delivery;
+	double Pickup;
 
 public:
 	CustomerVRP(int id, int x, int y, int del, int pick);
-	int getDemand(int indicator);
+	double getDemand(int indicator);
 	~CustomerVRP();
 };
 

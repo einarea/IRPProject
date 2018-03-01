@@ -22,6 +22,7 @@ private:
 	XPRSprob oprob;		//Express problem to use with cuts
 	bool MaskOn;
 
+
 	//Parameters
 	bool ARC_RELAXED;
 	int ** VisitNode; //Crossover mask. Which customer to visit.
@@ -47,6 +48,9 @@ private:
 	XPRBvar *** loadDelivery;
 	XPRBvar *** loadPickup;
 	XPRBvar ** time;
+
+	//Route matrix
+	int *** A;
 
 
 	XPRBexpr objective;
@@ -79,6 +83,7 @@ private:
 
 public:
 	//Sets
+	int startTime;
 	vector  <int> Periods;
 	vector  <int> AllPeriods;
 	vector  <int> DeliveryNodes;
@@ -97,7 +102,9 @@ public:
 	class Route {
 	public:
 	int getCost();
-	Route(vector <Node*> & path);
+	int id;
+	int getId();
+	Route(vector <Node*> & path, int id);
 	//Graph 
 	vector <Node*> route;
 	};
@@ -133,6 +140,8 @@ public:
 	Route * getRoute(int id);
 	int newRoute(vector <Node*> &path);
 	void addValidIneq();
+	void createRouteMatrix();
+	void printMatrix();
 	Map * getMap();
 	void calculateExcess();
 	void IRP::buildGraph(vector<Node*> &graph, int t, Solution * solution);
@@ -147,7 +156,7 @@ public:
 	int getNumOfPeriods();
 	int getNumOfCustomers();
 	void getVisitedCustomers(int period, vector <Customer *> &);
-	void getDemand(int period, vector<vector<int>> &, vector <Customer *> &);
+	void getDemand(int period, vector<vector<double>> &, vector <Customer *> &);
 	Solution * getSolution(int id);
 	void printBounds();
 

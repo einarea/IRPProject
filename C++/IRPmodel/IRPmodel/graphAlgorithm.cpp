@@ -10,7 +10,6 @@ graphAlgorithm::graphAlgorithm()
 
 void graphAlgorithm::printGraph(vector<Node*>& graph, IRP &instance, string filename) {
 
-	static int i = 0;
 	
 	FILE *gnuplotPipe = _popen("C:\\Octave\\3.2.4_gcc-4.4.0\\bin\\gnuplot", "w");
 	Gnuplot gp(gnuplotPipe);
@@ -66,14 +65,14 @@ void graphAlgorithm::printGraph(vector<Node*>& graph, IRP &instance, string file
 		}
 	}
 
-	string file = "set term pngcairo size 700, 700\nset output '"+filename+ to_string(i) + ".png'\n";
+	string file = "set term pngcairo size 700, 700\nset output '"+filename + ".png'\n";
 	gp << file;
 	gp << "set xrange [-110:110]\nset yrange [-110:110]\n";
 	gp << "unset tics\n";
 	gp << "set size ratio -1\n";
 	// '-' means read from stdin.  The send1d() function sends data to gnuplot's stdin.
 	
-	if (!Depot.empty()) {
+	if (!Depot.empty() && !arcs.empty()) {
 		gp << "plot '-' with vectors notitle lw 2 lt rgb '#2980b9' filled ,\
 		 '-' with points lt rgb '#e74c3c' pointtype 7 pointsize 2.5 notitle,\
 		'-' with points lt rgb '#e67e22' pointtype 7 pointsize 2.5 notitle,\
@@ -83,7 +82,7 @@ void graphAlgorithm::printGraph(vector<Node*>& graph, IRP &instance, string file
 		gp.send1d(custPoints);
 		gp.send1d(Depot);
 	}
-	else {
+	else if (!arcs.empty()) {
 		gp << "plot '-' with vectors notitle lw 2 lt rgb '#2980b9' filled ,\
 		 '-' with points lt rgb '#e74c3c' pointtype 7 pointsize 2.5 notitle,\
 		'-' with points lt rgb '#e67e22' pointtype 7 pointsize 2.5 notitle\n";
@@ -91,9 +90,15 @@ void graphAlgorithm::printGraph(vector<Node*>& graph, IRP &instance, string file
 		gp.send1d(custPoints);
 		gp.send1d(custPoints);
 	}
+	else {
+		gp << "plot '-' with points lt rgb '#e74c3c' pointtype 7 pointsize 2.5 notitle,\
+		'-' with points lt rgb '#e67e22' pointtype 7 pointsize 2.5 notitle,\
+		'-' with points lt rgb '#16a085' pointtype 7 pointsize 3.3 notitle \n"; 
+		gp.send1d(custPoints);
+		gp.send1d(custPoints);
+		gp.send1d(Depot);
+	}
 	
-	i++;
-
 }
 
 void graphAlgorithm::getRoutes(vector<Node*>& graph, vector<vector<Node*>>& routes)

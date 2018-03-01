@@ -17,7 +17,7 @@ public:
 	VRPmodel(CustomerVRPDB & db, Map &map);
 	void solveModel();
 	~VRPmodel();
-	void addToIRPSolution(int t, IRP::Solution * sol);
+	void addToIRPSolution(int t, IRP::Solution * sol, IRP &);
 	void addRoutesToIRP(IRP& instance, int t, IRP::Solution * sol);
 
 private:

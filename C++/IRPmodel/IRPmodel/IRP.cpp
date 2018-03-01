@@ -29,9 +29,13 @@ int XPRS_CC cbmng(XPRSprob oprob, void * vd)
 	
 	IRP * modelInstance;
 	modelInstance = (IRP*)vd;
+	if ((XPRB::getTime() - modelInstance->startTime) / 1000 >= ModelParameters::MAX_RUNNING_TIME)
+	{
+		XPRSinterrupt(oprob, XPRS_STOP_TIMELIMIT);
+	}
 
 	//Load LP relaxation currently held in the optimizer
-	modelInstance->getProblem()->beginCB(oprob);
+	/*modelInstance->getProblem()->beginCB(oprob);
 	modelInstance->getProblem()->sync(XPRB_XPRS_SOL);
 	double a = modelInstance->getProblem()->getObjVal();
 	//Add subtourconstraints
@@ -46,7 +50,7 @@ int XPRS_CC cbmng(XPRSprob oprob, void * vd)
 		int *cutPtr = &bb;
 		XPRScut m[10];
 		modelInstance->printBounds();*/ 
-		XPRSgetintattrib(oprob, XPRS_NODES, &node);
+		/*XPRSgetintattrib(oprob, XPRS_NODES, &node);
 		XPRSgetdblattrib(oprob, XPRS_LPOBJVAL, &objval);
 		cout << "Added at node ";
 		cout << node << "), obj. " << objval << endl;
@@ -62,7 +66,8 @@ int XPRS_CC cbmng(XPRSprob oprob, void * vd)
 
 	}
 	
-	modelInstance->getProblem()->endCB(); //Unload LP relaxation
+	modelInstance->getProblem()->endCB(); */
+	//Unload LP relaxation
 	return 0;
 	
 }
@@ -129,10 +134,11 @@ IRP::Solution * IRP::solveModel()
 {
 	
 	oprob = prob.getXPRSprob();
+	startTime = XPRB::getTime();
 	
 	//Enable subtour elimination
-	//int a=prob.setCutMode(1); // Enable the cut mode
-	//XPRSsetcbcutmgr(oprob, cbmng, &(*this));
+	int a=prob.setCutMode(1); // Enable the cut mode
+	XPRSsetcbcutmgr(oprob, cbmng, &(*this));
 
 	//double b =prob.lpOptimize();
 	//int b = prob.getLPStat();
@@ -205,9 +211,13 @@ int IRP::allocateSolution()
 
 				for (int t : Periods) {
 					//Initialize solution to 0
-					sol->xSol[i][j][t] = x[i][j][t].getSol();
+					/*sol->xSol[i][j][t] = x[i][j][t].getSol();
 					sol->loadDelSol[i][j][t] = loadDelivery[i][j][t].getSol();
-					sol->loadPickSol[i][j][t] = loadPickup[i][j][t].getSol();
+					sol->loadPickSol[i][j][t] = loadPickup[i][j][t].getSol();*/
+					sol->xSol[i][j][t] = 0;
+					sol->loadDelSol[i][j][t] = 0;
+					sol->loadPickSol[i][j][t] = 0;
+
 				}
 			} //endif
 		} //end for j
@@ -233,6 +243,8 @@ int IRP::allocateSolution()
 	sol->timeSol[0] = new double[Periods.size()];
 	for (int t : Periods) {
 		sol->ySol[0][t] = y[0][t].getSol();
+	
+
 		sol->timeSol[0][t] = 0;
 	}
 	
@@ -245,8 +257,9 @@ int IRP::allocateSolution()
 		sol->pickSol[i] = new double[Periods.size()];
 		for (int t : Periods) {
 			if (i <= DeliveryNodes.size()) {
-				if (delivery[i][t].getSol() > 0)
+				if (delivery[i][t].getSol() > 0) {
 					sol->delSol[i][t] = delivery[i][t].getSol();
+				}
 				else
 					sol->delSol[i][t] = 0;
 			}
@@ -953,15 +966,15 @@ void IRP::getVisitedCustomers(int period, vector<Customer *> &custVisit)
 		cout << "Error, problem not solved when creating visited customers";
 }
 
-void IRP::getDemand(int t, vector<vector<int>>& demand, vector<Customer *> &customers)
+void IRP::getDemand(int t, vector<vector<double>>& demand, vector<Customer *> &customers)
 {
 	demand.resize(2);
 	demand[Customer::DELIVERY].resize(getNumOfCustomers()+1);
 	demand[Customer::PICKUP].resize(getNumOfCustomers()+1);
 	int node;
 	for (Customer* c : customers) {
-			demand[Customer::DELIVERY][c->getId()] = delivery[map.getDeliveryNode(c)][t].getSol();
-			demand[Customer::PICKUP][c->getId()] = pickup[map.getPickupNode(c)][t].getSol();
+			demand[Customer::DELIVERY][c->getId()] = round(delivery[map.getDeliveryNode(c)][t].getSol());
+			demand[Customer::PICKUP][c->getId()] = round(pickup[map.getPickupNode(c)][t].getSol());
 	}
 }
 
@@ -1002,7 +1015,7 @@ void IRP::Solution::print(IRP & instance, string filename)
 	vector<Node *> graph;
 	for (int t : instance.Periods) {
 		buildGraph(graph, t, instance);
-		graphAlgorithm::printGraph(graph, instance, filename);
+		graphAlgorithm::printGraph(graph, instance, filename+to_string(t));
 		graph.clear();
 	}
 }
@@ -1021,7 +1034,8 @@ IRP::Route * IRP::getRoute(int id)
 
 int IRP::newRoute(vector <Node*> & route)
 {
-	routes.push_back(new Route(route));
+	int id = routes.size();
+	routes.push_back(new Route(route, id));
 	return routes.size()-1;
 }
 
@@ -1062,6 +1076,36 @@ void IRP::addValidIneq()
 	}*/
 
 }
+
+void IRP::createRouteMatrix()
+{
+	A = new int **[AllNodes.size()+1];
+	for (int i = 0; i < AllNodes.size(); i++) {
+		A[i] = new int *[AllNodes.size() + 1];
+		A[i] = new int[routes.size()];
+		for (int r = 0; r < routes.size(); r++) {
+			A[i][r] = 0;
+		}
+	}
+
+	for (Route *r : routes)
+		for (Node* u : r->route)
+		{
+				A[u->getId()][r->getId()] = 1;
+		}
+	
+}
+
+void IRP::printMatrix()
+{
+	for (int i : AllNodes) {
+		cout << "\n";
+		for (int r = 0; r < (routes).size(); r++) {
+			cout << A[i][r];
+		}
+	}
+}
+
 
 void IRP::Solution::printSolution(IRP &instance)
 {
@@ -1160,8 +1204,14 @@ void IRP::Solution::buildGraph(vector<Node*>& graph, int t, IRP & instance)
 	}
 }
 
-IRP::Route::Route(vector<Node*>& path)
+int IRP::Route::getId()
+{
+	return id;
+}
+
+IRP::Route::Route(vector<Node*>& path, int ref)
 	:
-	route(path)
+	route(path),
+	id(ref)
 {
 }

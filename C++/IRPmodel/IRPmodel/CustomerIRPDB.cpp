@@ -119,22 +119,24 @@ void CustomerIRPDB::writeInstanceToFile(ofstream &instanceFile, string Filename)
 	instanceFile << "I01\tI02\tX\tY\n";
 
 	for (Customer *c : Customers) {
-		CustomerIRP * cust = getCustomer(c);
+		if (c->getId() != 0) {
+			CustomerIRP * cust = getCustomer(c);
 
-		instanceFile << cust->getHoldCost(Customer::DELIVERY) << "\t" << cust->getHoldCost(Customer::PICKUP)
-			<< "\t" << cust->getLowerLimit(Customer::DELIVERY) << "\t" <<cust->getLowerLimit(Customer::PICKUP)
-			<< "\t" << cust->getUpperLimit(Customer::DELIVERY) << "\t" << cust->getUpperLimit(Customer::PICKUP) << "\t";
+			instanceFile << cust->getHoldCost(Customer::DELIVERY) << "\t" << cust->getHoldCost(Customer::PICKUP)
+				<< "\t" << cust->getLowerLimit(Customer::DELIVERY) << "\t" << cust->getLowerLimit(Customer::PICKUP)
+				<< "\t" << cust->getUpperLimit(Customer::DELIVERY) << "\t" << cust->getUpperLimit(Customer::PICKUP) << "\t";
 
-		for (int t = 1; t <= getnPeriods(); t++) {
-			instanceFile << cust->getDemand(t, Customer::DELIVERY) << "\t";
+			for (int t = 1; t <= getnPeriods(); t++) {
+				instanceFile << cust->getDemand(t, Customer::DELIVERY) << "\t";
+			}
+			for (int t = 1; t <= getnPeriods(); t++) {
+				instanceFile << cust->getDemand(t, Customer::PICKUP) << "\t";
+			}
+
+			instanceFile << cust->getInitInventory(Customer::DELIVERY) << "\t";
+			instanceFile << cust->getInitInventory(Customer::PICKUP) << "\t";
+			instanceFile << cust->getXpos() << "\t" << cust->getYpos() << "\n";
 		}
-		for (int t = 1; t <= getnPeriods(); t++) {
-			instanceFile << cust->getDemand(t, Customer::PICKUP) << "\t";
-		}
-
-		instanceFile << cust->getInitInventory(Customer::DELIVERY)<<"\t";
-		instanceFile << cust->getInitInventory(Customer::PICKUP)<<"\t";
-		instanceFile << cust->getXpos() << "\t" << cust->getYpos() << "\n";
 	}
 	
 	instanceFile << "end-of-file";

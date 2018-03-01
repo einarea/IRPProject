@@ -14,7 +14,7 @@ CustomerVRP * CustomerVRPDB::getCustomer(int id)
 }
 
 //Recieves demand and position for the customers
-CustomerVRPDB::CustomerVRPDB(vector<vector<int>> & Demand,  vector<Customer *> &customers)
+CustomerVRPDB::CustomerVRPDB(vector<vector<double>> & Demand,  vector<Customer *> &customers)
 {
 	for (Customer * c : customers) {
 		CustomerVRP * cust = new CustomerVRP(c->getId(), c->getXpos(), c->getYpos(), Demand[Customer::DELIVERY][c->getId()], Demand[Customer::PICKUP][c->getId()]);

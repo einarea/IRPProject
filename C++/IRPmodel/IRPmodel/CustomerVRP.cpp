@@ -13,7 +13,7 @@ CustomerVRP::CustomerVRP(int id, int x, int y, int del, int pick)
 {
 }
 
-int CustomerVRP::getDemand(int indicator)
+double CustomerVRP::getDemand(int indicator)
 {
 	if (indicator == Customer::PICKUP)
 		return  Pickup;
