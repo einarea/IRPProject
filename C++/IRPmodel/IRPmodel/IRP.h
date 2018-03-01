@@ -50,7 +50,7 @@ private:
 	XPRBvar ** time;
 
 	//Route matrix
-	int *** A;
+	vector<int **>A;
 
 
 	XPRBexpr objective;
@@ -104,6 +104,7 @@ public:
 	int getCost();
 	int id;
 	int getId();
+	int ** getRouteMatrix(IRP * const instance);
 	Route(vector <Node*> & path, int id);
 	//Graph 
 	vector <Node*> route;
@@ -138,9 +139,13 @@ public:
 
 
 	Route * getRoute(int id);
+	vector<Route const*> getRoutes();
 	int newRoute(vector <Node*> &path);
 	void addValidIneq();
-	void createRouteMatrix();
+
+	//Route functions
+	void printRouteMatrix();
+	void addRoutesToVector();
 	void printMatrix();
 	Map * getMap();
 	void calculateExcess();

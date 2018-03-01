@@ -232,7 +232,7 @@ bool VRPmodel::formulateProblem()
 	//Max visit
 	for (int i : Nodes) {
 		p1 = y[i];
-		prob.newCtr("Max visit", p1 <= 1);
+		prob.newCtr("Max visit", p1 = 1);
 		p1 = 0;
 	}
 
@@ -359,11 +359,33 @@ void VRPmodel::addRoutesToIRP(IRP & instance, int t,  IRP::Solution * sol)
 	vector<Node*> graph;
 	vector<vector<Node*>> routes;
 	instance.buildGraph(graph, t, sol);
+
+	
 	graphAlgorithm::getRoutes(graph, routes);
 
+	//Check if route exist.
+	for (vector <Node*> r : routes) {
+		vector <IRP::Route const *> routePtr = instance.getRoutes();
+		int i = 0;
+		while (routePtr.size() > 0 && i < r.size()) {
+			i = 0;
+			Node* u = r[i];
+			for (int j = 0; j < routePtr.size(); j++) {
+				if (u->getId() != routePtr[j]->route[i]->getId()) {
+					routePtr.erase(routePtr.begin() + j);
+				}
+			}
+			i++;
+		}
+		//No equal routes
+		if (routePtr.size() == 0){
+			instance.newRoute(r);
+		}
+
+	}
+
 	for (int i = 0; i < routes.size(); i++) {
-		int id = instance.newRoute(routes[i]);
-		graphAlgorithm::printGraph(instance.getRoute(id)->route, instance, "route"+to_string(i));
+		graphAlgorithm::printGraph(instance.getRoute(i)->route, instance, "route"+to_string(i));
 
 	}
 }

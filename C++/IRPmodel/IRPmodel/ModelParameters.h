@@ -3,7 +3,7 @@ class ModelParameters
 {
 public:
 
-	static const int MAX_RUNNING_TIME = 20; //seconds
+	static const int MAX_RUNNING_TIME = 7200; //seconds
 
 	ModelParameters();
 	static const int TRANSCOST_MULTIPLIER = 15;

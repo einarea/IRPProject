@@ -25,24 +25,24 @@ int XPRS_CC cbmng(XPRSprob oprob, void * vd)
 	double objval;
 	XPRSgetdblattrib(oprob, XPRS_LPOBJVAL, &objval);
 
-	vector<XPRBcut> subtourCut;
+/*	vector<XPRBcut> subtourCut;
 	
 	IRP * modelInstance;
 	modelInstance = (IRP*)vd;
 	if ((XPRB::getTime() - modelInstance->startTime) / 1000 >= ModelParameters::MAX_RUNNING_TIME)
 	{
 		XPRSinterrupt(oprob, XPRS_STOP_TIMELIMIT);
-	}
+	}*/
 
 	//Load LP relaxation currently held in the optimizer
-	/*modelInstance->getProblem()->beginCB(oprob);
-	modelInstance->getProblem()->sync(XPRB_XPRS_SOL);
-	double a = modelInstance->getProblem()->getObjVal();
+	//modelInstance->getProblem()->beginCB(oprob);
+	//modelInstance->getProblem()->sync(XPRB_XPRS_SOL);
+	//double a = modelInstance->getProblem()->getObjVal();
 	//Add subtourconstraints
-	bool addedCuts = modelInstance->sepStrongComponents(subtourCut);
+	//bool addedCuts = modelInstance->sepStrongComponents(subtourCut);
 
 	
-	if (addedCuts) {
+	if (false){//addedCuts) {
 		int node;
 		/*double *lBound;
 		double *uBound;
@@ -50,23 +50,23 @@ int XPRS_CC cbmng(XPRSprob oprob, void * vd)
 		int *cutPtr = &bb;
 		XPRScut m[10];
 		modelInstance->printBounds();*/ 
-		/*XPRSgetintattrib(oprob, XPRS_NODES, &node);
+		XPRSgetintattrib(oprob, XPRS_NODES, &node);
 		XPRSgetdblattrib(oprob, XPRS_LPOBJVAL, &objval);
-		cout << "Added at node ";
-		cout << node << "), obj. " << objval << endl;
+		//cout << "Added at node ";
+		//cout << node << "), obj. " << objval << endl;
 
-		for (XPRBcut cut : subtourCut)
-		{
-			cut.print();
-			modelInstance->nSubtourCuts += 1;
+		//for (XPRBcut cut : subtourCut)
+		//{
+			//cut.print();
+			//modelInstance->nSubtourCuts += 1;
 			//XPRSstorecuts(oprob, 1, 1, , 
 
-			//Local cuts: modelInstance->getProblem()->addCuts(&cut, 1);
-		}
+		//	modelInstance->getProblem()->addCuts(&cut, 1);
+		//}
 
 	}
 	
-	modelInstance->getProblem()->endCB(); */
+	//modelInstance->getProblem()->endCB(); 
 	//Unload LP relaxation
 	return 0;
 	
@@ -137,7 +137,7 @@ IRP::Solution * IRP::solveModel()
 	startTime = XPRB::getTime();
 	
 	//Enable subtour elimination
-	int a=prob.setCutMode(1); // Enable the cut mode
+	//int a=prob.setCutMode(1); // Enable the cut mode
 	XPRSsetcbcutmgr(oprob, cbmng, &(*this));
 
 	//double b =prob.lpOptimize();
@@ -424,7 +424,7 @@ void IRP::addSubtourCut(vector<vector<Node *>>& strongComp, int t, bool &newCut,
 				
 				//cout << "LP relaxation before cut: " << prob.getObjVal() << "\n";
 				string rSideStr = "<=";
-				printf("\nAdded subtour cut: ");
+				//printf("\nAdded subtour cut: ");
 
 				for (Node *node : strongComp[i]) {
 					rSide += y[node->getId()][t];
@@ -433,7 +433,7 @@ void IRP::addSubtourCut(vector<vector<Node *>>& strongComp, int t, bool &newCut,
 						if (edge->getValue() >= 0) {
 							int u = node->getId();
 							int v = edge->getEndNode()->getId();
-							printf("x_%d%d + ", u, v);
+							//printf("x_%d%d + ", u, v);
 							lSide += x[node->getId()][edge->getEndNode()->getId()][t];
 						}
 					}
@@ -441,7 +441,7 @@ void IRP::addSubtourCut(vector<vector<Node *>>& strongComp, int t, bool &newCut,
 
 			
 				rSideStr = rSideStr + " - " + "y_" + to_string(maxVisitID);
-				cout << rSideStr << "\n";
+				//cout << rSideStr << "\n";
 				nSubtourCuts += 1;
 				XPRBcut vv = prob.newCut( lSide <= rSide - y[maxVisitID][t]);
  				SubtourCut.push_back(vv);
@@ -1032,6 +1032,17 @@ IRP::Route * IRP::getRoute(int id)
 	return routes[id];
 }
 
+
+vector<IRP::Route const *> IRP::getRoutes()
+{
+	vector<IRP::Route const *> routePtr;
+	for (int i = 0; i < routes.size(); i++) {
+		routePtr.push_back(routes[i]);
+	}
+	return routePtr;
+}
+
+
 int IRP::newRoute(vector <Node*> & route)
 {
 	int id = routes.size();
@@ -1053,16 +1064,16 @@ void IRP::addValidIneq()
 	for (int i : DeliveryNodes) {
 		minVisit = 0;
 		p1 = 0;
-		/*	for (int t : Periods) {
+			for (int t : Periods) {
 				p1 += y[i][t];
 				minVisit = ExcessConsumption[i][t] / min(ModelParameters::Capacity, UpperLimit[i] - LowerLimit[i]);
 				if (ceil(minVisit) - minVisit >= 0.3)
 				{
-					//prob.newCtr("MinVisitDelivery", p1 >= ceil(minVisit));
+					prob.newCtr("MinVisitDelivery", p1 >= ceil(minVisit));
 				}
-			}*/
+			}
 	}
-	/*for (int i : PickupNodes) {
+	for (int i : PickupNodes) {
 		minVisit = 0;
 		p1 = 0;
 		for (int t : Periods) {
@@ -1070,31 +1081,35 @@ void IRP::addValidIneq()
 			minVisit = ExcessProd[i][t] / min(ModelParameters::Capacity, UpperLimit[i] - LowerLimit[i]);
 			if (ceil(minVisit) - minVisit >= 0.3)
 			{
-				//prob.newCtr("MinVisitPickup", p1 >= ceil(minVisit));
+				prob.newCtr("MinVisitPickup", p1 >= ceil(minVisit));
 			}
-		}
-	}*/
-
-}
-
-void IRP::createRouteMatrix()
-{
-	A = new int **[AllNodes.size()+1];
-	for (int i = 0; i < AllNodes.size(); i++) {
-		A[i] = new int *[AllNodes.size() + 1];
-		A[i] = new int[routes.size()];
-		for (int r = 0; r < routes.size(); r++) {
-			A[i][r] = 0;
 		}
 	}
 
-	for (Route *r : routes)
-		for (Node* u : r->route)
-		{
-				A[u->getId()][r->getId()] = 1;
-		}
-	
 }
+
+void IRP::printRouteMatrix()
+{
+	for (int r = 0; r < A.size(); r++) {
+		cout << "\n\n\n";
+		for (int i = 0; i < AllNodes.size(); i++) {
+			cout << "\n";
+			for (int j = 0; j < AllNodes.size(); j++) {
+				cout << A[r][i][j]<<"  ";
+
+			}
+		}
+	}
+}
+
+void IRP::addRoutesToVector()
+{		
+	for (IRP :: Route *r : routes)
+
+		A.push_back(r->getRouteMatrix(this));
+}
+	
+
 
 void IRP::printMatrix()
 {
@@ -1207,6 +1222,24 @@ void IRP::Solution::buildGraph(vector<Node*>& graph, int t, IRP & instance)
 int IRP::Route::getId()
 {
 	return id;
+}
+
+int ** IRP::Route::getRouteMatrix(IRP * const instance)
+{
+	int ** route = new int*[instance->AllNodes.size()];
+	for (int i = 0; i < instance->AllNodes.size(); i++) {
+		route[i] = new int[instance->AllNodes.size()];
+		for (int j = 0; j < instance->AllNodes.size(); j++) {
+			route[i][j] = 0;
+		}
+	}
+
+	for (Node *node : this->route) {
+		int i = node->getId();
+		int j = node->getEdge(0)->getEndNode()->getId();
+		route[i][j] = 1;
+	}
+	return route;
 }
 
 IRP::Route::Route(vector<Node*>& path, int ref)
