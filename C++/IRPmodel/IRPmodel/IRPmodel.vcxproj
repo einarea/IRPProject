@@ -158,6 +158,7 @@
     <ClInclude Include="CustomerVRPDB.h" />
     <ClInclude Include="graphAlgorithm.h" />
     <ClInclude Include="IRP.h" />
+    <ClInclude Include="IRPmodel.h" />
     <ClInclude Include="Map.h" />
     <ClInclude Include="MapIRP.h" />
     <ClInclude Include="ModelBase.h" />

@@ -67,7 +67,7 @@ void graphAlgorithm::printGraph(vector<Node*>& graph, IRP &instance, string file
 
 	string file = "set term pngcairo size 700, 700\nset output '"+filename + ".png'\n";
 	gp << file;
-	gp << "set xrange [-110:110]\nset yrange [-110:110]\n";
+	gp << "set xrange [-55:55]\nset yrange [-55:55]\n";
 	gp << "unset tics\n";
 	gp << "set size ratio -1\n";
 	// '-' means read from stdin.  The send1d() function sends data to gnuplot's stdin.
@@ -126,6 +126,20 @@ void graphAlgorithm::getRoutes(vector<Node*>& graph, vector<vector<Node*>>& rout
 		routes.push_back(route);
 		route.clear();
 	}
+}
+
+void graphAlgorithm::printToLatex(string * Columns, string * Rows, double ** data,  string filename)
+{
+	ofstream textFile;
+	textFile.open(filename);
+
+	for (int i = 0; i < Rows->size(); i++) {
+		textFile << Rows[i];
+		for (int j = 1; j < Columns->size(); j++) {
+			textFile << data[i][j] << "&";
+		}
+	}
+	textFile.close();
 }
 
 //Tarjans strongly connected components algorithm, sets value of edges not in strong components to -1.

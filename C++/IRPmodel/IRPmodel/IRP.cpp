@@ -145,7 +145,7 @@ IRP::Solution * IRP::solveModel()
 	
 	int d = prob.mipOptimise();
 	//prob.print();
-	int SolID = allocateSolution();
+	int SolID = allocateIRPSolution();
 
 	return getSolution(SolID);
 }
@@ -185,6 +185,93 @@ void IRP::calculateExcess()
 		}
 	}
 
+}
+
+int IRP::allocateIRPSolution()
+{
+	SolutionCounter++;
+	//Allocate x and loading solutions
+	Solution * sol = new Solution();
+	sol->SolID = SolutionCounter;
+
+	sol->xSol = new double **[AllNodes.size()];
+	sol->loadDelSol = new double **[AllNodes.size()];
+	sol->loadPickSol = new double **[AllNodes.size()];
+
+	for (int i : AllNodes) {
+		sol->xSol[i] = new double *[AllNodes.size()];
+		sol->loadDelSol[i] = new double *[AllNodes.size()];
+		sol->loadPickSol[i] = new double *[AllNodes.size()];
+
+		for (int j : AllNodes) {
+			if (map.inArcSet(i, j)) {
+				sol->xSol[i][j] = new double[Periods.size()];
+				sol->loadDelSol[i][j] = new double[Periods.size()];
+				sol->loadPickSol[i][j] = new double[Periods.size()];
+
+				for (int t : Periods) {
+					//Initialize solution to 0
+					sol->xSol[i][j][t] = x[i][j][t].getSol();
+					sol->loadDelSol[i][j][t] = loadDelivery[i][j][t].getSol();
+					sol->loadPickSol[i][j][t] = loadPickup[i][j][t].getSol();
+					
+				}
+			} //endif
+		} //end for j
+	} // end x and loading
+
+	  //Fill y, inventory and allocate time
+	sol->ySol = new double *[AllNodes.size()];
+	sol->timeSol = new double *[AllNodes.size()];
+	sol->invSol = new double *[AllNodes.size()];
+	for (int i : Nodes) {
+		sol->ySol[i] = new double[Periods.size()];
+		sol->timeSol[i] = new double[Periods.size()];
+		sol->invSol[i] = new double[Periods.size()];
+		for (int t : Periods) {
+			sol->ySol[i][t] = y[i][t].getSol();
+			sol->invSol[i][t] = inventory[i][t].getSol();
+			sol->timeSol[i][t] = 0;
+		}
+	}
+
+	//Depot
+	sol->ySol[0] = new double[Periods.size()];
+	sol->timeSol[0] = new double[Periods.size()];
+	for (int t : Periods) {
+		sol->ySol[0][t] = y[0][t].getSol();
+
+
+		sol->timeSol[0][t] = 0;
+	}
+
+
+	//Fill delivery and pickup
+	sol->delSol = new double *[Nodes.size()];
+	sol->pickSol = new double *[Nodes.size()];
+	for (int i : Nodes) {
+		sol->delSol[i] = new double[Periods.size()];
+		sol->pickSol[i] = new double[Periods.size()];
+		for (int t : Periods) {
+			if (i <= DeliveryNodes.size()) {
+				if (delivery[i][t].getSol() > 0) {
+					sol->delSol[i][t] = delivery[i][t].getSol();
+				}
+				else
+					sol->delSol[i][t] = 0;
+			}
+			else {
+				if (pickup[i][t].getSol() > 0)
+					sol->pickSol[i][t] = pickup[i][t].getSol();
+				else
+					sol->pickSol[i][t] = 0;
+			} //end else
+		} //end t
+	} //end i
+
+	solutions.push_back(sol);
+	//Return ID to solution
+	return getCounter();
 }
 
 int IRP::allocateSolution()
@@ -671,7 +758,7 @@ bool IRP::formulateProblem()
 		for (int j : AllNodes) {
 			if (map.inArcSet(i, j)) {
 				for (int t : Periods) {
-					p1 = loadDelivery[i][j][t] + loadPickup[i][j][t] - ModelParameters::Capacity * x[i][j][t];
+					p1 = loadDelivery[i][j][t] + loadPickup[i][j][t] - Capacity * x[i][j][t];
 					prob.newCtr("ArcCapacity", p1 <= 0);
 					p1 = 0;
 				}
@@ -682,7 +769,7 @@ bool IRP::formulateProblem()
 	//Vehicle capacity
 	for (int i : DeliveryNodes) {
 		for (int t : Periods) {
-			p1 = delivery[i][t] - min(ModelParameters::Capacity, UpperLimit[i] - LowerLimit[i])*y[i][t];
+			p1 = delivery[i][t] - min(Capacity, UpperLimit[i] - LowerLimit[i])*y[i][t];
 
 			prob.newCtr("Vehicle capacity delivert", p1 <= 0);
 			p1 = 0;
@@ -691,7 +778,7 @@ bool IRP::formulateProblem()
 
 	for (int i : PickupNodes) {
 		for (int t : Periods) {
-			p1 = pickup[i][t] - min(ModelParameters::Capacity, UpperLimit[i] - LowerLimit[i])*y[i][t];
+			p1 = pickup[i][t] - min(Capacity, UpperLimit[i] - LowerLimit[i])*y[i][t];
 
 			prob.newCtr("Vehicle capacity pickup", p1 <= 0);
 			p1 = 0;
@@ -787,9 +874,18 @@ bool IRP::initializeParameters() {
 		}
 	} //end demand pickup Nodes
 
+	//Initialize capacity
+	int TotalDemand = 0;
+	for (int t : Periods) {
+		for (int i : DeliveryNodes) {
+			TotalDemand += Demand[i][t];
+		}
+	}
+	IRP::Capacity = 2 * floor(TotalDemand / (ModelParameters::nVehicles*getNumOfPeriods()));
 
+	//Initialize max time
+	MaxTime = 480;
 	
-
 	return true;
 }
 
@@ -865,8 +961,8 @@ bool IRP::initializeVariables()
 				else
 					x[i][j][t] = prob.newVar(XPRBnewname("x%d-%d%d", i, j, t), XPRB_BV, 0, 1);
 
-				loadDelivery[i][j][t] = prob.newVar(XPRBnewname("lD_%d%d%d", i, j, t), XPRB_PL, 0, ModelParameters::Capacity);
-				loadPickup[i][j][t] = prob.newVar(XPRBnewname("lP_%d%d%d", i, j, t), XPRB_PL, 0, ModelParameters::Capacity);
+				loadDelivery[i][j][t] = prob.newVar(XPRBnewname("lD_%d%d%d", i, j, t), XPRB_PL, 0, Capacity);
+				loadPickup[i][j][t] = prob.newVar(XPRBnewname("lP_%d%d%d", i, j, t), XPRB_PL, 0, Capacity);
 			}
 			}
 		}
@@ -915,7 +1011,7 @@ bool IRP::initializeVariables()
 	for (int i : DeliveryNodes) {
 		delivery[i] = new XPRBvar [Periods.size()+1];
 		for (int t : Periods) {
-			delivery[i][t] = prob.newVar(XPRBnewname("qD_%d%d", i, t), XPRB_PL, 0, ModelParameters::Capacity);
+			delivery[i][t] = prob.newVar(XPRBnewname("qD_%d%d", i, t), XPRB_PL, 0, Capacity);
 			
 		}
 	}
@@ -925,7 +1021,7 @@ bool IRP::initializeVariables()
 	for (int i : PickupNodes){
 		pickup[i] = new  XPRBvar[Periods.size()+1];
 		for (int t : Periods) {
-			pickup[i][t] = prob.newVar(XPRBnewname("qP_%d%d", i, t), XPRB_PL, 0, ModelParameters::Capacity);
+			pickup[i][t] = prob.newVar(XPRBnewname("qP_%d%d", i, t), XPRB_PL, 0, Capacity);
 		}
 	}
 
@@ -1020,6 +1116,15 @@ void IRP::Solution::print(IRP & instance, string filename)
 	}
 }
 
+double IRP::Solution::getNumberOfRoutes(IRP &instance)
+{
+	double nRoutes = 0;
+	for (int t : instance.Periods) {
+		nRoutes += ySol[0][t];
+	}
+	return nRoutes;
+}
+
 double IRP::Solution::getObjective(IRP *instance)
 {
 	return getHoldingCost(instance) + getTransportationCost(instance);
@@ -1066,7 +1171,7 @@ void IRP::addValidIneq()
 		p1 = 0;
 			for (int t : Periods) {
 				p1 += y[i][t];
-				minVisit = ExcessConsumption[i][t] / min(ModelParameters::Capacity, UpperLimit[i] - LowerLimit[i]);
+				minVisit = ExcessConsumption[i][t] / min(Capacity, UpperLimit[i] - LowerLimit[i]);
 				if (ceil(minVisit) - minVisit >= 0.3)
 				{
 					prob.newCtr("MinVisitDelivery", p1 >= ceil(minVisit));
@@ -1078,7 +1183,7 @@ void IRP::addValidIneq()
 		p1 = 0;
 		for (int t : Periods) {
 			p1 += y[i][t];
-			minVisit = ExcessProd[i][t] / min(ModelParameters::Capacity, UpperLimit[i] - LowerLimit[i]);
+			minVisit = ExcessProd[i][t] / min(Capacity, UpperLimit[i] - LowerLimit[i]);
 			if (ceil(minVisit) - minVisit >= 0.3)
 			{
 				prob.newCtr("MinVisitPickup", p1 >= ceil(minVisit));
@@ -1119,6 +1224,11 @@ void IRP::printMatrix()
 			cout << A[i][r];
 		}
 	}
+}
+
+int IRP::getCapacity()
+{
+	return Capacity;
 }
 
 

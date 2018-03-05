@@ -6,30 +6,46 @@ public:
 	static const int MAX_RUNNING_TIME = 7200; //seconds
 
 	ModelParameters();
-	static const int TRANSCOST_MULTIPLIER = 15;
-	static const int SERVICECOST_MULTIPLIER =50;
+	static const int TRANSCOST_MULTIPLIER = 13;
+	static const int SERVICECOST_MULTIPLIER =100;
 	static const int TRAVELTIME_MULTIPLIER = 1;
-	static const int SERVICETIME = 10;
-	static const int maxTime = 2000;
-	static const int Capacity = 300;
+	static const int SERVICETIME = 20;
+	static const int maxTime = 480;
+	static const int Capacity;
 	static const int CapacityPenalty = 10;
-	static const int nVehicles = 4;
+	static const int nVehicles = 3;
 
 	//Heurestic
 	//static const double VisitRatio = 0.5;
 
-	//For generating customers
-	//multiplied with number between 1 and 10
-	static const int HoldingCost = 2; 
+	//************For generating customers********************//
+	//Ranges where values are randomly drawn from.
+
+	//Holding cost
+	static const int HoldingCostLow = 1;
+	static const int HoldingCostHigh = 5;
+
+	//Demand at delivery nodes and pickup nodes
+	static const int DemandDelLow = 5;
+	static const int DemandDelHigh = 50;
+	static const int DemandPickLow = 5;
+	static const int DemandPickHigh = 50;
+
+	//Lower inventory bounds
+	static const int LBDel = 5;				//Delivery
+	static const int LBPic = 0;				//Pickup
+
+	//Upper inventory limits
+	static const int UBDelLow = 75;
+	static const int UBDelHigh = 100;
+	static const int UBPickLow = 75;
+	static const int UBPickHigh = 100;
+
 	static const int InitInventoryDel = 15;	//Delivery nodes
 	static const int InitInventoryPick = 15; //Pickup nodes
-	static const int DemandDel = 6;			//Delivery nodes
-	static const int DemandPick = 6;		//Pickup nodes
-	static const int LBDel = 2;				//Lower bound delivery nodes
-	static const int LBPick = 0;			//Lower bound pickup
-	static const int UBDel = 30;				//Lower bound pickup
-	static const int UBPick = 38;			//Lower bound pickup
-
+	
+	
+	static const int LBPick = 0;			
 
 	//Valid inequalitites
 	static const int MinimumNodeVisit = 1;

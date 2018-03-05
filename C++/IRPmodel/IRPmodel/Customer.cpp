@@ -21,8 +21,8 @@ Customer::Customer(int id, int randSeed)
 	CustomerID(id)
 {
 	srand(time(0) + randSeed);
-	posX = (rand() % 200 + 0) - 100;
-	posY = (rand() % 200 + 0) - 100;
+	posX = (rand() % 100 + 0) - 50;
+	posY = (rand() % 100 + 0) - 50;
 }
 
 

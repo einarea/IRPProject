@@ -3,11 +3,12 @@
 #include "ModelParameters.h"
 
 
-VRPmodel::VRPmodel(CustomerVRPDB &db, Map &map)
+VRPmodel::VRPmodel(CustomerVRPDB &db, Map &map, int Cap)
 	:
 	database(db),
 	map(map),
-	prob("VRP")
+	prob("VRP"),
+	Capacity(Cap)
 {
 	initializeSets();
 	initializeParameters();
@@ -76,7 +77,7 @@ bool VRPmodel::initializeSets()
 
 bool VRPmodel::initializeParameters()
 {
-
+	MaxTime = ModelParameters::maxTime;
 	Demand = new int [Nodes.back()];
 	int cust;
 
@@ -118,8 +119,6 @@ bool VRPmodel::initializeParameters()
 			}
 	}
 
-	Capacity = ModelParameters::Capacity;
-	MaxTime = ModelParameters::maxTime;
 	nVehicles = ModelParameters::nVehicles;
 
 	return true;
@@ -284,7 +283,7 @@ bool VRPmodel::formulateProblem()
 	for (int i : AllNodes) {
 		for (int j : AllNodes) {
 			if (map.inArcSet(i, j)) {			
-				p1 = loadDelivery[i][j] + loadPickup[i][j] - ModelParameters::Capacity * x[i][j];
+				p1 = loadDelivery[i][j] + loadPickup[i][j] - Capacity * x[i][j];
 				prob.newCtr("ArcCapacity", p1 <= 0);
 				p1 = 0;
 				

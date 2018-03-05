@@ -28,6 +28,8 @@ private:
 	int ** VisitNode; //Crossover mask. Which customer to visit.
 
 	int NumOfCustomers;
+	int MaxTime;
+	int Capacity;
 	int NumOfPeriods;
 	int ** Dist;
 	int ** TransCost;
@@ -82,6 +84,7 @@ private:
 
 
 public:
+	
 	//Sets
 	int startTime;
 	vector  <int> Periods;
@@ -127,6 +130,8 @@ public:
 		void buildGraph(vector<Node*> &graph, int t, IRP &);
 		void print(IRP &, string filname);
 
+		double getNumberOfRoutes(IRP &instance);
+
 		double getObjective(IRP * instance);
 		void printSolution(IRP &instance);
 		double getTransportationCost(IRP * instance);
@@ -147,10 +152,12 @@ public:
 	void printRouteMatrix();
 	void addRoutesToVector();
 	void printMatrix();
+	int getCapacity();
 	Map * getMap();
 	void calculateExcess();
 	void IRP::buildGraph(vector<Node*> &graph, int t, Solution * solution);
 	int allocateSolution();
+	int allocateIRPSolution();
 	bool sepStrongComponents(vector<XPRBcut> &);
 	void addSubtourCut(vector<vector <Node *>> &, int t, bool &, vector<XPRBcut> &);
 	IRP::Solution * solveModel();

@@ -40,23 +40,18 @@ CustomerIRP::CustomerIRP(int id, int periods, int randSeed)
 	Demand(new int * [2])
 {	
 	srand(time(0)+randSeed);
-	if (ModelParameters::DemandDel >= ModelParameters::UBDel ||
-		ModelParameters::DemandPick >= ModelParameters::UBPick) {
-		printf("Error: Demand parameter cannot exceed upper limit parameter in Model parameters");
-		return;
-	}
-		HoldingCost[DELIVERY] = (rand() % 10 + 1)*ModelParameters::HoldingCost;
-		HoldingCost[PICKUP] = (rand() % 10 + 1)*ModelParameters::HoldingCost;
-		
 
-		Demand[DELIVERY] = new int[periods];
-		Demand[PICKUP] = new int[periods];
-		int maxDemandDel = 0;
-		int maxDemandPic = 0;
+	HoldingCost[DELIVERY] = rand() % (ModelParameters::HoldingCostHigh - ModelParameters::HoldingCostLow) + ModelParameters::HoldingCostLow;
+	HoldingCost[PICKUP] = rand() % (ModelParameters::HoldingCostHigh - ModelParameters::HoldingCostLow ) + ModelParameters::HoldingCostLow;
+		
+	Demand[DELIVERY] = new int[periods];
+	Demand[PICKUP] = new int[periods];
+	int maxDemandDel = 0;
+	int maxDemandPic = 0;
 
 		for (int t = 0; t < periods; t++) {
-			Demand[DELIVERY][t] = (rand() % 10 + 1)*ModelParameters::DemandDel;
-			Demand[PICKUP][t] = (rand() % 10 + 1)*ModelParameters::DemandPick;
+			Demand[DELIVERY][t] = rand() % (ModelParameters::DemandDelHigh - ModelParameters::DemandDelLow) + ModelParameters::DemandDelLow;
+			Demand[PICKUP][t] = rand() % (ModelParameters::DemandPickHigh - ModelParameters::DemandPickLow) + ModelParameters::DemandPickLow;
 			if (Demand[DELIVERY][t] >= maxDemandDel) {
 				maxDemandDel = Demand[DELIVERY][t];
 			}
@@ -65,28 +60,26 @@ CustomerIRP::CustomerIRP(int id, int periods, int randSeed)
 			}
 		}
 
-		LowerLimit[DELIVERY] = (rand() % 10 + 1)*ModelParameters::LBDel;
+		LowerLimit[DELIVERY] = ModelParameters::LBDel;
 		
 		do {
-			UpperLimit[DELIVERY] = LowerLimit[DELIVERY] + (rand() % 10 + 1)*ModelParameters::UBDel;
-			
+			UpperLimit[DELIVERY] = rand() % (ModelParameters::UBDelHigh - ModelParameters::UBDelLow) + ModelParameters::UBDelLow;
+
 		}
 		while (UpperLimit[DELIVERY] - LowerLimit[DELIVERY] <= maxDemandDel);
 
 
 		int a = ModelParameters::LBPick;
-		LowerLimit[PICKUP] = (rand() % 10 + 1)*ModelParameters::LBPick;	
+		LowerLimit[PICKUP] = ModelParameters::LBPick;	
 		do {
-			UpperLimit[PICKUP] = LowerLimit[PICKUP] + (rand() % 10 + 1)*ModelParameters::UBPick;
+			UpperLimit[PICKUP] = rand () % (ModelParameters::UBPickHigh - ModelParameters::UBPickLow) + ModelParameters::UBPickLow;
 		} while (UpperLimit[PICKUP] - LowerLimit[PICKUP] <= maxDemandPic);
 
-		do {
-			InitInventory[DELIVERY] = (rand() % 10 + 1)*ModelParameters::InitInventoryDel;
-		} while (InitInventory[DELIVERY] <= LowerLimit[DELIVERY] || InitInventory[DELIVERY] >= UpperLimit[DELIVERY]);
+		
+		InitInventory[DELIVERY] = rand() % (UpperLimit[DELIVERY] - LowerLimit[DELIVERY]) + LowerLimit[DELIVERY];
 
-		do {
-			InitInventory[PICKUP] = (rand() % 10 + 1)*ModelParameters::InitInventoryPick;
-		} while (InitInventory[PICKUP] <= LowerLimit[PICKUP] || InitInventory[PICKUP] >= UpperLimit[PICKUP]);
+	    InitInventory[PICKUP] = rand() % (UpperLimit[PICKUP] - LowerLimit[PICKUP]) + LowerLimit[PICKUP];
+
 }
 
 

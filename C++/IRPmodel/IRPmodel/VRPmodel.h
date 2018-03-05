@@ -14,7 +14,7 @@ using namespace dashoptimization;
 class VRPmodel
 {
 public:
-	VRPmodel(CustomerVRPDB & db, Map &map);
+	VRPmodel(CustomerVRPDB & db, Map &map, int Capacity);
 	void solveModel();
 	~VRPmodel();
 	void addToIRPSolution(int t, IRP::Solution * sol, IRP &);
