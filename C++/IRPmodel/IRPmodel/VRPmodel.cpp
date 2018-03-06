@@ -352,18 +352,14 @@ VRPmodel::~VRPmodel()
 
 void VRPmodel::addToIRPSolution(int t, IRP::Solution * sol, IRP &instance)
 {
-	//Add arc and load variables
+	//Add load variables
 	for (int i : AllNodes) {
 		sol->ySol[i][t] = y[i].getSol();
 		for (int j : AllNodes) {
 			if (map.inArcSet(i, j)) {
 				//get solution from VRP
-				sol->xSol[i][j][t] = x[i][j].getSol();
-				x[i][j].print();
-				cout << "\n";
-				sol->loadDelSol[i][j][t] = (int)loadDelivery[i][j].getSol();
-				int a = (int)loadPickup[i][j].getSol();
-				sol->loadPickSol[i][j][t] = (int)loadPickup[i][j].getSol();
+				sol->loadDelSol[i][j][t] = loadDelivery[i][j].getSol();
+				sol->loadPickSol[i][j][t] = loadPickup[i][j].getSol();
 			}
 		
 		}
@@ -372,7 +368,10 @@ void VRPmodel::addToIRPSolution(int t, IRP::Solution * sol, IRP &instance)
 	//Add time variables
 	for (int i : Nodes) {
 		sol->timeSol[i][t] = time[i].getSol();
-		}
+	}
+
+	//Add the routes 
+	addRoutesToIRP(instance, t, sol);
 }
 
 void VRPmodel::addRoutesToIRP(IRP & instance, int t,  IRP::Solution * sol)

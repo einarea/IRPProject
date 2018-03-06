@@ -278,21 +278,18 @@ int IRP::allocateSolution()
 {
 	SolutionCounter++;
 	//Allocate x and loading solutions
-	Solution * sol = new Solution(*this);
+	Solution * sol = new Solution(*this, true);
 	sol->SolID = SolutionCounter;
 
-	sol->xSol = new double **[AllNodes.size()];
 	sol->loadDelSol = new double **[AllNodes.size()];
 	sol->loadPickSol = new double **[AllNodes.size()];
 
 	for (int i : AllNodes) {
-		sol->xSol[i] = new double *[AllNodes.size()];
 		sol->loadDelSol[i] = new double *[AllNodes.size()];
 		sol->loadPickSol[i] = new double *[AllNodes.size()];
 
 		for (int j : AllNodes) {
 			if (map.inArcSet(i, j)) {
-				sol->xSol[i][j] = new double[Periods.size()];
 				sol->loadDelSol[i][j] = new double[Periods.size()];
 				sol->loadPickSol[i][j] = new double[Periods.size()];
 
@@ -301,7 +298,6 @@ int IRP::allocateSolution()
 					/*sol->xSol[i][j][t] = x[i][j][t].getSol();
 					sol->loadDelSol[i][j][t] = loadDelivery[i][j][t].getSol();
 					sol->loadPickSol[i][j][t] = loadPickup[i][j][t].getSol();*/
-					sol->xSol[i][j][t] = 0;
 					sol->loadDelSol[i][j][t] = 0;
 					sol->loadPickSol[i][j][t] = 0;
 
@@ -1088,14 +1084,16 @@ IRP::~IRP()
 
 
 
-IRP::Solution::Solution(IRP & model)
+IRP::Solution::Solution(IRP & model, bool integer = false)
 	:
+	IntegerSolution(integer),
 	instance(model)
 {
 }
 
-IRP::Solution::Solution(IRP &model, double ** y, double *** x, double ** del, double ** pick, double *** loadDel, double *** loadPick, double **inv, double ** time)
+IRP::Solution::Solution(IRP &model, bool integer=false, double ** y, double *** x, double ** del, double ** pick, double *** loadDel, double *** loadPick, double **inv, double ** time)
 	:
+	IntegerSolution(integer),
 	instance(model),
 	ySol(y),
 	xSol(x),
@@ -1159,7 +1157,10 @@ int IRP::Solution::newRoute(vector<Node*>& route, int t)
 
 double IRP::Solution::getObjective()
 {
-	return getHoldingCost() + getTransportationCost();
+	if (IntegerSolution)
+		return getHoldingCost() + getTransInteger();
+	else
+		return getHoldingCost() + getTransportationCost();
 	
 }
 
@@ -1335,8 +1336,38 @@ double IRP::Solution::getHoldingCost()
 
 double IRP::Solution::removeVisit(IRP::Route * route, int selection)
 {
+	
 	Node node = getNode(route, selection);
 	route->removeNode(node, *this);
+	fixInventory(node, int selection, route->period);
+}
+
+double IRP::Solution::fixInventory(Node *, int selection, int t)
+{
+	if(selection == ModelParameters::REMOVE_SERVICE)
+		propagateInventory(Node *, int t)
+}
+
+
+void IRP::Solution::propagateInventory(Node * u, int period)
+{
+	
+	while (period < instance.getNumOfPeriods()) {
+		propagateInventory(u, period + 1);
+	}
+}
+
+double IRP::Solution::getTransInteger()
+{
+	int i;
+	int j;
+	double TravelCost = 0;
+	for(IRP::Route * r: SolutionRoutes)
+		for (Node * u : r->route) {
+			i = u->getId();
+			j = u->getEdge(0)->getEndNode()->getId();
+			TravelCost += instance.TransCost[i][j];
+		}
 }
 
 void IRP::Solution::buildGraph(vector<Node*>& graph, int t)
@@ -1377,7 +1408,6 @@ int IRP::Route::removeNode(Node * node, IRP::Solution & sol)
 	Node * v = node->getEdge(0)->getEndNode();
 
 	u->removeEdge(*node);
-	x[][]
 	u->addEdge(1, *v);
 	route.erase(route.begin()+position);
 	delete node;
