@@ -39,6 +39,8 @@ private:
 	XPRBvar **loadDelivery;
 	XPRBvar **loadPickup;
 	XPRBvar *time;
+	XPRBvar extraVehicle;
+	XPRBvar **pCapacity; //Penalty capacity
 
 	//Parameters
 	int Capacity;

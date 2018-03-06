@@ -12,7 +12,8 @@ public:
 	static const int SERVICETIME = 20;
 	static const int maxTime = 480;
 	static const int Capacity;
-	static const int CapacityPenalty = 10;
+	static const int CapacityPenalty = 10000;
+	//static const int VehiclePenalty = 100000;
 	static const int nVehicles = 3;
 
 	//Heurestic

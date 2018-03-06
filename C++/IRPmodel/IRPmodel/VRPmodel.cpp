@@ -25,8 +25,14 @@ void VRPmodel::solveModel()
 	//int b = prob.getLPStat();
 
 	int d = prob.mipOptimise();
-	//prob.print();
+	prob.print();
+
 	for (int i : AllNodes)
+		for (int j : AllNodes)
+			if (map.inArcSet(i, j))
+				if (pCapacity[i][j].getSol() >= 0.5)
+					cout << pCapacity[i][j].getSol();
+	/*for (int i : AllNodes)
 	{
 		y[i].print();
 		printf("\t");
@@ -43,14 +49,14 @@ void VRPmodel::solveModel()
 			(loadPickup[i][j][t]).print();
 			printf("\t");
 			}
-			}*/
+			}
 
 			time[i].print();
 			printf("\n");
 
 
 		
-	}
+	}*/
 	int c = prob.getObjVal();
 }
 
@@ -130,15 +136,17 @@ bool VRPmodel::initializeVariables()
 	//Loading variables
 
 
-	//Initialize routing variables and load
+	//Initialize routing variables, load and penalty variables
 	loadDelivery = new XPRBvar *[AllNodes.back()];
 	loadPickup = new XPRBvar *[AllNodes.back()];
+	pCapacity = new XPRBvar *[AllNodes.back()];
 
 	x = new XPRBvar * [AllNodes.back()];
 
 	for (int i : AllNodes) {
 		x[i] = new XPRBvar[AllNodes.back()];
 
+		pCapacity[i] = new XPRBvar[AllNodes.back()];
 		loadDelivery[i] = new XPRBvar[AllNodes.back()];
 		loadPickup[i] = new XPRBvar[AllNodes.back()];
 
@@ -146,6 +154,7 @@ bool VRPmodel::initializeVariables()
 			if (map.inArcSet(i, j)) {
 				x[i][j] = prob.newVar(XPRBnewname("x%d-%d", i, j), XPRB_BV, 0, 1);
 
+				pCapacity[i][j] = prob.newVar(XPRBnewname("pCap%d%d", i, j), XPRB_PL, 0, Capacity);
 				loadDelivery[i][j] = prob.newVar(XPRBnewname("loadDel_%d%d", i, j), XPRB_PL, 0, Capacity);
 				loadPickup[i][j] = prob.newVar(XPRBnewname("loadPic_%d%d", i, j), XPRB_PL, 0, Capacity);
 				//loadDelivery[i][j].print();
@@ -159,8 +168,10 @@ bool VRPmodel::initializeVariables()
 	}
 
 	//depot
-	y[0] = prob.newVar(XPRBnewname("y%d", 0), XPRB_PL, 0, nVehicles);
+	y[0] = prob.newVar(XPRBnewname("y%d", 0), XPRB_PL, 0, 4*nVehicles);
 
+	//Ectra vehicles
+	extraVehicle = prob.newVar(XPRBnewname("extraVeh", 0), XPRB_PL, 0, 2 * nVehicles);
 
 
 	//Time variables
@@ -185,6 +196,17 @@ bool VRPmodel::formulateProblem()
 				printf("%d\n", a);
 			}
 			}
+
+	//Penalty capacity
+	for(int i: AllNodes)
+		for (int j : AllNodes) {
+			if (map.inArcSet(i, j)) {
+				objective += ModelParameters::CapacityPenalty * pCapacity[i][j];
+			}
+
+		}
+
+		
 	prob.setObj(prob.newCtr("OBJ", objective));  /* Set the objective function */
 
 
@@ -283,7 +305,7 @@ bool VRPmodel::formulateProblem()
 	for (int i : AllNodes) {
 		for (int j : AllNodes) {
 			if (map.inArcSet(i, j)) {			
-				p1 = loadDelivery[i][j] + loadPickup[i][j] - Capacity * x[i][j];
+				p1 = loadDelivery[i][j] + loadPickup[i][j] - Capacity * x[i][j] - pCapacity[i][j];
 				prob.newCtr("ArcCapacity", p1 <= 0);
 				p1 = 0;
 				
@@ -362,8 +384,15 @@ void VRPmodel::addRoutesToIRP(IRP & instance, int t,  IRP::Solution * sol)
 	
 	graphAlgorithm::getRoutes(graph, routes);
 
-	//Check if route exist.
+	
+	//Add all routes to the current solution	
 	for (vector <Node*> r : routes) {
+		sol->newRoute(r, t);
+	}
+
+	//Add unique routes to IRP
+	//Check if route exist.
+	/*for (vector <Node*> r : routes) {
 		vector <IRP::Route const *> routePtr = instance.getRoutes();
 		int i = 0;
 		while (routePtr.size() > 0 && i < r.size()) {
@@ -386,6 +415,6 @@ void VRPmodel::addRoutesToIRP(IRP & instance, int t,  IRP::Solution * sol)
 	for (int i = 0; i < routes.size(); i++) {
 		graphAlgorithm::printGraph(instance.getRoute(i)->route, instance, "route"+to_string(i));
 
-	}
+	}*/
 }
 		

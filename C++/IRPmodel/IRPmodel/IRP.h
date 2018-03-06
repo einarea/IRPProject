@@ -106,9 +106,12 @@ public:
 	public:
 	int getCost();
 	int id;
+	int removeNode(Node*, IRP::Solution&);
+	int getPosition(Node * node);
 	int getId();
 	int ** getRouteMatrix(IRP * const instance);
-	Route(vector <Node*> & path, int id);
+	int period;
+	Route(vector <Node*> & path, int id, int t = 0);
 	//Graph 
 	vector <Node*> route;
 	};
@@ -116,8 +119,8 @@ public:
 	//Class to store solutions to the instance
 	class Solution {
 	public:
-		Solution();
-		Solution(double ** y, double ***x, double **del, double **pic, double ***loadDel, double ***loadPic, double **inv, double ** time);
+		Solution(IRP &model);
+		Solution(IRP &model, double ** y, double ***x, double **del, double **pic, double ***loadDel, double ***loadPic, double **inv, double ** time);
 		int SolID;
 		double **ySol;
 		double ***xSol;
@@ -127,15 +130,28 @@ public:
 		double ***loadPickSol;
 		double **invSol;
 		double **timeSol;
-		void buildGraph(vector<Node*> &graph, int t, IRP &);
-		void print(IRP &, string filname);
+		double **pCapacity;
 
-		double getNumberOfRoutes(IRP &instance);
+		vector <IRP::Route*> SolutionRoutes;
 
-		double getObjective(IRP * instance);
-		void printSolution(IRP &instance);
-		double getTransportationCost(IRP * instance);
-		double getHoldingCost(IRP * instance);
+		void buildGraph(vector<Node*> &graph, int t);
+		void print(string filname);
+
+		bool isFeasible();
+		bool isRouteFeasible(IRP::Route *);
+		double getNumberOfRoutes();
+		int newRoute(vector <Node*> & route, int period);
+
+		double getObjective();
+		void printSolution();
+		double getTransportationCost();
+		double getHoldingCost();
+
+		//Operators
+		double removeVisit(IRP::Route * route, int selection = 1);
+
+		private:
+		IRP &instance;
 	
 	};
 
