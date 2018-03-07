@@ -12,9 +12,10 @@ public:
 	static const int SERVICETIME = 20;
 	static const int maxTime = 480;
 	static const int Capacity;
-	static const int CapacityPenalty = 10000;
-	//static const int VehiclePenalty = 100000;
-	static const int nVehicles = 3;
+	//static const int CapacityPenalty = 10000;
+	static const int VehiclePenalty = 100000;
+	static const int overTime = 3;
+	static const int nVehicles = 1;
 
 	//Heurestic
 	//static const double VisitRatio = 0.5;
@@ -50,6 +51,10 @@ public:
 
 	//Valid inequalitites
 	static const int MinimumNodeVisit = 1;
+
+
+	//Operators
+	static const int REMOVE_SERVICE = 0;
 
 	~ModelParameters();
 };

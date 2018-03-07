@@ -24,10 +24,11 @@ void VRPmodel::solveModel()
 	//prob.lpOptimize();
 	//int b = prob.getLPStat();
 
-	int d = prob.mipOptimise();
 	prob.print();
-
-	for (int i : AllNodes)
+	int d = prob.mipOptimise();
+	if (extraVehicle.getSol() > 0)
+		int a = 1;
+	/*for (int i : AllNodes)
 		for (int j : AllNodes)
 			if (map.inArcSet(i, j))
 				if (pCapacity[i][j].getSol() >= 0.5)
@@ -154,7 +155,7 @@ bool VRPmodel::initializeVariables()
 			if (map.inArcSet(i, j)) {
 				x[i][j] = prob.newVar(XPRBnewname("x%d-%d", i, j), XPRB_BV, 0, 1);
 
-				pCapacity[i][j] = prob.newVar(XPRBnewname("pCap%d%d", i, j), XPRB_PL, 0, Capacity);
+				//pCapacity[i][j] = prob.newVar(XPRBnewname("pCap%d%d", i, j), XPRB_PL, 0, Capacity);
 				loadDelivery[i][j] = prob.newVar(XPRBnewname("loadDel_%d%d", i, j), XPRB_PL, 0, Capacity);
 				loadPickup[i][j] = prob.newVar(XPRBnewname("loadPic_%d%d", i, j), XPRB_PL, 0, Capacity);
 				//loadDelivery[i][j].print();
@@ -171,7 +172,7 @@ bool VRPmodel::initializeVariables()
 	y[0] = prob.newVar(XPRBnewname("y%d", 0), XPRB_PL, 0, 4*nVehicles);
 
 	//Ectra vehicles
-	extraVehicle = prob.newVar(XPRBnewname("extraVeh", 0), XPRB_PL, 0, 2 * nVehicles);
+	extraVehicle = prob.newVar(XPRBnewname("extraVeh", 0), XPRB_PL, 0, 2*nVehicles);
 
 
 	//Time variables
@@ -197,14 +198,17 @@ bool VRPmodel::formulateProblem()
 			}
 			}
 
-	//Penalty capacity
+	//Vehicle penalty
+	objective += ModelParameters::VehiclePenalty * extraVehicle;
+
+	/*Penalty capacity
 	for(int i: AllNodes)
 		for (int j : AllNodes) {
 			if (map.inArcSet(i, j)) {
-				objective += ModelParameters::CapacityPenalty * pCapacity[i][j];
+				
 			}
 
-		}
+		}*/
 
 		
 	prob.setObj(prob.newCtr("OBJ", objective));  /* Set the objective function */
@@ -246,7 +250,7 @@ bool VRPmodel::formulateProblem()
 
 	//Depot
 	p1 = y[0];
-	prob.newCtr("Max vehicles", p1 <= ModelParameters::nVehicles);
+	prob.newCtr("Max vehicles", p1 <= ModelParameters::nVehicles + extraVehicle);
 	p1 = 0;
 	
 
@@ -305,7 +309,7 @@ bool VRPmodel::formulateProblem()
 	for (int i : AllNodes) {
 		for (int j : AllNodes) {
 			if (map.inArcSet(i, j)) {			
-				p1 = loadDelivery[i][j] + loadPickup[i][j] - Capacity * x[i][j] - pCapacity[i][j];
+				p1 = loadDelivery[i][j] + loadPickup[i][j] - Capacity * x[i][j];
 				prob.newCtr("ArcCapacity", p1 <= 0);
 				p1 = 0;
 				
@@ -329,6 +333,11 @@ bool VRPmodel::formulateProblem()
 				prob.newCtr("Time flow", p1 <= p2);
 				p1 = 0;
 				p2 = 0;
+
+				p1 = time[i] + TravelTime[i][j] * x[i][j];
+			
+				//prob.newCtr("Final time", p1 <= ModelParameters::maxTime );
+				p1 = 0;
 			}
 
 		}
@@ -342,6 +351,19 @@ bool VRPmodel::formulateProblem()
 	}
 	
 
+	//Valid inequalitites
+	for (int i : AllNodes) {
+		for (int j : AllNodes) {
+			if (map.inArcSet(i, j))
+				p1 += TravelTime[i][j] * x[i][j];
+		}
+	}
+
+	p2 = ModelParameters::maxTime*(y[0] + extraVehicle);
+	prob.newCtr("Totaltume", p1 <= p2);
+
+	p1 = 0;
+	p2 = 0;
 
 	return false;
 }
@@ -360,6 +382,7 @@ void VRPmodel::addToIRPSolution(int t, IRP::Solution * sol, IRP &instance)
 				//get solution from VRP
 				sol->loadDelSol[i][j][t] = loadDelivery[i][j].getSol();
 				sol->loadPickSol[i][j][t] = loadPickup[i][j].getSol();
+				sol->xSol[i][j][t] = x[i][j].getSol();
 			}
 		
 		}

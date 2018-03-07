@@ -120,7 +120,7 @@ public:
 	class Solution {
 	public:
 		Solution(IRP &model, bool integer);
-		Solution(IRP &model, bool integer, double ** y, double ***x, double **del, double **pic, double ***loadDel, double ***loadPic, double **inv, double ** time);
+		Solution(IRP &model, double ** y, double ***x, double **del, double **pic, double ***loadDel, double ***loadPic, double **inv, double ** time, bool integer);
 		int SolID;
 		double **ySol;
 		double ***xSol;
@@ -137,7 +137,7 @@ public:
 		void buildGraph(vector<Node*> &graph, int t);
 		void print(string filname);
 
-		bool IntegerSolution = false;
+		bool IntegerSolution;
 		bool isFeasible();
 		bool isRouteFeasible(IRP::Route *);
 		double getNumberOfRoutes();
@@ -150,10 +150,11 @@ public:
 
 		//Operators
 		double removeVisit(IRP::Route * route, int selection = 1);
-		double fixInventory(Node *, int selection = 1, int period);
+		double fixInventory(Node *, int selection, int period);
 
 		private:
 		//Integer solutions
+			Node* selectNode(IRP::Route *, int Selection);
 			void propagateInventory(Node*, int period);
 			double getTransInteger();
 		IRP &instance;
