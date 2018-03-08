@@ -75,6 +75,9 @@
     <ClInclude Include="IRPmodel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="NodeIRP.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -126,6 +129,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="NodeStrong.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NodeIRP.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

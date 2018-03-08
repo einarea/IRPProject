@@ -25,7 +25,19 @@ Node::Edge * Node::getEdge(int id)
 	return Edges[id];
 }
 
-vector<Node::Edge*>* Node::getEdges()
+int Node::getnEdges()
+{
+	return Edges.size();
+}
+
+Node::Edge * Node::getEdge()
+{
+	return Edges[0];
+}
+
+
+
+vector<Node::Edge*> Node::getEdges()
 {
 	return &Edges;
 }
@@ -43,6 +55,11 @@ bool Node::operator==(const Node & node) const
 		return true;
 	else
 		return false;
+}
+
+void Node::addEdge(Edge* edge)
+{
+	this->Edges.push_back(edge);
 }
 
 void Node::addEdge(double value, Node &child)

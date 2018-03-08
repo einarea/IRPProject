@@ -75,7 +75,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Users\einarea\Source\Repos\IRPProject\Exlibs\gnuplot-iostrea;C:\Users\einarea\Source\Repos\IRPProject\boost\boost_1_60_0;\\sambaad.stud.ntnu.no\einarea\Documents\Visual Studio 2015\Projects\IRP\XpressFiles\include;$(IncludePath)</IncludePath>
+    <IncludePath>C:\Users\Einar Aastveit\source\repos\IRPProject2\include;C:\Users\einarea\Source\Repos\IRPProject\Exlibs\gnuplot-iostrea;C:\Users\einarea\Source\Repos\IRPProject\boost\boost_1_60_0;\\sambaad.stud.ntnu.no\einarea\Documents\Visual Studio 2015\Projects\IRP\XpressFiles\include;$(IncludePath)</IncludePath>
     <LibraryPath>C:\Users\einarea\Source\Repos\IRPProject\boost\boost_1_60_0\lib64-msvc-14.0;\\sambaad.stud.ntnu.no\einarea\Documents\Visual Studio 2015\Projects\IRP\XpressFiles\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -164,6 +164,7 @@
     <ClInclude Include="ModelBase.h" />
     <ClInclude Include="ModelParameters.h" />
     <ClInclude Include="Node.h" />
+    <ClInclude Include="NodeIRP.h" />
     <ClInclude Include="NodeStrong.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
@@ -185,6 +186,7 @@
     <ClCompile Include="ModelBase.cpp" />
     <ClCompile Include="ModelParameters.cpp" />
     <ClCompile Include="Node.cpp" />
+    <ClCompile Include="NodeIRP.cpp" />
     <ClCompile Include="NodeStrong.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

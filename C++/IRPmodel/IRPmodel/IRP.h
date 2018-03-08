@@ -6,6 +6,7 @@
 #include <vector>
 #include "CustomerDB.h"
 #include "Node.h"
+#include "NodeIRP.h"
 #include "xprs.h"
 #include <string.h>
 
@@ -123,20 +124,14 @@ public:
 	class Solution {
 	public:
 		Solution(IRP &model, bool integer);
-		Solution(IRP &model, double ** y, double ***x, double **del, double **pic, double ***loadDel, double ***loadPic, double **inv, double ** time, bool integer);
+		Solution(IRP &model, vector<vector<IRP::Route*>> & r,bool integer);
 		int SolID;
-		double **ySol;
-		double ***xSol;
-		double **delSol;
-		double **pickSol;
-		double	***loadDelSol;
-		double ***loadPickSol;
-		double **invSol;
-		double **timeSol;
 		double **pCapacity;
 
+		vector<NodeIRP *> Nodes;
+
 		//The set of routes for each period
-		vector<vector <IRP::Route*>> SolutionRoutes;
+		vector<vector <IRP::Route*>> Routes;
 
 		void buildGraph(vector<Node*> &graph, int t);
 		void print(string filname);

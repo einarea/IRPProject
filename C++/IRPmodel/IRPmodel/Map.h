@@ -24,6 +24,7 @@ public:
 	int getDistance(int node1, int node2);
 	int getX(int id);
 	int getY(int id);
+	int getCustomerId(int nodeNumber);
 	int getDeliveryNode(Customer *);
 	int getPickupNode(Customer *);
 	int getNumCustomers();

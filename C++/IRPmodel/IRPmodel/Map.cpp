@@ -103,6 +103,7 @@ int Map::getY(int id)
 }
 
 
+
 bool Map::inArcSet(int i, int j)
 {
 	bool a = (i == j || (i == database.getnCustomers() + j && j != 0));
