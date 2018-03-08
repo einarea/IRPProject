@@ -55,7 +55,8 @@ public:
 
 	//Operators
 	static const int REMOVE_SERVICE = 0;
-
+	static const int HIGHEST_HOLDINGCOST = 1;
+	static const int HIGHEST_TOTALCOST = 2;
 	~ModelParameters();
 };
 

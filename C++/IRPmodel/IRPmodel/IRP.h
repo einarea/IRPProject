@@ -106,7 +106,10 @@ public:
 	public:
 	int getCost();
 	int id;
-	int removeNode(Node*, IRP::Solution&);
+	int removeNode(Node*, IRP::Route *);
+	void insertSubRoute(vector<Node *>, Node * start, Node * end);
+	
+
 	int getPosition(Node * node);
 	int getId();
 	int ** getRouteMatrix(IRP * const instance);
@@ -132,7 +135,8 @@ public:
 		double **timeSol;
 		double **pCapacity;
 
-		vector <IRP::Route*> SolutionRoutes;
+		//The set of routes for each period
+		vector<vector <IRP::Route*>> SolutionRoutes;
 
 		void buildGraph(vector<Node*> &graph, int t);
 		void print(string filname);
@@ -149,14 +153,22 @@ public:
 		double getHoldingCost();
 
 		//Operators
-		double removeVisit(IRP::Route * route, int selection = 1);
-		double fixInventory(Node *, int selection, int period);
+		void removeVisit(IRP::Route * route, int selection = 1);
+		void updateInventory(Node *, int period);
+		void changeQuantity(Node *, int period,  int quantity);
+		IRP::Route * insertSubrouteInRoute(IRP::Route * subroute, int period);
 
 		private:
 		//Integer solutions
-			Node* selectNode(IRP::Route *, int Selection);
-			void propagateInventory(Node*, int period);
+			vector<Node*> selectPair(IRP::Route *, int Selection);
+
+			//Update inventory and helper functions
+			void propDelInvBack(int nodeId, int period);
+			void propDelInvForw(int nodeId, int period);
+			void propPickInvBack(int nodeId, int period);
+			void propPickInvForw(int nodeId, int period);
 			double getTransInteger();
+
 		IRP &instance;
 	
 	};
