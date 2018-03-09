@@ -5,10 +5,9 @@
 #include "MapIRP.h"
 #include <vector>
 #include "CustomerDB.h"
-#include "Node.h"
-#include "NodeIRP.h"
 #include "xprs.h"
 #include <string.h>
+#include "Node.h"
 
 using namespace ::dashoptimization;
 using namespace::std;
@@ -62,6 +61,7 @@ private:
 
 	//Forward declaration
 	class Solution;
+	class NodeIRP;
 	class Route;
 
 
@@ -101,24 +101,24 @@ public:
 	double ** ExcessConsumption;
 	double ** ExcessProd;
 
-	
+	//*****************Inner classes************************//
 	//Class to store routes and cost of routes
 	class Route {
-	public:
-	int getCost();
-	int id;
-	int removeNode(Node*, IRP::Route *);
-	void insertSubRoute(vector<Node *>, Node * start, Node * end);
+		public:
+		int getCost();
+		int id;
+		//int removeNode(NodeIRP*, IRP::Route *);
+		//void insertSubRoute(vector<NodeIRP *>, NodeIRP * start, NodeIRP * end);
 	
 
-	int getPosition(Node * node);
-	int getId();
-	int ** getRouteMatrix(IRP * const instance);
-	int period;
-	Route(vector <Node*> & path, int id, int t = 0);
-	//Graph 
-	vector <Node*> route;
-	};
+		int getPosition(Node * node);
+		int getId();
+		int ** getRouteMatrix(IRP * const instance);
+		int period;
+		Route(vector <NodeIRP*> & path, int id, int t = 0);
+		//Graph 
+		vector <NodeIRP*> route;
+	}; //end class Route
 
 	//Class to store solutions to the instance
 	class Solution {
@@ -133,39 +133,70 @@ public:
 		//The set of routes for each period
 		vector<vector <IRP::Route*>> Routes;
 
-		void buildGraph(vector<Node*> &graph, int t);
+		//void buildGraph(vector<Node*> &graph, int t);
 		void print(string filname);
 
 		bool IntegerSolution;
 		bool isFeasible();
 		bool isRouteFeasible(IRP::Route *);
-		double getNumberOfRoutes();
+		double getNumberOfRoutes(int period);
+		NodeIRP * getNode(int id);
 		int newRoute(vector <Node*> & route, int period);
 
+		int getnPeriods();
 		double getObjective();
 		void printSolution();
 		double getTransportationCost();
 		double getHoldingCost();
+		double getHoldingCost(int period);
+		double getTransportationCost(int period);
 
 		//Operators
 		void removeVisit(IRP::Route * route, int selection = 1);
-		void updateInventory(Node *, int period);
-		void changeQuantity(Node *, int period,  int quantity);
 		IRP::Route * insertSubrouteInRoute(IRP::Route * subroute, int period);
 
 		private:
 		//Integer solutions
-			vector<Node*> selectPair(IRP::Route *, int Selection);
-
-			//Update inventory and helper functions
-			void propDelInvBack(int nodeId, int period);
-			void propDelInvForw(int nodeId, int period);
-			void propPickInvBack(int nodeId, int period);
-			void propPickInvForw(int nodeId, int period);
-			double getTransInteger();
+			vector<NodeIRP*> selectPair(IRP::Route *, int Selection);
 
 		IRP &instance;
 	
+	}; //End class solution
+
+	//Class to store nodes
+	class NodeIRP :
+		public Node
+	{
+	public:
+		IRP& Instance;
+
+		class EdgeIRP : public Edge {
+		public:
+			EdgeIRP(Node *child, double loadDel, double loadPick, int t, double value);
+			NodeIRP * getEndNode();
+			double LoadDel;
+			double LoadPick;
+			int Period;
+		};
+
+		NodeIRP(int id, IRP & model);
+		~NodeIRP();
+		//Override
+		void addEdge(double loadDel, double loadPick, NodeIRP * child, int period, double value);
+		EdgeIRP * getEdge(int period);
+		vector<double> Quantity;
+		vector<double> Inventory;
+		vector<double> TimeServed;
+		vector <EdgeIRP*> getEdges(int period);
+		double getOutflow(int period);
+		double getHoldCost(int period);
+		
+
+		void propInvForw(int period);
+		void changeQuantity(int period, int quantity);
+		void updateInventory(int period);
+
+		bool isDelivery();
 	};
 
 	IRP(CustomerIRPDB&, bool relaxed = false, bool maskOn = false, int ** VisitMask = 0);

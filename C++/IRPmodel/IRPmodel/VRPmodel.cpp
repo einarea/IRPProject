@@ -378,10 +378,9 @@ void VRPmodel::addToIRPSolution(int t, IRP::Solution * sol, IRP &instance)
 	for (int i : AllNodes) {
 		for (int j : AllNodes) {
 			if (map.inArcSet(i, j)) {
+				if(x[i][j].getSol()>0.001)
 				//get solution from VRP
-				sol->loadDelSol[i][j][t] = loadDelivery[i][j].getSol();
-				sol->loadPickSol[i][j][t] = loadPickup[i][j].getSol();
-				sol->xSol[i][j][t] = x[i][j].getSol();
+				sol->Nodes[i]->addEdge(loadDelivery[i][j].getSol(), loadPickup[i][j].getSol(), sol->Nodes[j], t, x[i][j].getSol());
 			}
 		
 		}
@@ -389,7 +388,7 @@ void VRPmodel::addToIRPSolution(int t, IRP::Solution * sol, IRP &instance)
 
 	//Add time variables
 	for (int i : Nodes) {
-		sol->timeSol[i][t] = time[i].getSol();
+		sol->Nodes[i]->TimeServed[t] = time[i].getSol();
 	}
 
 	//Add the routes 
@@ -400,12 +399,13 @@ void VRPmodel::addRoutesToIRP(IRP & instance, int t,  IRP::Solution * sol)
 {
 	vector<Node*> graph;
 	vector<vector<Node*>> routes;
-	instance.buildGraph(graph, t, sol);
+	for (IRP::NodeIRP * n :sol->Nodes) {
+		graph.push_back(n);
+	}
 
-	
+
 	graphAlgorithm::getRoutes(graph, routes);
 
-	
 	//Add all routes to the current solution	
 	for (vector <Node*> r : routes) {
 		sol->newRoute(r, t);

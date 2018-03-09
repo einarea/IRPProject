@@ -4,7 +4,6 @@
 #include <algorithm>
 #include "graphAlgorithm.h"
 #include "ModelParameters.h"
-#include "NodeIRP.h"
 
 #include <boost/tuple/tuple.hpp>
 
@@ -100,8 +99,8 @@ IRP::IRP(CustomerIRPDB& db, bool ArcRel, bool maskOn, int ** VisitMask)
 	SolutionCounter(0),
 	MaskOn(maskOn)
 {
-	//Initialize node
-	NodeIRP::instance = *this;
+
+
 	//Initialize sets
 	if(!initializeSets()) {
 		cout<<"Data Error: Could not initialize sets.";
@@ -202,10 +201,7 @@ int IRP::allocateIRPSolution()
 			if (map.inArcSet(i, j)) {
 				for (int t : Periods) {
 					if (x[i][j][t].getSol() > 0) {
-						if (map.isDelivery(i))
-							sol->Nodes[i]->addEdge(loadDelivery[i][j][t].getSol(), sol->Nodes[j], t, x[i][j][t].getSol());
-						else
-							sol->Nodes[i]->addEdge(loadPickup[i][j][t].getSol(), sol->Nodes[j], t, x[i][j][t].getSol());
+						sol->Nodes[i]->addEdge(loadDelivery[i][j][t].getSol(), loadPickup[i][j][t].getSol(), sol->Nodes[j], t, x[i][j][t].getSol());		
 					}
 				}
 			} //endif
@@ -341,12 +337,16 @@ void IRP::buildGraph(vector<Node*> &graph, int t, bool Depot)
 
 void IRP::buildGraph(vector<Node*> &graph, int t, IRP::Solution *solution)
 {
-	int s;
+	for (Route * r : solution->Routes[t])
+		for (Node * n : r->route)
+			graph.push_back(new Node(*n));
+}
+	/*int s;
 	double edgeValue;
 
 	//Create nodes for each visited customer
 	for (int i : AllNodes) {
-		if (solution->ySol[i][t] >= 0.01) {
+		if (solution->Nodes[i]->Quantity[t] >= 0.01) {
 			Node * node = new Node(i);
 			graph.push_back(node);
 		}
@@ -364,15 +364,15 @@ void IRP::buildGraph(vector<Node*> &graph, int t, IRP::Solution *solution)
 			}
 		}
 	}
-}
+}*/
 
 void IRP::printGraph(vector<Node> &graph)
 {
 	for (Node node : graph) {
 		int id = node.getId();
-		vector<Node::Edge*> edges = (*node.getEdges());
+		vector<Node::Edge*> edges = (node.getEdges());
 
-		for (Node::Edge* edge : (*node.getEdges())) {
+		for (Node::Edge* edge : (node.getEdges())) {
 			Node * endNode = edge->getEndNode();
 			/*printf("Node: %d with edges to ", id);
 			printf("%d with flow %f" , (*endNode).getId(), edge.getValue());
@@ -406,7 +406,7 @@ void IRP::addSubtourCut(vector<vector<Node *>>& strongComp, int t, bool &newCut,
 			//	printf("y%d%d: %.2f\t", node.getId(), t, y[node.getId()][t].getSol());
 				visitSum += tempNodeVisit;
 
-				for (Node::Edge *edge : *(node->getEdges())) {
+				for (Node::Edge *edge : node->getEdges()) {
 					if(edge->getValue() >= 0) //only inlude edges in strong component
 						circleFlow += edge->getValue();
 						int u = node->getId();
@@ -438,7 +438,7 @@ void IRP::addSubtourCut(vector<vector<Node *>>& strongComp, int t, bool &newCut,
 				for (Node *node : strongComp[i]) {
 					rSide += y[node->getId()][t];
 					rSideStr = rSideStr + " + " + "y_" + to_string(node->getId());
-					for (Node::Edge *edge : *(node->getEdges())) {
+					for (Node::Edge *edge : node->getEdges()) {
 						if (edge->getValue() >= 0) {
 							int u = node->getId();
 							int v = edge->getEndNode()->getId();
@@ -1020,12 +1020,12 @@ IRP::Solution::Solution(IRP & model, bool integer = false)
 	instance(model)
 {
 	//Initializa node holder
-	Nodes.resize(instance.getNumOfCustomers * 2 + 1);
+	Nodes.resize(instance.getNumOfCustomers() * 2 + 1);
 	//Create a route holder for each period
-	Routes.resize(instance.getNumOfPeriods());
+	Routes.resize(instance.getNumOfPeriods()+1);
 	//Create a nodes for all customers and depot
 	for (int i : instance.AllNodes) {
-		NodeIRP * node = new NodeIRP(instance.map.nodeToCustomer(i), instance.getNumOfPeriods());
+		NodeIRP * node = new NodeIRP(i, instance);
 		Nodes[i] = node;
 	}
 }
@@ -1042,13 +1042,11 @@ IRP::Solution::Solution(IRP &model, vector<vector<IRP::Route*>>& routes, bool in
 }
 
 
-
-
 void IRP::Solution::print(string filename)
 {
 	vector<Node *> graph;
 	for (int t : instance.Periods) {
-		buildGraph(graph, t);
+		instance.buildGraph(graph, t, this);
 		graphAlgorithm::printGraph(graph, instance, filename+to_string(t));
 		graph.clear();
 	}
@@ -1058,14 +1056,14 @@ bool IRP::Solution::isFeasible()
 {
 	//Check if too many vehicles
 	for (int t : instance.Periods) {
-		if (ySol[0][t] > ModelParameters::nVehicles) {
+		if (getNumberOfRoutes(t) > ModelParameters::nVehicles) {
 			return false;
 		}
 	}
 
 	//Check if each route is feasible
 	for(int t : instance.Periods)
-	for (IRP::Route* r : SolutionRoutes[t]) {
+	for (IRP::Route* r : Routes[t]) {
 		if (!isRouteFeasible(r))
 			return false;
 	}
@@ -1074,47 +1072,51 @@ bool IRP::Solution::isFeasible()
 
 bool IRP::Solution::isRouteFeasible(IRP::Route * r)
 {
-	int u;
-	int v;
-	int t;
 
-	for (Node * n : r->route) {
-		u = n->getId();
-		v = n->getEdge(0)->getEndNode()->getId();
-		t = r->period;
-		if (loadDelSol[u][v][t] > instance.Capacity || (loadPickSol[u][v][t] > instance.Capacity))
+	int t = r->period;
+
+	for (NodeIRP * n : r->route) {
+
+		if ( n->getEdge(t)->LoadDel + n->getEdge(t)->LoadPick> instance.Capacity)
 			return false;
 		}
 	return true;
 }
 
-double IRP::Solution::getNumberOfRoutes()
+double IRP::Solution::getNumberOfRoutes(int period)
 {
-	if (IntegerSolution)
-		return SolutionRoutes.size();
-	else {
-		double totRoutes = 0;
-		for (int t : instance.Periods) {
-			totRoutes += ySol[0][t];
-		}
-		return totRoutes;
+	NodeIRP * depot = getNode(0);
+	return depot->getOutflow(period);
+}
+
+IRP::NodeIRP * IRP::Solution::getNode(int id)
+{
+	for (NodeIRP * n : Nodes) {
+		if (n->getId() == id)
+			return n;
 	}
 }
 
 int IRP::Solution::newRoute(vector<Node*>& route, int t)
 {
-	int id = SolutionRoutes[t].size();
-	SolutionRoutes[t].push_back(new Route(route, id, t));
-	return SolutionRoutes[t].size() - 1;
+	vector<IRP::NodeIRP *> ptrHolder;
+	for (Node* n : route) {
+		IRP::NodeIRP * nodeptr = static_cast<IRP::NodeIRP*> (n);
+		ptrHolder.push_back(nodeptr);
+	}
+	int id = Routes[t].size();
+	Routes[t].push_back(new Route(ptrHolder, id, t));
+	return Routes[t].size() - 1;
+}
+
+int IRP::Solution::getnPeriods()
+{
+	return Routes.size();
 }
 
 double IRP::Solution::getObjective()
 {
-	if (IntegerSolution)
-		return getHoldingCost() + getTransInteger();
-	else
 		return getHoldingCost() + getTransportationCost();
-	
 }
 
 
@@ -1133,13 +1135,6 @@ vector<IRP::Route const *> IRP::getRoutes()
 	return routePtr;
 }
 
-
-int IRP::newRoute(vector <Node*> & route)
-{
-	int id = routes.size();
-	routes.push_back(new Route(route, id));
-	return routes.size()-1;
-}
 
 void IRP::addValidIneq()
 
@@ -1231,15 +1226,13 @@ void IRP::Solution::printSolution()
 		for (int i : instance.AllNodes) {
 			printf("\n");
 			if (i == 0) {
-				printf("y0: %d", Nodes[i]->getnEdges());
+				printf("y0: %.2f\t", Nodes[i]->getOutflow(t));
 
-				for (NodeIRP::EdgeIRP *edge : Nodes[i]->getEdges())
+				for (NodeIRP::EdgeIRP *edge : Nodes[i]->getEdges(t))
 					if (edge->getValue() > 0) {
-						printf("x%d%d: %d\t", edge->getValue());
-						if (edge->getEndNode()->isDelivery())
-							printf("loadDel%d%d: %.2f\t", i, edge->getEndNode()->getId(), edge->Load);
-						else
-							printf("loadPick%d%d: %.2f\t", i, edge->getEndNode()->getId(), edge->Load);
+						printf("x%d%d: %.2f\t", i, edge->getEndNode()->getId(), edge->getValue());
+						printf("loadDel%d%d: %.2f\t", i, edge->getEndNode()->getId(), edge->LoadDel);
+						printf("loadPick%d%d: %.2f\t", i, edge->getEndNode()->getId(), edge->LoadPick);
 					}
 			}
 			else {
@@ -1250,17 +1243,17 @@ void IRP::Solution::printSolution()
 
 					j = Nodes[i]->getEdge(t)->getEndNode()->getId();
 
-					printf("y%d: %.2f\t", i, 1);
+					printf("y%d: %.2f\t", i, Nodes[i]->getOutflow(t));
 					printf("t%d: %.2f\t", i, Nodes[i]->TimeServed[t]);
 					printf("x%d%d: %.2f\t", i, j, Nodes[i]->getEdge(t)->getValue());
 					if (instance.map.isDelivery(i)) {
 						printf("qD_%d: %.2f\t", i, Nodes[i]->Quantity[t]);
-						printf("loadDel%d%d: %.2f\t", i, j, Nodes[i]->getEdge(t)->Load);
 					}
 					else {
 						printf("qP_%d: %.2f\t", i, Nodes[i]->Quantity[t]);
-						printf("loadPick%d%d: %.2f\t", i, j, Nodes[i]->getEdge(t)->Load);
 					}
+					printf("loadDel%d%d: %.2f\t", i, j, Nodes[i]->getEdge(t)->LoadDel);
+					printf("loadPick%d%d: %.2f\t", i, j, Nodes[i]->getEdge(t)->LoadPick);
 				}
 					
 			} // end if
@@ -1271,84 +1264,89 @@ void IRP::Solution::printSolution()
 double IRP::Solution::getTransportationCost()
 {
 	double TravelCost = 0;
-	for (int i : instance.AllNodes) {
-		for (int j : instance.AllNodes) {
-			if (instance.map.inArcSet(i, j))
-				for (int t : instance.Periods)
-					if (xSol[i][j][t] > 0.01) {
-						TravelCost = TravelCost + instance.TransCost[i][j] * xSol[i][j][t];
-					}
-		}
-	}
+	for (int t : instance.Periods)
+		TravelCost = getTransportationCost(t);
 	return TravelCost;
 }
 
 double IRP::Solution::getHoldingCost()
 {
 	double HoldingCost = 0;
-	//Transportation cost
-
 
 	//Holding Cost
-	for (int i : instance.Nodes) {
-		for (int t : instance.Periods) {
-			HoldingCost += instance.HoldCost[i] * invSol[i][t];
-		}
+	for (int t : instance.Periods) {
+		HoldingCost += getHoldingCost(t);
 	}
-
+	
 	return HoldingCost;
 }
 
-void IRP::Solution::removeVisit(IRP::Route * route, int selection)
+double IRP::Solution::getHoldingCost(int period)
+{
+	double HoldingCost = 0;
+	for (NodeIRP * n : Nodes) {
+		if (n->getId() > 0) {
+			HoldingCost += n->getHoldCost(period);
+		}
+	}
+	return HoldingCost;
+}
+
+
+double IRP::Solution::getTransportationCost(int t)
+{
+	double TravelCost = 0;
+	for (NodeIRP* n : Nodes) {
+		for (Node::Edge * edge : n->getEdges(t)) {
+			int i = n->getId();
+			int j = edge->getEndNode()->getId();
+			double value = edge->getValue();
+			TravelCost = TravelCost + instance.map.getTransCost(i, j)*value;
+		}
+	}
+
+	return TravelCost;
+}
+
+/*void IRP::Solution::removeVisit(IRP::Route * route, int selection)
 {
 	
-	vector<Node*> pair = selectPair(route, ModelParameters::HIGHEST_HOLDINGCOST);
+	vector<NodeIRP*> pair = selectPair(route, ModelParameters::HIGHEST_HOLDINGCOST);
 	
-	for (Node * n : pair) {
+	for (NodeIRP * n : pair) {
 
 		//Removes node from the route
 		route->removeNode(n, route);
-		//Remove the service, either 0 pickup or 0 delivery, the inventory is updates in this function as well
-		changeQuantity(n, route->period, 0);
+		//Remove the service, the inventory is updated in this function as well
+		n->changeQuantity(route->period, 0);
 	}
 	
-}
+}*/
 
-void IRP::Solution::updateInventory(Node * u,  int t)
+
+
+vector<IRP::NodeIRP*> IRP::Solution::selectPair(IRP::Route * r, int Selection)
 {
-	int i = u->getId();
+	vector <NodeIRP*> pair;
+	vector <NodeIRP*> tempPair;
 
-	//If delivery, update inventory in all time periods
-	if (instance.map.isDelivery(i)){
-		invSol[i][t] = invSol[u->getId()][t] - delSol[i][t];
-		propDelInvForw(i, t + 1);
-	}
-	else {
-		invSol[i][t] = invSol[u->getId()][t] + pickSol[i][t];
-		propPickInvForw(i, t + 1);
-	}
-}
-
-
-vector<Node*> IRP::Solution::selectPair(IRP::Route * r, int Selection)
-{
-	vector <Node*> pair;
-	vector <Node*> tempPair;
+	int t = r->period;
 
 	switch (Selection) {
 	case ModelParameters::HIGHEST_HOLDINGCOST:
-
+	{
 		//Locate the node with the highest removal cost in terms of holding cost
 		double tempCost = 0;
 		//Initialize tempPair
 		tempPair.resize(2);
 		pair.resize(2);
-		Node * tempNode = new Node(-1);
+		NodeIRP * tempNode = new NodeIRP(-1, instance);
 
 		int minCost = 1000000;
+		
 		int i = 1;
-		Node * u;
-		Node * v;
+		NodeIRP * u;
+		NodeIRP * v;
 		while (i < r->route.size())
 			tempPair[0] = tempNode;
 		tempPair[1] = tempNode;
@@ -1356,12 +1354,12 @@ vector<Node*> IRP::Solution::selectPair(IRP::Route * r, int Selection)
 		v = r->route[i + 1];
 
 		//Check if node is delivery
-		if (instance.map.isDelivery(u->getId())) {
-			tempCost = delSol[u->getId()][r->period] * instance.HoldCost[u->getId()];
+		if (u->isDelivery()) {
+			tempCost = u->Quantity[t] * instance.HoldCost[u->getId()];
 			tempPair[0] = u;
 			//Check if next node is on the route is the same customer
 			if (instance.map.getCustomer(u->getId()) == instance.map.getCustomer(v->getId())) {
-				tempCost += pickSol[v->getId()][r->period] * instance.HoldCost[v->getId()];
+				tempCost += v->Quantity[t] * instance.HoldCost[v->getId()];
 				i += 2;
 				tempPair[1] = v;
 			}
@@ -1370,7 +1368,7 @@ vector<Node*> IRP::Solution::selectPair(IRP::Route * r, int Selection)
 		}
 		//Else the node is a pickup node
 		else {
-			tempCost += pickSol[v->getId()][r->period] * instance.HoldCost[v->getId()];
+			tempCost += v->Quantity[t] * instance.HoldCost[v->getId()];
 			i += 1;
 			tempPair[0] = v;
 		}
@@ -1382,7 +1380,7 @@ vector<Node*> IRP::Solution::selectPair(IRP::Route * r, int Selection)
 			minCost = tempCost;
 
 			//push the new nodes to the return value
-			for (Node * n : tempPair)
+			for (NodeIRP * n : tempPair)
 			{
 				pair.clear();
 				pair.push_back(n);
@@ -1394,72 +1392,24 @@ vector<Node*> IRP::Solution::selectPair(IRP::Route * r, int Selection)
 			pair.pop_back();
 
 		return pair;
-		break;
+	}
+	break;
 
 	case ModelParameters::HIGHEST_TOTALCOST:
 	{
 		double tempCost = 0;
-		for (Node * u : r->route)
-			tempCost = delSol[u->getId()][r->period] * instance.HoldCost[u->getId()];
+		for (NodeIRP * u : r->route)
+			tempCost = u->Quantity[t] * instance.HoldCost[u->getId()];
 
-		break;
 	}
+	break;
 
 	} // end switch
 }
 
 
-void IRP::Solution::propDelInvBack(int i, int period){
-	if (period > 0) {
-		invSol[i][period] = invSol[i][period+1] - delSol[i][period];
-		propDelInvBack(i, period - 1);
-	}
-}
 
-void IRP::Solution::propDelInvForw(int i, int period)
-{
-	if (period <= instance.Periods.size()) {
-		invSol[i][period] = invSol[i][period - 1] + delSol[i][period];
-		propDelInvForw(i, period + 1);
-	}
-}
-
-
-void IRP::Solution::propPickInvBack(int i, int period)
-{
-	if (period > 0) {
-		invSol[i][period] = invSol[i][period + 1] + pickSol[i][period];
-		propPickInvBack(i, period - 1);
-	}
-}
-
-void IRP::Solution::propPickInvForw(int i, int period)
-{
-	if (period <= instance.Periods.size()) {
-		invSol[i][period] = invSol[i][period - 1] - pickSol[i][period];
-		propPickInvForw(i, period + 1);
-	}
-
-}
-
-
-double IRP::Solution::getTransInteger()
-{
-	int i;
-	int j;
-	double TravelCost = 0;
-	for(int t : instance.Periods)
-		for(IRP::Route * r: SolutionRoutes[t])
-			for (Node * u : r->route) {
-				i = u->getId();
-				j = u->getEdge(0)->getEndNode()->getId();
-				TravelCost += instance.TransCost[i][j];
-			}
-
-	return TravelCost;
-}
-
-void IRP::Solution::buildGraph(vector<Node*>& graph, int t)
+/*void IRP::Solution::buildGraph(vector<Node*>& graph, int t)
 {
 	int s;
 	double edgeValue;
@@ -1485,9 +1435,9 @@ void IRP::Solution::buildGraph(vector<Node*>& graph, int t)
 			}
 		}
 	}
-}
+}*/
 
-int IRP::Route::removeNode(Node * node, IRP::Route *r)
+/*int IRP::Route::removeNode(NodeIRP * node, IRP::Route *r)
 {
 	int position = getPosition(node);
 	//previous node
@@ -1501,9 +1451,9 @@ int IRP::Route::removeNode(Node * node, IRP::Route *r)
 	route.erase(r->route.begin()+position);
 
 	return position;
-}
+}*/
 
-void IRP::Route::insertSubRoute(vector<Node *> subroute, Node *u, Node *v)
+/*void IRP::Route::insertSubRoute(vector<NodeIRP *> subroute, NodeIRP *u, NodeIRP *v)
 {
 	//resize route
 	route.resize(route.size() + subroute.size());
@@ -1511,11 +1461,11 @@ void IRP::Route::insertSubRoute(vector<Node *> subroute, Node *u, Node *v)
 	
 
 	//remove edges between start and end
-	Node * n = u;
-	Node *nextNode;
+	NodeIRP * n = u;
+	NodeIRP *nextNode;
 	do {
 		if(i > 0)
-			changeQuantity(n, t, 0);
+		n->changeQuantity(period, 0);
 		nextNode = n->getEdge(0)->getEndNode();
 		n->removeEdge(*nextNode);
 		n = n->getEdge(0)->getEndNode();
@@ -1533,22 +1483,10 @@ void IRP::Route::insertSubRoute(vector<Node *> subroute, Node *u, Node *v)
 	for (int i = 0; i < subroute.size(); i++) {
 		route.insert(route.begin() + position + i, subroute[i]);
 	}
-}
+}*/
 
-void IRP::Solution::changeQuantity(Node * n, int period,  int quantity)
-{
-	//Remove the service
-	int i = n->getId();
-	if (instance.map.isDelivery(i)) {
-		delSol[i][period] = quantity;
-	}
-	else
-		pickSol[i][period] = quantity;
 
-	updateInventory(n, period);
-}
-
-IRP::Route * IRP::Solution::insertSubrouteInRoute(IRP::Route * subroute, int period)
+/*IRP::Route * IRP::Solution::insertSubrouteInRoute(IRP::Route * subroute, int period)
 {
 	double minCost = 100000;
 	double tempCost = 0;
@@ -1583,7 +1521,7 @@ IRP::Route * IRP::Solution::insertSubrouteInRoute(IRP::Route * subroute, int per
 	//Insert route
 	path->insertSubroute(subroute->route, end);
 	
-}
+}*/
 
 int IRP::Route::getPosition(Node * node)
 {
@@ -1618,10 +1556,121 @@ int ** IRP::Route::getRouteMatrix(IRP * const instance)
 	return route;
 }
 
-IRP::Route::Route(vector<Node*>& path, int ref, int t)
+IRP::Route::Route(vector<NodeIRP*>& path, int ref, int t)
 	:
 	route(path),
 	id(ref),
 	period(t)
 {
+}
+
+
+IRP::NodeIRP::NodeIRP(int id, IRP & model)
+	:
+	Instance(model),
+	Node(id)
+{
+	//
+	Quantity.resize(Instance.getNumOfPeriods()+1);
+	TimeServed.resize(Instance.getNumOfPeriods()+1);
+	Inventory.resize(Instance.getNumOfPeriods()+1);
+}
+
+
+IRP::NodeIRP::~NodeIRP()
+{
+}
+
+IRP::NodeIRP::EdgeIRP::EdgeIRP(Node * child, double loadDel, double loadPick, int t, double value = 1)
+	:
+	Edge(*child, value),
+	LoadDel(loadDel),
+	LoadPick(loadPick),
+	Period(t)
+{
+}
+void IRP::NodeIRP::addEdge(double loadDel, double loadPick, NodeIRP * child, int period, double value = 1)
+{
+	Node * nodePtr = child;
+	EdgeIRP * edge = new EdgeIRP(nodePtr, loadDel, loadPick, period, value);
+	Edge * edgePtr = edge;
+	Node::addEdge(edgePtr);
+}
+
+IRP::NodeIRP::EdgeIRP * IRP::NodeIRP::getEdge(int period)
+{
+	vector<EdgeIRP *> edge = getEdges(period);
+	EdgeIRP * derivedPtr = edge[0];
+	if (derivedPtr != 0) {
+		return derivedPtr;
+	}
+}
+
+vector<IRP::NodeIRP::EdgeIRP*> IRP::NodeIRP::getEdges(int period)
+{
+	vector<Edge*> edges = Node::getEdges();
+	vector<EdgeIRP*> edgesIRP;
+	for (int i = 0; i < edges.size(); i++) {
+		EdgeIRP * derivedPtr = static_cast <EdgeIRP *> (edges[i]);
+		if(derivedPtr->Period == period)
+			edgesIRP.push_back(derivedPtr);
+	}
+	return edgesIRP;
+}
+
+double IRP::NodeIRP::getOutflow(int period)
+{
+	double outflow = 0;
+	vector<EdgeIRP*> edges = getEdges(period);
+	for (EdgeIRP * edge : edges) {
+		outflow += edge->getValue();
+	}
+	return outflow;
+}
+
+double IRP::NodeIRP::getHoldCost(int period)
+{
+	Instance.map.getHoldCost(getId()) * Inventory[period];
+}
+
+void IRP::NodeIRP::propInvForw(int period)
+{
+	if (period <= Instance.getNumOfPeriods()) {
+		Inventory[period] = Inventory[period - 1] + Quantity[period];
+		propInvForw(period + 1);
+	}
+}
+
+void IRP::NodeIRP::changeQuantity(int period, int quantity)
+{
+	//Remove the service
+	if (isDelivery()) {
+		Quantity[period] = quantity;
+	}
+	else
+		Quantity[period] = -quantity;
+
+	updateInventory(period);
+}
+
+void IRP::NodeIRP::updateInventory(int t)
+{
+	Inventory[t] = Inventory[t] - Quantity[t];
+	propInvForw(t + 1);
+}
+
+bool IRP::NodeIRP::isDelivery()
+{
+	return Instance.getMap()->isDelivery(getId());
+}
+
+
+
+IRP::NodeIRP * IRP::NodeIRP::EdgeIRP::getEndNode()
+{
+	Node * node = Node::Edge::getEndNode();
+	NodeIRP * derivedPtr = static_cast <NodeIRP *> (node);
+	if (derivedPtr != 0) {
+		return derivedPtr;
+	}
 }

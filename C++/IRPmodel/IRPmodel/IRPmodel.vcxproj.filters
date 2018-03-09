@@ -16,6 +16,9 @@
     <Filter Include="Source Files\Customer">
       <UniqueIdentifier>{2c4a9309-1b4e-4115-85be-d8a0c1e66fc8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Node">
+      <UniqueIdentifier>{c0758794-f632-45d8-bc38-d6f9a0f88646}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -125,14 +128,14 @@
     <ClCompile Include="ModelParameters.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Node.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="NodeStrong.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Node</Filter>
+    </ClCompile>
+    <ClCompile Include="Node.cpp">
+      <Filter>Source Files\Node</Filter>
     </ClCompile>
     <ClCompile Include="NodeIRP.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Node</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

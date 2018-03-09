@@ -21,10 +21,10 @@ public:
 	bool inArcSet(int, int);
 	CustomerDB & database;
 	int getTransCost(int node1, int node2, int transCostMultiplier, int serviceCostMultipler);
+	int getTransCost(int node1, int node2);
 	int getDistance(int node1, int node2);
 	int getX(int id);
 	int getY(int id);
-	int getCustomerId(int nodeNumber);
 	int getDeliveryNode(Customer *);
 	int getPickupNode(Customer *);
 	int getNumCustomers();

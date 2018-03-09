@@ -20,6 +20,8 @@ int Node::getId() const {
 	return NodeID;
 }
 
+
+
 Node::Edge * Node::getEdge(int id)
 {
 	return Edges[id];
@@ -39,7 +41,7 @@ Node::Edge * Node::getEdge()
 
 vector<Node::Edge*> Node::getEdges()
 {
-	return &Edges;
+	return Edges;
 }
 
 Node::Edge::Edge(Node & endNode, double value)

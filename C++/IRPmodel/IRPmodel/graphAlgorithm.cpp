@@ -45,7 +45,7 @@ void graphAlgorithm::printGraph(vector<Node*>& graph, IRP &instance, string file
 	for (Node *node : graph) {
 		x1 = instance.getMap()->getX(node->getId());
 		y1 = instance.getMap()->getY(node->getId());
-		for (Node::Edge* edge : *node->getEdges()) {
+		for (Node::Edge* edge : node->getEdges()) {
 			if (edge->getValue() != -1) {
 				x2 = instance.getMap()->getX(edge->getEndNode()->getId());
 				y2 = instance.getMap()->getY(edge->getEndNode()->getId());
@@ -105,12 +105,12 @@ void graphAlgorithm::getRoutes(vector<Node*>& graph, vector<vector<Node*>>& rout
 {
 	// Do a depth-first-search to identify routes.
 	Node *depot = graph[0];
-	vector <Node::Edge*> *edges = depot->getEdges();
+	vector <Node::Edge*> edges = depot->getEdges();
 	//edges->erase(edges->begin());
 	
 
 	vector<Node*> route;
-	for (Node::Edge* edge : *edges) {
+	for (Node::Edge* edge : edges) {
 		Node * start = new Node(0);
 		Node * v = edge->getEndNode();
 		start->addEdge(*v);
@@ -172,7 +172,7 @@ void graphAlgorithm::strongConnect(NodeStrong & node, int &index, stack <NodeStr
 	S.push(&node);
 	node.setOnStack(true);
 	
-	for (NodeStrong::Edge *edge : (*node.getEdges())) {
+	for (NodeStrong::Edge *edge : (node.getEdges())) {
 		endNode = NodeStrong::getStrongNode(edge->getEndNode());
 		if (endNode->getIndex() == -1) {
 			strongConnect(*endNode, index, S, result);

@@ -33,6 +33,14 @@ int Map::getTransCost(int node1, int node2, int TRANSCOST_MULTIPLIER, int SERVIC
 	return distance* TRANSCOST_MULTIPLIER + SERVICECOST_MULTIPLER;
 }
 
+int Map::getTransCost(int node1, int node2)
+{
+	int distance = getDistance(node1, node2);
+	return distance* ModelParameters::TRANSCOST_MULTIPLIER + ModelParameters::SERVICECOST_MULTIPLIER;
+}
+
+
+
 
 
 int Map::getDeliveryNode(Customer * cust)
