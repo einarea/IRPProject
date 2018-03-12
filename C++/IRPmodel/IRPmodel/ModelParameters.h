@@ -15,7 +15,7 @@ public:
 	//static const int CapacityPenalty = 10000;
 	static const int VehiclePenalty = 100000;
 	static const int overTime = 3;
-	static const int nVehicles = 1;
+	static const int nVehicles = 3;
 
 	//Heurestic
 	//static const double VisitRatio = 0.5;

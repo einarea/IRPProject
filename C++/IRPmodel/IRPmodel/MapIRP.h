@@ -9,7 +9,7 @@ private:
 public:
 	MapIRP(CustomerIRPDB &);
 	~MapIRP();
-	int getHoldCost(int);
+	double getHoldCost(int);
 	int getUpperLimit(int node);
 	int getLowerLimit(int node);
 	int getDemand(int node, int period, int indicator);

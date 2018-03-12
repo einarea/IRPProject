@@ -27,13 +27,16 @@ SequentialEnum(Content,
 
 
 
-
 SequentialEnum(CostData,
 	HoldExact,
 	TransExact,
 	deltaHold,
 	deltaTrans,
 	deltaObjective,
+);
+
+SequentialEnum(RouteData,
+	nVehicles,
 );
 
 SequentialEnum(DataType,

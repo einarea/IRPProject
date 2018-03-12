@@ -3,7 +3,7 @@
 #include "Map.h"
 #include <vector>
 #include "CustomerVRPDB.h"
-#include "Node.h"
+#include "NodeIRP.h"
 #include "xprs.h"
 #include <string.h>
 #include "IRP.h"

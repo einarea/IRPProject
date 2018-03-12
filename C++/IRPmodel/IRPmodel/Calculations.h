@@ -11,13 +11,14 @@ class Calculations
 {
 public:
 	Calculations(vector <double> *** modelData, int instances, int periods);
-	double ** getCostDistribution();
+	double *** getCostDistribution();
+	double *** getRouteInformation();
 	//Returns cost data for each time period and total
 	~Calculations();
 private:
-	int AnalyzeModel(vector <double> *** modelData);
-	double getStdDev(vector <double> values, double average);
-	double getAverage(vector <double> values);
+	void AnalyzeModel(vector <double> *** & modelData);
+	double getStdDev(vector <double> & values, double average);
+	double getAverage(vector <double> & values);
 
 
 	int nInstances;

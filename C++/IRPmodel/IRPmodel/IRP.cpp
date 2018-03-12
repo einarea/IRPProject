@@ -1606,6 +1606,14 @@ IRP::NodeIRP::EdgeIRP * IRP::NodeIRP::getEdge(int period)
 	}
 }
 
+IRP::NodeIRP * IRP::NodeIRP::getNode(Node * n)
+{
+	NodeIRP * derivedPtr = static_cast <NodeIRP *> (n);
+	if (derivedPtr != 0) {
+		return derivedPtr;
+	}
+}
+
 vector<IRP::NodeIRP::EdgeIRP*> IRP::NodeIRP::getEdges(int period)
 {
 	vector<Edge*> edges = Node::getEdges();
@@ -1630,7 +1638,7 @@ double IRP::NodeIRP::getOutflow(int period)
 
 double IRP::NodeIRP::getHoldCost(int period)
 {
-	Instance.map.getHoldCost(getId()) * Inventory[period];
+	return Instance.map.getHoldCost(getId()) * Inventory[period];
 }
 
 void IRP::NodeIRP::propInvForw(int period)
@@ -1674,3 +1682,5 @@ IRP::NodeIRP * IRP::NodeIRP::EdgeIRP::getEndNode()
 		return derivedPtr;
 	}
 }
+
+

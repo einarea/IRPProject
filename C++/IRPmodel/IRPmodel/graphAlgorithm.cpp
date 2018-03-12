@@ -101,13 +101,12 @@ void graphAlgorithm::printGraph(vector<Node*>& graph, IRP &instance, string file
 	
 }
 
-void graphAlgorithm::getRoutes(vector<Node*>& graph, vector<vector<Node*>>& routes)
+void graphAlgorithm::getRoutes(vector<Node*>& graph,  vector<vector<Node*>>& routes, int period)
 {
 	// Do a depth-first-search to identify routes.
-	Node *depot = graph[0];
-	vector <Node::Edge*> edges = depot->getEdges();
+	IRP::NodeIRP *depot = IRP::NodeIRP::getNode(graph[0]);
+	vector <IRP::NodeIRP::EdgeIRP*> edges = depot->getEdges(period);
 	//edges->erase(edges->begin());
-	
 
 	vector<Node*> route;
 	for (Node::Edge* edge : edges) {
@@ -128,18 +127,9 @@ void graphAlgorithm::getRoutes(vector<Node*>& graph, vector<vector<Node*>>& rout
 	}
 }
 
-void graphAlgorithm::printToLatex(string * Columns, string * Rows, double ** data,  string filename)
+void graphAlgorithm::printToLatex(string * Columns, string * Rows, double ** data, string filename)
 {
-	ofstream textFile;
-	textFile.open(filename);
-
-	for (int i = 0; i < Rows->size(); i++) {
-		textFile << Rows[i];
-		for (int j = 1; j < Columns->size(); j++) {
-			textFile << data[i][j] << "&";
-		}
-	}
-	textFile.close();
+	
 }
 
 //Tarjans strongly connected components algorithm, sets value of edges not in strong components to -1.

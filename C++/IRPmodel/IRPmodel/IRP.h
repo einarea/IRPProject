@@ -184,6 +184,7 @@ public:
 		//Override
 		void addEdge(double loadDel, double loadPick, NodeIRP * child, int period, double value);
 		EdgeIRP * getEdge(int period);
+		static NodeIRP * getNode(Node *);
 		vector<double> Quantity;
 		vector<double> Inventory;
 		vector<double> TimeServed;

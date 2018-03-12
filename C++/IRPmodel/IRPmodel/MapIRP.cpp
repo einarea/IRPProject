@@ -9,12 +9,15 @@ database(db)
 {	
 }
 
-int MapIRP::getHoldCost(int node)
+double MapIRP::getHoldCost(int node)
 {
+	double returnValue = 0;
 	if (isDelivery(node))		
-		return database.getHoldCost(nodeToCustomer(node), Customer::DELIVERY);
+		returnValue = database.getHoldCost(nodeToCustomer(node), Customer::DELIVERY);
 	else
-		return database.getHoldCost(nodeToCustomer(node), Customer::PICKUP);
+		returnValue = database.getHoldCost(nodeToCustomer(node), Customer::PICKUP);
+
+	return returnValue;
 }
 
 int MapIRP::getUpperLimit(int node)

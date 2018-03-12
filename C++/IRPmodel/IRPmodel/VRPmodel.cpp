@@ -404,7 +404,7 @@ void VRPmodel::addRoutesToIRP(IRP & instance, int t,  IRP::Solution * sol)
 	}
 
 
-	graphAlgorithm::getRoutes(graph, routes);
+	graphAlgorithm::getRoutes(graph, routes, t);
 
 	//Add all routes to the current solution	
 	for (vector <Node*> r : routes) {
