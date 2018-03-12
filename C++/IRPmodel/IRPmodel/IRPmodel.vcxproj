@@ -150,12 +150,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Calculations.h" />
     <ClInclude Include="Customer.h" />
     <ClInclude Include="CustomerDB.h" />
     <ClInclude Include="CustomerIRP.h" />
     <ClInclude Include="CustomerIRPDB.h" />
     <ClInclude Include="CustomerVRP.h" />
     <ClInclude Include="CustomerVRPDB.h" />
+    <ClInclude Include="DataSets.h" />
     <ClInclude Include="graphAlgorithm.h" />
     <ClInclude Include="IRP.h" />
     <ClInclude Include="IRPmodel.h" />
@@ -172,6 +174,7 @@
     <ClInclude Include="VRPmodel.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Calculations.cpp" />
     <ClCompile Include="Customer.cpp" />
     <ClCompile Include="CustomerDB.cpp" />
     <ClCompile Include="CustomerIRP.cpp" />
