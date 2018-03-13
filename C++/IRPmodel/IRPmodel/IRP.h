@@ -106,6 +106,7 @@ public:
 	//Class to store routes and cost of routes
 	class Route {
 		public:
+		IRP & Instance;
 		int getCost();
 		int id;
 		//int removeNode(NodeIRP*, IRP::Route *);
@@ -116,7 +117,7 @@ public:
 		int getId();
 		int ** getRouteMatrix(IRP * const instance);
 		int period;
-		Route(vector <NodeIRP*> & path, int id, int t = 0);
+		Route(vector <NodeIRP*> & path, int id, IRP &instance, int t);
 		//Graph 
 		vector <NodeIRP*> route;
 	}; //end class Route
@@ -130,7 +131,7 @@ public:
 	public:
 		class EdgeIRP : public Edge {
 		public:
-			EdgeIRP(Node *child, double loadDel, double loadPick, int t, double value);
+			EdgeIRP(Node *child, double loadDel, double loadPick, double value);
 			NodeIRP * getEndNode();
 			double LoadDel;
 			double LoadPick;
@@ -139,7 +140,7 @@ public:
 		NodeIRP(int id);
 		~NodeIRP();
 		//Override
-		void addEdge(double loadDel, double loadPick, NodeIRP * child, int period, double value);
+		void addEdge(double loadDel, double loadPick, NodeIRP * child,  double value);
 		EdgeIRP * getEdge();
 		static NodeIRP * getNode(Node *);
 		double Quantity;
@@ -148,7 +149,6 @@ public:
 		vector <EdgeIRP*> getEdges();
 		double getOutflow();
 		double getHoldCost();
-		bool isDelivery();
 	};
 
 	//Class to store nodes over all periods
@@ -159,13 +159,21 @@ public:
 		NodeIRPHolder(int id, IRP &instance);
 		IRP & Instance;
 		vector<NodeIRP*> Nodes;
+
+		//Changes
+		void addEdge(double loadDel, double loadPic, NodeIRPHolder * child, int period, double value);
+		//Information
 		void propInvForw(int period);
 		double getOutflow(int period);
+		double quantity(int period);
+		double timeServed(int period);
+
 		vector <NodeIRP::EdgeIRP*> getEdges(int period);
 		NodeIRP::EdgeIRP * getEdge(int period);
 		double getHoldCost(int period);
 		void changeQuantity(int period, int quantity);
 		void updateInventory(int period);
+		bool isDelivery();
 	};
 
 	class Solution {
@@ -182,6 +190,7 @@ public:
 		//void buildGraph(vector<Node*> &graph, int t);
 		void print(string filname);
 
+
 		bool IntegerSolution;
 		bool isFeasible();
 		bool isRouteFeasible(IRP::Route *);
@@ -196,6 +205,7 @@ public:
 		double getHoldingCost();
 		double getHoldingCost(int period);
 		double getTransportationCost(int period);
+		IRP &Instance;
 
 		//Operators
 		void removeVisit(IRP::Route * route, int selection = 1);
@@ -204,8 +214,8 @@ public:
 		private:
 		//Integer solutions
 			vector<NodeIRP*> selectPair(IRP::Route *, int Selection);
-
-		IRP &instance;
+			
+		
 	
 	}; //End class solution
 

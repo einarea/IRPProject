@@ -13,7 +13,7 @@ public:
 	static void sepByStrongComp(vector<Node*> &graph, vector<vector<Node*>> &result);
 	~graphAlgorithm();
 	static void graphAlgorithm::printGraph(vector<Node*>& graph, IRP &, string filename);
-	static void getRoutes(vector<Node*> &graph, vector<vector<Node*>> &routes, int period);
+	static void getRoutes(vector<Node*> &graph, vector<vector<Node*>> &routes);
 	void printToLatex(string * Columns, string * Rows, double ** data, string filename);
 
 private:

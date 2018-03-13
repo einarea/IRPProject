@@ -101,11 +101,11 @@ void graphAlgorithm::printGraph(vector<Node*>& graph, IRP &instance, string file
 	
 }
 
-void graphAlgorithm::getRoutes(vector<Node*>& graph,  vector<vector<Node*>>& routes, int period)
+void graphAlgorithm::getRoutes(vector<Node*>& graph,  vector<vector<Node*>>& routes)
 {
 	// Do a depth-first-search to identify routes.
 	IRP::NodeIRP *depot = IRP::NodeIRP::getNode(graph[0]);
-	vector <IRP::NodeIRP::EdgeIRP*> edges = depot->getEdges(period);
+	vector <IRP::NodeIRP::EdgeIRP*> edges = depot->getEdges();
 	//edges->erase(edges->begin());
 
 	vector<Node*> route;
