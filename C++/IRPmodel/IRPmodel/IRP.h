@@ -62,6 +62,7 @@ private:
 	//Forward declaration
 	class Solution;
 	class NodeIRP;
+	class NodeIRPHolder;
 	class Route;
 
 
@@ -121,14 +122,59 @@ public:
 	}; //end class Route
 
 	//Class to store solutions to the instance
+
+	//Class that define a IRP node in a particular period
+	class NodeIRP :
+		public Node
+	{
+	public:
+		class EdgeIRP : public Edge {
+		public:
+			EdgeIRP(Node *child, double loadDel, double loadPick, int t, double value);
+			NodeIRP * getEndNode();
+			double LoadDel;
+			double LoadPick;
+		};
+
+		NodeIRP(int id);
+		~NodeIRP();
+		//Override
+		void addEdge(double loadDel, double loadPick, NodeIRP * child, int period, double value);
+		EdgeIRP * getEdge();
+		static NodeIRP * getNode(Node *);
+		double Quantity;
+		double Inventory;
+		double TimeServed;
+		vector <EdgeIRP*> getEdges();
+		double getOutflow();
+		double getHoldCost();
+		bool isDelivery();
+	};
+
+	//Class to store nodes over all periods
+	class NodeIRPHolder {
+	public:
+		int Id;
+		int getId();
+		NodeIRPHolder(int id, IRP &instance);
+		IRP & Instance;
+		vector<NodeIRP*> Nodes;
+		void propInvForw(int period);
+		double getOutflow(int period);
+		vector <NodeIRP::EdgeIRP*> getEdges(int period);
+		NodeIRP::EdgeIRP * getEdge(int period);
+		double getHoldCost(int period);
+		void changeQuantity(int period, int quantity);
+		void updateInventory(int period);
+	};
+
 	class Solution {
 	public:
 		Solution(IRP &model, bool integer);
 		Solution(IRP &model, vector<vector<IRP::Route*>> & r,bool integer);
 		int SolID;
 		double **pCapacity;
-
-		vector<NodeIRP *> Nodes;
+		vector<NodeIRPHolder *> NodeHolder;
 
 		//The set of routes for each period
 		vector<vector <IRP::Route*>> Routes;
@@ -140,7 +186,7 @@ public:
 		bool isFeasible();
 		bool isRouteFeasible(IRP::Route *);
 		double getNumberOfRoutes(int period);
-		NodeIRP * getNode(int id);
+		NodeIRPHolder * getNode(int id);
 		int newRoute(vector <Node*> & route, int period);
 
 		int getnPeriods();
@@ -163,42 +209,9 @@ public:
 	
 	}; //End class solution
 
-	//Class to store nodes
-	class NodeIRP :
-		public Node
-	{
-	public:
-		IRP& Instance;
+	
 
-		class EdgeIRP : public Edge {
-		public:
-			EdgeIRP(Node *child, double loadDel, double loadPick, int t, double value);
-			NodeIRP * getEndNode();
-			double LoadDel;
-			double LoadPick;
-			int Period;
-		};
-
-		NodeIRP(int id, IRP & model);
-		~NodeIRP();
-		//Override
-		void addEdge(double loadDel, double loadPick, NodeIRP * child, int period, double value);
-		EdgeIRP * getEdge(int period);
-		static NodeIRP * getNode(Node *);
-		vector<double> Quantity;
-		vector<double> Inventory;
-		vector<double> TimeServed;
-		vector <EdgeIRP*> getEdges(int period);
-		double getOutflow(int period);
-		double getHoldCost(int period);
-		
-
-		void propInvForw(int period);
-		void changeQuantity(int period, int quantity);
-		void updateInventory(int period);
-
-		bool isDelivery();
-	};
+	
 
 	IRP(CustomerIRPDB&, bool relaxed = false, bool maskOn = false, int ** VisitMask = 0);
 	//void addSolution(int ** y, int ***x, int **d, int **pic, int ***loadDel, int ***loadPic, int **inv, int ** t);

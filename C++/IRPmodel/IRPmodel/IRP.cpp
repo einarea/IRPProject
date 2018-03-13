@@ -201,7 +201,8 @@ int IRP::allocateIRPSolution()
 			if (map.inArcSet(i, j)) {
 				for (int t : Periods) {
 					if (x[i][j][t].getSol() > 0) {
-						sol->Nodes[i]->addEdge(loadDelivery[i][j][t].getSol(), loadPickup[i][j][t].getSol(), sol->Nodes[j], t, x[i][j][t].getSol());		
+						sol->NodeHolder[i]->Nodes[t]->addEdge(loadDelivery[i][j][t].getSol(), 
+							loadPickup[i][j][t].getSol(), sol->NodeHolder[j]->Nodes[t], t, x[i][j][t].getSol());		
 					}
 				}
 			} //endif
@@ -211,7 +212,7 @@ int IRP::allocateIRPSolution()
 	  //Fill inventory
 	for (int i : Nodes) {
 		for (int t : Periods) {
-			sol->Nodes[i]->Inventory[t] = inventory[i][t].getSol();
+			sol->NodeHolder[i]->Nodes[t]->Inventory = inventory[i][t].getSol();
 		}
 	}
 
@@ -220,19 +221,19 @@ int IRP::allocateIRPSolution()
 		for (int t : Periods) {
 			if (map.isDelivery(i)) {
 				if (delivery[i][t].getSol() > 0) {
-					sol->Nodes[i]->Quantity[t] = delivery[i][t].getSol();
-					sol->Nodes[i]->TimeServed[t] = time[i][t].getSol();
+					sol->NodeHolder[i]->Nodes[t]->Quantity = delivery[i][t].getSol();
+					sol->NodeHolder[i]->Nodes[t]->TimeServed = time[i][t].getSol();
 				}
 				else {
-					sol->Nodes[i]->Quantity[t] = 0;
-					sol->Nodes[i]->TimeServed[t] = time[i][t].getSol();
+					sol->NodeHolder[i]->Nodes[t]->Quantity = 0;
+					sol->NodeHolder[i]->Nodes[t]->TimeServed = time[i][t].getSol();
 				}
 			}
 			else {
 				if (pickup[i][t].getSol() > 0)
-					sol->Nodes[i]->Quantity[t] = pickup[i][t].getSol();
+					sol->NodeHolder[i]->Nodes[t]->Quantity = pickup[i][t].getSol();
 				else
-					sol->Nodes[i]->Quantity[t] = 0;
+					sol->NodeHolder[i]->Nodes[t]->Quantity = 0;
 			} //end else
 		} //end t
 	} //end i
@@ -251,7 +252,7 @@ int IRP::allocateSolution()
 	//Fill Inventory
 	for (int i : Nodes) {
 		for (int t : Periods) {
-			sol->Nodes[i]->Inventory[t] = inventory[i][t].getSol();
+			sol->NodeHolder[i]->Nodes[t]->Inventory = inventory[i][t].getSol();
 		}
 	}
 
@@ -260,19 +261,19 @@ int IRP::allocateSolution()
 		for (int t : Periods) {
 			if (map.isDelivery(i)) {
 				if (delivery[i][t].getSol() > 0) {
-					sol->Nodes[i]->Quantity[t] = delivery[i][t].getSol();
-					sol->Nodes[i]->TimeServed[t] = time[i][t].getSol();
+					sol->NodeHolder[i]->Nodes[t]->Quantity = delivery[i][t].getSol();
+					sol->NodeHolder[i]->Nodes[t]->TimeServed = time[i][t].getSol();
 				}
 				else
-					sol->Nodes[i]->Quantity[t] = 0;
+					sol->NodeHolder[i]->Nodes[t]->Quantity = 0;
 			}
 			else {
 				if (pickup[i][t].getSol() > 0) {
-					sol->Nodes[i]->Quantity[t] = pickup[i][t].getSol();
-					sol->Nodes[i]->TimeServed[t] = time[i][t].getSol();
+					sol->NodeHolder[i]->Nodes[t]->Quantity = pickup[i][t].getSol();
+					sol->NodeHolder[i]->Nodes[t]->TimeServed = time[i][t].getSol();
 				}
 				else
-					sol->Nodes[i]->Quantity[t] = 0;
+					sol->NodeHolder[i]->Nodes[t]->Quantity = 0;
 			}
 		}
 	}
@@ -1019,14 +1020,12 @@ IRP::Solution::Solution(IRP & model, bool integer = false)
 	IntegerSolution(integer),
 	instance(model)
 {
-	//Initializa node holder
-	Nodes.resize(instance.getNumOfCustomers() * 2 + 1);
+	//Initializa node hold
 	//Create a route holder for each period
 	Routes.resize(instance.getNumOfPeriods()+1);
 	//Create a nodes for all customers and depot
 	for (int i : instance.AllNodes) {
-		NodeIRP * node = new NodeIRP(i, instance);
-		Nodes[i] = node;
+		NodeHolder[i] = new NodeIRPHolder(i, instance);		
 	}
 }
 
@@ -1085,13 +1084,13 @@ bool IRP::Solution::isRouteFeasible(IRP::Route * r)
 
 double IRP::Solution::getNumberOfRoutes(int period)
 {
-	NodeIRP * depot = getNode(0);
+	NodeIRPHolder * depot = getNode(0);
 	return depot->getOutflow(period);
 }
 
-IRP::NodeIRP * IRP::Solution::getNode(int id)
+IRP::NodeIRPHolder * IRP::Solution::getNode(int id)
 {
-	for (NodeIRP * n : Nodes) {
+	for (NodeIRPHolder * n : NodeHolder) {
 		if (n->getId() == id)
 			return n;
 	}
@@ -1226,9 +1225,9 @@ void IRP::Solution::printSolution()
 		for (int i : instance.AllNodes) {
 			printf("\n");
 			if (i == 0) {
-				printf("y0: %.2f\t", Nodes[i]->getOutflow(t));
+				printf("y0: %.2f\t", NodeHolder[i]->getOutflow(t));
 
-				for (NodeIRP::EdgeIRP *edge : Nodes[i]->getEdges(t))
+				for (NodeIRP::EdgeIRP *edge : NodeHolder[i]->getEdges(t))
 					if (edge->getValue() > 0) {
 						printf("x%d%d: %.2f\t", i, edge->getEndNode()->getId(), edge->getValue());
 						printf("loadDel%d%d: %.2f\t", i, edge->getEndNode()->getId(), edge->LoadDel);
@@ -1236,12 +1235,12 @@ void IRP::Solution::printSolution()
 					}
 			}
 			else {
-				printf("Inv_%d: %.2f\t", i, Nodes[i]->Inventory[t]);
+				printf("Inv_%d: %.2f\t", i, NodeHolder[i]->Nodes[t]->Inventory);
 
 
-				if (Nodes[i]->Quantity[t] > 0.5) {
+				if (NodeHolder[i]->Nodes[t]->Quantity > 0.5) {
 
-					j = Nodes[i]->getEdge(t)->getEndNode()->getId();
+					j = NodeHolder[i]->getEdge(t)->getEndNode()->getId();
 
 					printf("y%d: %.2f\t", i, Nodes[i]->getOutflow(t));
 					printf("t%d: %.2f\t", i, Nodes[i]->TimeServed[t]);
@@ -1565,7 +1564,7 @@ IRP::Route::Route(vector<NodeIRP*>& path, int ref, int t)
 }
 
 
-IRP::NodeIRP::NodeIRP(int id, IRP & model)
+IRP::NodeIRP::NodeIRP(int id, IRP &instance)
 	:
 	Instance(model),
 	Node(id)
@@ -1641,13 +1640,6 @@ double IRP::NodeIRP::getHoldCost(int period)
 	return Instance.map.getHoldCost(getId()) * Inventory[period];
 }
 
-void IRP::NodeIRP::propInvForw(int period)
-{
-	if (period <= Instance.getNumOfPeriods()) {
-		Inventory[period] = Inventory[period - 1] + Quantity[period];
-		propInvForw(period + 1);
-	}
-}
 
 void IRP::NodeIRP::changeQuantity(int period, int quantity)
 {
@@ -1683,4 +1675,42 @@ IRP::NodeIRP * IRP::NodeIRP::EdgeIRP::getEndNode()
 	}
 }
 
+int IRP::NodeIRPHolder::getId()
+{
+	return Id;
+}
 
+
+IRP::NodeIRPHolder::NodeIRPHolder(int id, IRP &instance)
+	:
+	Instance(instance)
+{
+	//Initialize the holder with one node for each period
+	for (auto t : Instance.Periods) {
+		Nodes.push_back(new NodeIRP());
+	}
+}
+
+void IRP::NodeIRPHolder::propInvForw(int period)
+{
+		if (period <= Instance.getNumOfPeriods()) {
+			Nodes[period]->Inventory = Nodes->Inventory[period - 1] + Nodes[period]->Quantity;
+			propInvForw(period + 1);
+		}
+
+}
+
+double IRP::NodeIRPHolder::getOutflow(int period)
+{
+	return Nodes[period]->getOutflow();
+}
+
+vector<IRP::NodeIRP::EdgeIRP*> IRP::NodeIRPHolder::getEdges(int period)
+{
+	return Nodes[period]->getEdges();
+}
+
+IRP::NodeIRP::EdgeIRP * IRP::NodeIRPHolder::getEdge(int period)
+{
+	return Nodes[period]->getEdge();
+}
