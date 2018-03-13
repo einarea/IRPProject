@@ -30,20 +30,20 @@ int XPRS_CC cbmng(XPRSprob oprob, void * vd)
 	IRP * modelInstance;
 	modelInstance = (IRP*)vd;
 
-	/*if ((XPRB::getTime() - modelInstance->startTime) / 1000 >= ModelParameters::MAX_RUNNING_TIME)
+	if ((XPRB::getTime() - modelInstance->startTime) / 1000 >= ModelParameters::MAX_RUNNING_TIME)
 	{
 		XPRSinterrupt(oprob, XPRS_STOP_TIMELIMIT);
 	}
 
 	//Load LP relaxation currently held in the optimizer
-	//modelInstance->getProblem()->beginCB(oprob);
-	//modelInstance->getProblem()->sync(XPRB_XPRS_SOL);
-	double a = modelInstance->getProblem()->getObjVal();*/
+	modelInstance->getProblem()->beginCB(oprob);
+	modelInstance->getProblem()->sync(XPRB_XPRS_SOL);
+	//double a = modelInstance->getProblem()->getObjVal();
 	//Add subtourconstraints
 	bool addedCuts = modelInstance->sepStrongComponents(subtourCut);
 
 	
-	if (false){//addedCuts) {
+	if (addedCuts) {
 		int node;
 		/*double *lBound;
 		double *uBound;
@@ -67,7 +67,7 @@ int XPRS_CC cbmng(XPRSprob oprob, void * vd)
 
 	}
 	
-	//modelInstance->getProblem()->endCB(); 
+	modelInstance->getProblem()->endCB(); 
 	//Unload LP relaxation
 	return 0;
 	
@@ -292,12 +292,12 @@ bool IRP::sepStrongComponents(vector<XPRBcut> & cut)
 	bool newCut = false;
 	for (int t : Periods) {
 		buildGraph(graph, t, true); //include depot
-		//graphAlgorithm::printGraph(graph, *this);
+		graphAlgorithm::printGraph(graph, *this, "Subtour/LPrelax");
 		graph.clear();
 		buildGraph(graph, t, false); //Do not include depot in graph
-		//graphAlgorithm::printGraph(graph, *this);
+		graphAlgorithm::printGraph(graph, *this, "Subtour/DepotGone");
 		graphAlgorithm::sepByStrongComp(graph, result);
-		//graphAlgorithm::printGraph(graph, *this);
+		graphAlgorithm::printGraph(graph, *this, "Subtour/Separation");
 		addSubtourCut(result, t, newCut, cut);
 		graph.clear();
 		result.clear();
@@ -404,7 +404,7 @@ void IRP::addSubtourCut(vector<vector<Node *>>& strongComp, int t, bool &newCut,
 
 			}
 
-			if (circleFlow >= visitSum - maxVisitSum + 0.7) {
+			if (circleFlow >= visitSum - maxVisitSum + 0.1) {
 				//print subtour
 				//graphAlgorithm::printGraph(strongComp[i], *this);
 				// save current basis
