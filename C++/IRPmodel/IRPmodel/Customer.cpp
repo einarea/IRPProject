@@ -1,36 +1,28 @@
 #include "stdafx.h"
 #include <algorithm>
-using namespace ::std;
 #include "Customer.h"
 #include <fstream>
+#include <time.h>
+using namespace ::std;
 
 
 
 
-Customer::Customer(int id, int holdCost, int lowLim, int uppLim, int ** dem, int * init, int coordinateX, int coordinateY)
+Customer::Customer(int id, int coordinateX, int coordinateY)
 	:
 	CustomerID(id),
-	HoldingCost(holdCost),
-	LowerLimit(lowLim),
-	UpperLimit(uppLim),
-	Demand(dem),
-	InitInventory(init),
 	posX(coordinateX),
 	posY(coordinateY)
 {
 }
 
-Customer::Customer(int id, int holdCost, int lowLim, int uppLim, int ** dem, int * init)
+Customer::Customer(int id, int randSeed)
 	:
-	CustomerID(id),
-	HoldingCost(holdCost),
-	LowerLimit(lowLim),
-	InitInventory(init),
-	UpperLimit(uppLim),
-	Demand(dem)
+	CustomerID(id)
 {
-	posX = (rand() % 1000 + 1)/10;
-	posY = (rand() % 1000 + 1)/10;
+	srand(time(0) + randSeed);
+	posX = (rand() % 100 + 0) - 50;
+	posY = (rand() % 100 + 0) - 50;
 }
 
 
@@ -56,32 +48,13 @@ double Customer::getYpos()
 	return this->posY;
 }
 
-int Customer::getHoldCost()
+int Customer::getId()
 {
-	return this->HoldingCost;
+	return CustomerID;
 }
 
-int Customer::getUpperLimit()
+void Customer::print()
 {
-	return UpperLimit;
-}
-
-int Customer::getLowerLimit()
-{
-	return LowerLimit;
-}
-
-int Customer::getDemand(int period, int indicator)
-{
-	if (indicator == Customer::PICKUP)
-		return  Demand[Customer::PICKUP][period];
-	else
-		return Demand[Customer::DELIVERY][period];
-
-}
-
-int Customer::getInitInventory(int indicator)
-{
-	return this->InitInventory[indicator];
+	printf("\nCustomer Id: %d, x: %.0f, y: %.0f", getId(), getXpos(), getYpos());
 }
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include "ModelParameters.h"
 #include "stdafx.h"
 
 using namespace::std;
@@ -11,29 +12,19 @@ private:
 	static int nPeriods;
 	
 	int CustomerID;
-	int HoldingCost;
-	int LowerLimit;
-	int UpperLimit;
-	int ** Demand;
 	double posX;
 	double posY;
-	int *InitInventory;
-
 
 public:
-	Customer(int, int, int, int, int **, int *, int, int);
-	Customer(int, int, int, int, int **, int *);
 
-	Customer(int numberOfPeriods);
+	Customer(int CustomerID, int posX, int posY);
+	Customer(int id, int randSeed);
 	double getXpos();
 	double getYpos();
-	int getHoldCost();
-	int getUpperLimit();
-	int getLowerLimit();
-	int getDemand(int period, int indicator);
-	int getInitInventory(int indicator);
+	int getId();	
+	void print();
 
-	const int static DELIVERY = 0;
-	const int static PICKUP = 1;
+	static const int  DELIVERY = 0;
+	static const int PICKUP = 1;
 
 };

@@ -17,6 +17,7 @@ bool Map::isDelivery(int node)
 		return false;
 }
 
+
 Map::Map(CustomerDB& db)
 	:
 	database(db)
@@ -32,59 +33,53 @@ int Map::getTransCost(int node1, int node2, int TRANSCOST_MULTIPLIER, int SERVIC
 	return distance* TRANSCOST_MULTIPLIER + SERVICECOST_MULTIPLER;
 }
 
-int Map::getHoldCost(int node)
+int Map::getTransCost(int node1, int node2)
 {
-	nodeToCustomer(node);
-	return database.getHoldCost(node);
+	int distance = getDistance(node1, node2);
+	return distance* ModelParameters::TRANSCOST_MULTIPLIER + ModelParameters::SERVICECOST_MULTIPLIER;
 }
+
+
+
+
+
+int Map::getDeliveryNode(Customer * cust)
+{
+	return (cust->getId());
+}
+
+int Map::getPickupNode(Customer * c)
+{
+	return c->getId()+getNumCustomers();
+}
+
+
+
 
 int Map::getNumCustomers()
 {
 	return database.getnCustomers();
 }
 
-int Map::getUpperLimit(int node)
+Customer * Map::getCustomer(int id)
 {
-	nodeToCustomer(node);
-	return database.getUpperLimit(node);
+	nodeToCustomer(id);
+	return database.getCustomer(id);
 }
 
-int Map::getLowerLimit(int node)
-{
-	nodeToCustomer(node);
-	return database.getLowerLimit(node);
-}
 
-int Map::getDemand(int node, int period, int indicator)
-{
-	nodeToCustomer(node);
-	return database.getDemand(node, period, indicator);
-}
 
-int Map::getInitInventory(int node)
+int Map::getTravelTime(int node1, int node2, int travelTimeParam, int serviceTimeParam)
 {
-	int indicator;
-	if (isDelivery(node))
-		indicator = Customer::DELIVERY;
-	else
-		indicator = Customer::PICKUP;
-	
-	nodeToCustomer(node);
-
-	return database.getInitInventory(node, indicator);
-	
-}
-
-int Map::getTravelTime(int node1, int node2, int travelTimeParam)
-{
-	return getDistance(node1, node2) * travelTimeParam;
+	int a = getDistance(node1, node2) * travelTimeParam + serviceTimeParam;
+	return getDistance(node1, node2) * travelTimeParam + serviceTimeParam;
 }
 
 int Map::getDistance(int node1, int node2)
 {
 	int distance;
-	nodeToCustomer(node1);
-	nodeToCustomer(node2);
+	node1 = nodeToCustomer(node1);
+	node2 = nodeToCustomer(node2);
 
 	if (node1 == 0 || node2 == 0) {
 		int x = database.getX(max(node1, node2));
@@ -98,14 +93,38 @@ int Map::getDistance(int node1, int node2)
 		int x2 = database.getX(node2);
 		int y2 = database.getY(node2);
 
-		distance = floor(sqrt(pow(x2 - x1, 2) + pow(y2 - y1, 2)));
+		distance = (int) floor(sqrt(pow(x2 - x1, 2) + pow(y2 - y1, 2)));
 	}
 	return distance;
 }
 
-void Map::nodeToCustomer(int & node)
+int Map::getX(int id)
 {
-	if (node > database.getnCustomers()) { node = node - database.getnCustomers(); };
+	id = nodeToCustomer(id);
+	return database.getCustomer(id)->getXpos();
+}
+
+int Map::getY(int id)
+{
+	id = nodeToCustomer(id);
+	return database.getCustomer(id)->getYpos();
+}
+
+
+
+bool Map::inArcSet(int i, int j)
+{
+	bool a = (i == j || (i == database.getnCustomers() + j && j != 0));
+	return !a;
+}
+
+
+int Map::nodeToCustomer(int node)
+{
+	if (node > database.getnCustomers())
+		return node - database.getnCustomers();
+	else
+		return node;
 }
 
 Map::~Map()
