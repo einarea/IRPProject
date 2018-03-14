@@ -239,7 +239,7 @@ public:
 	int getCapacity();
 	Map * getMap();
 	void calculateExcess();
-	void IRP::buildGraph(vector<Node*> &graph, int t, Solution * solution);
+	void IRP::buildGraph(vector<NodeIRP*> &graph, int t, Solution * solution);
 	int allocateSolution();
 	int allocateIRPSolution();
 	bool sepStrongComponents(vector<XPRBcut> &);

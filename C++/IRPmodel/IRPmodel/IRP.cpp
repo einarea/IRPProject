@@ -19,7 +19,7 @@ int XPRS_CC cbmng(XPRSprob oprob, void * vd)
 
 	int depth;
 	int node;
-
+	int cutId;
 	XPRSgetintattrib(oprob, XPRS_NODEDEPTH, &depth);
 	XPRSgetintattrib(oprob, XPRS_NODES, &node);
 	double objval;
@@ -56,12 +56,19 @@ int XPRS_CC cbmng(XPRSprob oprob, void * vd)
 		//cout << "Added at node ";
 		//cout << node << "), obj. " << objval << endl;
 
+		//Store cut parameters
+		/*const int nCuts = 1;
+		const int mtype[] = { 1 };
+		const char qrtype[] = { "L" }; //<= constraint
+		const double drhs[] = { 1 };
+		XPRScut mindex[nCuts];*/
 		for (XPRBcut cut : subtourCut)
+
 		{
 			cut.print();
 			modelInstance->nSubtourCuts += 1;
-			//XPRSstorecuts(oprob, 1, 1, , 
-
+			cutId = modelInstance->nSubtourCuts;
+			//XPRSstorecuts(oprob, nCuts, 1, mtype, qrtype, drhs, , mindex )
 			modelInstance->getProblem()->addCuts(&cut, 1);
 		}
 
@@ -140,7 +147,7 @@ IRP::Solution * IRP::solveModel()
 	
 	//Enable subtour elimination
 	//int a=prob.setCutMode(1); // Enable the cut mode
-	XPRSsetcbcutmgr(oprob, cbmng, &(*this));
+	//XPRSsetcbcutmgr(oprob, cbmng, &(*this));
 
 	//double b =prob.lpOptimize();
 	//int b = prob.getLPStat();
@@ -338,11 +345,11 @@ void IRP::buildGraph(vector<Node*> &graph, int t, bool Depot)
 	}
 }
 
-void IRP::buildGraph(vector<Node*> &graph, int t, IRP::Solution *solution)
+void IRP::buildGraph(vector<NodeIRP*> &graph, int t, IRP::Solution *solution)
 {
 	//Add nodes from particular period
-	for (IRP::NodeIRPHolder * n :solution->NodeHolder) {
-			Node * node = new Node(*n->Nodes[t]);
+	for (NodeIRPHolder * n :solution->NodeHolder) {
+			NodeIRP * node = new NodeIRP(*n->Nodes[t]);
 			graph.push_back(node);
 		}
 }
@@ -406,7 +413,7 @@ void IRP::addSubtourCut(vector<vector<Node *>>& strongComp, int t, bool &newCut,
 
 			if (circleFlow >= visitSum - maxVisitSum + 0.1) {
 				//print subtour
-				//graphAlgorithm::printGraph(strongComp[i], *this);
+				graphAlgorithm::printGraph(strongComp[i], *this, "Subtour\subtour");
 				// save current basis
 				//SavedBasis.push_back(prob.saveBasis());
 				//addSubtour constraint
@@ -1026,7 +1033,7 @@ IRP::Solution::Solution(IRP &model, vector<vector<IRP::Route*>>& routes, bool in
 
 void IRP::Solution::print(string filename)
 {
-	vector<Node *> graph;
+	vector<NodeIRP *> graph;
 	for (int t : Instance.Periods) {
 		Instance.buildGraph(graph, t, this);
 		graphAlgorithm::printGraph(graph, Instance, filename+to_string(t));
@@ -1220,20 +1227,22 @@ void IRP::Solution::printSolution()
 
 
 				if (NodeHolder[i]->Nodes[t]->Quantity > 0.5) {
-
-					j = NodeHolder[i]->getEdge(t)->getEndNode()->getId();
-
 					printf("y%d: %.2f\t", i, NodeHolder[i]->getOutflow(t));
 					printf("t%d: %.2f\t", i, NodeHolder[i]->timeServed(t));
-					printf("x%d%d: %.2f\t", i, j, NodeHolder[i]->getEdge(t)->getValue());
+
 					if (Instance.map.isDelivery(i)) {
 						printf("qD_%d: %.2f\t", i, NodeHolder[i]->quantity(t));
 					}
 					else {
 						printf("qP_%d: %.2f\t", i, NodeHolder[i]->quantity(t));
 					}
-					printf("loadDel%d%d: %.2f\t", i, j, NodeHolder[i]->getEdge(t)->LoadDel);
-					printf("loadPick%d%d: %.2f\t", i, j, NodeHolder[i]->getEdge(t)->LoadPick);
+
+					for (NodeIRP::EdgeIRP *edge : NodeHolder[i]->getEdges(t)) {
+						j = edge->getEndNode()->getId();
+						printf("x%d%d: %.2f\t", i, j, edge->getValue());
+						printf("loadDel%d%d: %.2f\t", i, j, edge->LoadDel);
+						printf("loadPick%d%d: %.2f\t", i, j, edge->LoadPick);
+					}
 				}
 					
 			} // end if
