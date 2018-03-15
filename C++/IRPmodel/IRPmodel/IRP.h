@@ -188,13 +188,16 @@ public:
 		vector<vector <IRP::Route*>> Routes;
 
 		//void buildGraph(vector<Node*> &graph, int t);
-		void print(string filname);
+		void print(string filname,int weight);
 
-
+		vector <NodeIRP *> getVisitedNodes(int period);
+		void sort(vector <NodeIRP>*);
 		bool IntegerSolution;
 		bool isFeasible();
 		bool isRouteFeasible(IRP::Route *);
 		double getNumberOfRoutes(int period);
+		double getNodeVisits(int period);
+		double getService(int period);
 		NodeIRPHolder * getNode(int id);
 		int newRoute(vector <Node*> & route, int period);
 

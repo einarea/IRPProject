@@ -30,5 +30,8 @@ private:
 	vector<double> ** totalAvg;
 	double *** varTot;
 	double *** var;
+	double *** RouteData;
+	double ** totCostAvg;
+	double *** CostData;
 };
 

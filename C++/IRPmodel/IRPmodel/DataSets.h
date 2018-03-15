@@ -15,14 +15,13 @@ SequentialEnum(Model,
 	Construction,
 );
 
-
-
-
 SequentialEnum(Content,
 	HoldingCost,
 	TransCost,
 	Routes,
 	Objective,
+	nNodeVisits,
+	Service,
 );
 
 
@@ -37,6 +36,8 @@ SequentialEnum(CostData,
 
 SequentialEnum(RouteData,
 	nVehicles,
+	nNodes,
+	dService
 );
 
 SequentialEnum(DataType,

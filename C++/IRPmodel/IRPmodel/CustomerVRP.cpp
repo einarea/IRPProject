@@ -5,7 +5,7 @@
 
 
 
-CustomerVRP::CustomerVRP(int id, int x, int y, int del, int pick)
+CustomerVRP::CustomerVRP(int id, int x, int y, double del, double pick)
 	:
 	Customer(id, x, y),
 	Delivery(del),
@@ -19,6 +19,16 @@ double CustomerVRP::getDemand(int indicator)
 		return  Pickup;
 	else
 		return Delivery;
+}
+
+void CustomerVRP::setDelivery(double quantity)
+{
+	Delivery = quantity;
+}
+
+void CustomerVRP::setPickup(double quantity)
+{
+	Pickup = quantity;
 }
 
 

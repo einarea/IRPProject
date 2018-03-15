@@ -69,10 +69,10 @@ bool VRPmodel::initializeSets()
 	int node = 1;
 	for (Customer * c : (*customers)) {
 		CustomerVRP * cust = database.getCustomer(c->getId());
-		if (cust->getDemand(Customer::DELIVERY) > 0)
+		if (cust->getDemand(Customer::DELIVERY) > 0.01)
 			DeliveryNodes.push_back(map.getDeliveryNode(cust));
 			
-		if (cust->getDemand(Customer::PICKUP) > 0)
+		if (cust->getDemand(Customer::PICKUP) > 0.01)
 			PickupNodes.push_back(map.getPickupNode(cust));
 	}
 

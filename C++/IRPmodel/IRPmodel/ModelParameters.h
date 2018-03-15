@@ -57,6 +57,10 @@ public:
 	static const int REMOVE_SERVICE = 0;
 	static const int HIGHEST_HOLDINGCOST = 1;
 	static const int HIGHEST_TOTALCOST = 2;
+
+	//weights to color graphs
+	static const int LOAD = 1;
+	static const int X = 2;
 	~ModelParameters();
 };
 

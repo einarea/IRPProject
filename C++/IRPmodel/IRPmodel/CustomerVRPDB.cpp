@@ -22,6 +22,40 @@ CustomerVRPDB::CustomerVRPDB(vector<vector<double>> & Demand,  vector<Customer *
 	}
 }
 
+CustomerVRPDB::CustomerVRPDB(vector<IRP::NodeIRP *> nodes, Map& map)
+{
+	for (IRP::NodeIRP * node : nodes) {
+		//Only add if not exisiting
+		bool exists = false;
+
+		for (Customer * c1 : Customers) {
+			CustomerVRP * c = static_cast <CustomerVRP*> (c1);
+			//if customer exisits
+			if (map.getCustomer(node->getId())->getId() == c->getId()) {
+				exists = true;
+				if (map.isDelivery(node->getId()))
+					c->setDelivery(node->Quantity);
+				else
+					c->setPickup(node->Quantity);
+			}
+		}
+
+		//if customer is not added
+		if(! exists){
+				Customer * cust = map.getCustomer(node->getId());
+
+				//Push back customer with delivery or pickup
+				if (map.isDelivery(node->getId()))
+					Customers.push_back(new CustomerVRP(cust->getId(), cust->getXpos(), cust->getYpos(), node->Quantity, 0));
+				else
+					Customers.push_back(new CustomerVRP(cust->getId(), cust->getXpos(), cust->getYpos(), 0, node->Quantity));
+		} //end not exists
+		//todo, sort(Customers);
+	} //end nodes
+	
+		
+}
+
 int CustomerVRPDB::getnCustomers()
 {
 	return Customers.size();

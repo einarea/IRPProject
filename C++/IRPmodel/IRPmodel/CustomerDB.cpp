@@ -31,6 +31,10 @@ CustomerDB::CustomerDB()
 {
 }
 
+CustomerDB::~CustomerDB()
+{
+}
+
 vector<Customer*>* CustomerDB::getCustomers()
 {
 	return &Customers;

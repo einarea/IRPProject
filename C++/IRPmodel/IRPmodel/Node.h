@@ -22,7 +22,7 @@ public:
 
 	Node(int id);
 	Node(int id, vector<Edge*> edges);
-	Edge * getEdge(int);
+	Edge * getEdge(Node & n);
 	int getnEdges();
 	//Returns the first edge
 	Edge * getEdge();
@@ -31,6 +31,8 @@ public:
 	void addEdge(Edge *);
 	void addEdge(Node& child);
 	void removeEdge(Node &child);
+	void deleteEdges();
+	void removeEdges();
 	int getId() const;
 	~Node();
 

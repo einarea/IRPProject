@@ -22,9 +22,15 @@ int Node::getId() const {
 
 
 
-Node::Edge * Node::getEdge(int id)
+Node::Edge * Node::getEdge(Node & child)
 {
-	return Edges[id];
+	for (int i = 0; i < Edges.size(); i++) {
+		if (child.getId() == Edges[i]->getEndNode()->getId()) {
+			return Edges[i];
+		}
+		
+	}
+	exit(111);
 }
 
 int Node::getnEdges()
@@ -76,13 +82,32 @@ void Node::addEdge(Node & child)
 
 void Node::removeEdge(Node & child)
 {
-	for (int i = 0; i <= Edges.size(); i++) {
+	for (int i = 0; i < Edges.size(); i++) {
 		if (child.getId() == Edges[i]->getEndNode()->getId()) {
-			Edges.erase(Edges.begin() + i );
 			delete Edges[i];
+			Edges.erase(Edges.begin() + i);
 		}
 	}
 }
+
+void Node::removeEdges()
+{
+	int size = Edges.size();
+	for (int i = size-1; i >= 0; i--) {
+		Edges.erase(Edges.begin() + i);
+		}
+}
+
+void Node::deleteEdges()
+{
+	int size = Edges.size();
+	for (int i = size - 1; i >= 0; i--) {
+		delete Edges[i];
+		Edges.erase(Edges.begin() + i);
+	}
+}
+
+
 
 void Node::Edge::setValue(double v)
 {

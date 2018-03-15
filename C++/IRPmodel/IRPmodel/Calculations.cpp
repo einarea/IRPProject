@@ -15,16 +15,19 @@ Calculations::Calculations(vector<double> *** modelData, int instances, int peri
 	//Initialize dataholders
 	total = new double**[nModels];
 	totalAvg = new vector<double> *[nModels];
+	totCostAvg = new double*[nModels];
 	varTot = new double **[nModels];
 	var = new double **[nModels];
 
 	for (auto i : ModelList) {
 		total[i] = new double *[nFields];
 		totalAvg[i] = new vector<double> [nFields];
+		totCostAvg[i] = new double[nFields];
 		varTot[i] = new double *[nModels];
 		var[i] = new double *[nModels];
 
 		for (auto j : ContentList) {
+			totCostAvg[i][j] = 0;
 			total[i][j] = new double[nPeriods + 1];
 			totalAvg[i][j].resize(nPeriods + 1);
 			varTot[i][j] = new double[nPeriods + 1];
@@ -40,6 +43,29 @@ Calculations::Calculations(vector<double> *** modelData, int instances, int peri
 		}
 	}
 
+	//Initialize cost data
+	CostData = new double **[CostDataList.size()];
+	for (auto field : CostDataList) {
+		CostData[field] = new double *[nPeriods + 2];
+		for (int t = 1; t <= nPeriods + 1; t++) {
+			CostData[field][t] = new double[2];
+			for (auto i : DataTypeList)
+				CostData[field][t][i] = 0;
+		}
+	}
+
+	//Initialize routedata
+	RouteData = new double **[RouteDataList.size()];
+
+	for (auto field : RouteDataList) {
+		RouteData[field] = new double *[nPeriods + 2];
+		for (int t = 1; t <= nPeriods + 1; t++) {
+			RouteData[field][t] = new double[2];
+			for (auto i : DataTypeList)
+				RouteData[field][t][i] = 0;
+		}
+	}
+
 	AnalyzeModel(modelData);
 }
 
@@ -52,9 +78,13 @@ void Calculations::AnalyzeModel(vector<double> *** & modelData)
 			double A = 0;
 			for (int period = 1; period <= nPeriods; period++) {
 				totalAvg[model][field][period] += getAverage(modelData[model][field][period]);
-				totalAvg[model][field][period];
+				totCostAvg[model][field] += totalAvg[model][field][period];
 			}
+			A = totCostAvg[model][field];
+		
+			int c = 1;
 		}
+
 
 	//Calculate the sample standard deviation over all instances
 	/*for (auto model : ModelList)
@@ -86,66 +116,26 @@ double Calculations::getStdDev(vector<double> &v, double average = -1)
 
 double *** Calculations::getRouteInformation()
 {
-	vector<int> RouteSet = { Routes };
-	double *** RouteData;
-	RouteData = new double **[RouteSet.size()];
+	vector<int> RouteSet = { Routes, nNodeVisits, Service };
 
-	//Initialize return value
-	for (auto field : RouteDataList) {
-		RouteData[field] = new double *[nPeriods + 2];
-		for (int t = 1; t <= nPeriods + 1; t++) {
-			RouteData[field][t] = new double[2];
-			for (auto i : DataTypeList)
-				RouteData[field][t][i] = 0;
-		}	
-	}
+	for (int t = 1; t <= nPeriods; t++) {
+		RouteData[nVehicles][t][Average] = totalAvg[Construction][Routes][t] - totalAvg[Exact][Routes][t];
+		RouteData[nNodes][t][Average] = (totalAvg[Construction][nNodeVisits][t] - totalAvg[Exact][nNodeVisits][t]) / totCostAvg[Exact][nNodeVisits] * 100;
+		RouteData[dService][t][Average] = (totalAvg[Construction][Service][t] - totalAvg[Exact][Service][t]) / totCostAvg[Exact][Service] * 100;
 
-
-	//Calculate the average cost over all periods
-	double ** totCostAvg;
-	totCostAvg = new double*[ModelList.size()];
-
-	for (auto model : ModelList) {
-		totCostAvg[model] = new double[RouteSet.size()];
-		for (auto info : RouteSet) {
-			totCostAvg[model][info] = 0;
-			for (int t = 1; t <= nPeriods; t++)
-			{
-				totCostAvg[model][info] += totalAvg[model][info][t];
-
-			}
-		}
-	}
-
-	for (auto field : RouteSet) {
-		for (int t = 1; t <= nPeriods; t++) {
-				RouteData[nVehicles][t][Average] = totalAvg[Construction][field][t] - totalAvg[Exact][field][t];
-				double c = totalAvg[Construction][field][t];
-				double b = totalAvg[Exact][field][t];
-				int d = 1;
-		}
 	}
 	//Calculate the cumulative vehicles
 	RouteData[nVehicles][nPeriods + 1][Average] = totCostAvg[Construction][Routes] - totCostAvg[Exact][Routes];
-
+	double a = totCostAvg[Construction][Service];
+	double b = totCostAvg[Exact][Service];
+	RouteData[nNodes][nPeriods + 1][Average] = (totCostAvg[Construction][nNodeVisits]- totCostAvg[Exact][nNodeVisits]) / totCostAvg[Exact][nNodeVisits]*100;
+	RouteData[dService][nPeriods + 1][Average] = (totCostAvg[Construction][Service] - totCostAvg[Exact][Service]) / totCostAvg[Exact][Service] * 100;
 	return RouteData;
 }
 
 double  *** Calculations::getCostDistribution()
 {
 	vector <int> CostSet = { HoldingCost, TransCost, Objective };
-
-	double *** CostData;
-
-	CostData = new double **[CostDataList.size()];
-	for (auto field : CostDataList) {
-		CostData[field] = new double *[nPeriods + 2];
-		for (int t = 1; t <= nPeriods+1; t++) {
-			CostData[field][t] = new double[2];
-			for (auto i : DataTypeList)
-				CostData[field][t][i] = 0;
-		}
-	}
 
 	
 	vector<double> * hold;
@@ -167,27 +157,14 @@ double  *** Calculations::getCostDistribution()
 		deltaT[t].resize(nInstances);
 		deltaObj[t].resize(nInstances);
 	}
-	//Calculate the average cost over all periods
-	double ** totCostAvg;
-	totCostAvg = new double*[ModelList.size()];
 
-	for (auto model : ModelList) {
-		totCostAvg[model] = new double[CostSet.size()];
-			for (auto cost : CostSet) {
-				totCostAvg[model][cost] = 0;
-				for (int t = 1; t <= nPeriods; t++)
-				{
-					totCostAvg[model][cost]+= totalAvg[model][cost][t];
-
-				}
-			}
-	}
 	//Calculate cost distribution for each period
 	for (int t = 1; t <= nPeriods; t++) {
+		double a = totCostAvg[Exact][Objective];
+		double b = totalAvg[Exact][HoldingCost][t];
 		hold[t][Average] = totalAvg[Exact][HoldingCost][t] / totCostAvg[Exact][Objective] * 100;
+		double c = b / a * 100;
 		trans[t][Average] = totalAvg[Exact][TransCost][t] / totCostAvg[Exact][Objective] * 100;
-	
-	
 	
 		deltaH[t][Average] = (totalAvg[Construction][HoldingCost][t] - totalAvg[Exact][HoldingCost][t]) / totCostAvg[Exact][HoldingCost] * 100;
 		deltaT[t][Average] = (totalAvg[Construction][TransCost][t] - totalAvg[Exact][TransCost][t]) / totCostAvg[Exact][TransCost] * 100;
@@ -195,6 +172,7 @@ double  *** Calculations::getCostDistribution()
 		deltaObj[t][Average] = (totalAvg[Construction][Objective][t] - totalAvg[Exact][Objective][t]) / totCostAvg[Exact][Objective] * 100;
 
 		CostData[HoldExact][t][Average] = hold[t][Average];
+		double d = CostData[HoldExact][t][Average];
 		CostData[TransExact][t][Average] = trans[t][Average];
 		CostData[deltaHold][t][Average] = deltaH[t][Average];
 		
@@ -226,4 +204,5 @@ double  *** Calculations::getCostDistribution()
 
 Calculations::~Calculations()
 {
+	int a = 1;
 }

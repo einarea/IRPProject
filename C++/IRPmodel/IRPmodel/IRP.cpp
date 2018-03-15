@@ -299,12 +299,15 @@ bool IRP::sepStrongComponents(vector<XPRBcut> & cut)
 	bool newCut = false;
 	for (int t : Periods) {
 		buildGraph(graph, t, true); //include depot
-		graphAlgorithm::printGraph(graph, *this, "Subtour/LPrelax");
+		graphAlgorithm::printGraph(graph, *this, "Subtour/LPrelax", ModelParameters::X);
 		graph.clear();
 		buildGraph(graph, t, false); //Do not include depot in graph
-		graphAlgorithm::printGraph(graph, *this, "Subtour/DepotGone");
+		graphAlgorithm::printGraph(graph, *this, "Subtour/DepotGone", ModelParameters::X);
 		graphAlgorithm::sepByStrongComp(graph, result);
-		graphAlgorithm::printGraph(graph, *this, "Subtour/Separation");
+		for (int i = 0; i < result.size(); i++) {
+			graphAlgorithm::printGraph(result[i], *this, "ConnectedComp/DepotGone" + to_string(i), ModelParameters::X);
+		}
+		graphAlgorithm::printGraph(graph, *this, "Subtour/Separation", ModelParameters::X);
 		addSubtourCut(result, t, newCut, cut);
 		graph.clear();
 		result.clear();
@@ -1031,15 +1034,27 @@ IRP::Solution::Solution(IRP &model, vector<vector<IRP::Route*>>& routes, bool in
 }
 
 
-void IRP::Solution::print(string filename)
+void IRP::Solution::print(string filename, int load)
 {
-	vector<NodeIRP *> graph;
+	vector<Node *> graph;
 	for (int t : Instance.Periods) {
 		Instance.buildGraph(graph, t, this);
-		graphAlgorithm::printGraph(graph, Instance, filename+to_string(t));
+		graphAlgorithm::printGraph(graph, Instance, filename+to_string(t), load);
 		graph.clear();
 	}
 }
+
+vector<IRP::NodeIRP*> IRP::Solution::getVisitedNodes(int period)
+{
+	vector<IRP::NodeIRP*> visitedNodes;
+	for (auto node : NodeHolder) {
+		if (node->quantity(period) > 0.01) {
+			visitedNodes.push_back(node->Nodes[period]);
+		}
+	}
+	return visitedNodes;
+}
+
 
 bool IRP::Solution::isFeasible()
 {
@@ -1074,6 +1089,27 @@ double IRP::Solution::getNumberOfRoutes(int period)
 {
 	NodeIRPHolder * depot = getNode(0);
 	return depot->getOutflow(period);
+}
+
+double IRP::Solution::getNodeVisits(int period)
+{
+	double nodeVisits = 0;
+	for (auto node : NodeHolder)
+		if (node->quantity(period) >= 0.01)
+			nodeVisits += 1;
+
+	return nodeVisits;
+}
+
+double IRP::Solution::getService(int period)
+{
+	double service = 0;
+	for (auto node : NodeHolder)
+		service += node->quantity(period);
+	if (service > 0.01)
+		return service / getNodeVisits(period);
+	else
+		return 0;
 }
 
 IRP::NodeIRPHolder * IRP::Solution::getNode(int id)
@@ -1538,7 +1574,7 @@ int ** IRP::Route::getRouteMatrix(IRP * const Instance)
 
 	for (Node *node : this->route) {
 		int i = node->getId();
-		int j = node->getEdge(0)->getEndNode()->getId();
+		int j = node->getEdge()->getEndNode()->getId();
 		route[i][j] = 1;
 	}
 	return route;

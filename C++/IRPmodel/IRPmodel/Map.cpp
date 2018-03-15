@@ -63,7 +63,7 @@ int Map::getNumCustomers()
 
 Customer * Map::getCustomer(int id)
 {
-	nodeToCustomer(id);
+	id = nodeToCustomer(id);
 	return database.getCustomer(id);
 }
 
