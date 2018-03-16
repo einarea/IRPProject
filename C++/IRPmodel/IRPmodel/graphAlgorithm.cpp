@@ -103,65 +103,69 @@ void graphAlgorithm::printGraph(vector<Node*>& graph, IRP &instance, string file
 	gp << "set size ratio -1\n";
 	// '-' means read from stdin.  The send1d() function sends data to gnuplot's stdin.
 
-	if (!Depot.empty() && !arcs.empty()) {
+	if (!nodePoints.empty()) {
+		if (!Depot.empty() && !arcs.empty()) {
 
-		string str = "plot";
-		for (int i = 0; i < arcs.size(); i++)
-			if(!arcs[i].empty())
-				str = str + "'-' with vectors notitle lw 2 lt rgb '"+ color[i] + "' filled, ";
+			string str = "plot";
+			for (int i = 0; i < arcs.size(); i++)
+				if (!arcs[i].empty())
+					str = str + "'-' with vectors notitle lw 2 lt rgb '" + color[i] + "' filled, ";
 
-		str = str + "'-' with points lt rgb '#e74c3c' pointtype 7 pointsize 2.5 notitle, \
+			if (!nodePoints.empty())
+				str = str + "'-' with points lt rgb '#e74c3c' pointtype 7 pointsize 2.5 notitle, ";
+
+			str = str + "'-' with points lt rgb '#16a085' pointtype 7 pointsize 3.3 notitle \n";
+
+			gp << str;
+
+			for (int i = 0; i < arcs.size(); i++) {
+				if (!arcs[i].empty())
+					gp.send1d(arcs[i]);
+
+			}
+			if (!nodePoints.empty())
+				gp.send1d(nodePoints);
+			gp.send1d(Depot);
+		}
+		else if (!nodePoints.empty()) {
+			string str = "plot";
+			for (int i = 0; i < arcs.size(); i++)
+				if (!arcs[i].empty())
+					str = str + "'-' with vectors notitle lw 2 lt rgb '" + color[i] + "' filled, ";
+
+			if (!nodePoints.empty())
+				str = str + "'-' with points lt rgb '#16a085' pointtype 7 pointsize 3.3 notitle \n";
+
+			gp << str;
+
+			for (int i = 0; i < arcs.size(); i++) {
+				if (!arcs[i].empty())
+					gp.send1d(arcs[i]);
+
+			}
+			if (!nodePoints.empty())
+				gp.send1d(nodePoints);
+		}
+		else {
+			string str = "plot";
+			for (int i = 0; i < arcs.size(); i++)
+				if (!arcs[i].empty())
+					str = str + "'-' with vectors notitle lw 2 lt rgb '" + color[i] + "' filled, ";
+
+			str = str + "'-' with points lt rgb '#e74c3c' pointtype 7 pointsize 2.5 notitle, \
 			'-' with points lt rgb '#16a085' pointtype 7 pointsize 3.3 notitle \n";
 
-		gp << str;
+			gp << str;
 
-		for (int i = 0; i < arcs.size(); i++) {
-			if (!arcs[i].empty())
-				gp.send1d(arcs[i]);
-		
+			for (int i = 0; i < arcs.size(); i++) {
+				if (!arcs[i].empty())
+					gp.send1d(arcs[i]);
+
+			}
+
+			gp.send1d(nodePoints);
+			gp.send1d(Depot);
 		}
-
-		gp.send1d(nodePoints);
-		gp.send1d(Depot);
-	}
-	else if (!arcs.empty()) {
-		string str = "plot";
-		for (int i = 0; i < arcs.size(); i++)
-			if (!arcs[i].empty())
-				str = str + "'-' with vectors notitle lw 2 lt rgb '" + color[i] + "' filled, ";
-
-		str = str + "'-' with points lt rgb '#e74c3c' pointtype 7 pointsize 2.5 notitle, \
-			'-' with points lt rgb '#16a085' pointtype 7 pointsize 3.3 notitle \n";
-
-		gp << str;
-
-		for (int i = 0; i < arcs.size(); i++) {
-			if (!arcs[i].empty())
-				gp.send1d(arcs[i]);
-
-		}
-
-		gp.send1d(nodePoints);
-	}
-	else {
-		string str = "plot";
-		for (int i = 0; i < arcs.size(); i++)
-			if (!arcs[i].empty())
-				str = str + "'-' with vectors notitle lw 2 lt rgb '" + color[i] + "' filled, ";
-
-		str = str + "'-' with points lt rgb '#e74c3c' pointtype 7 pointsize 2.5 notitle, \
-			'-' with points lt rgb '#16a085' pointtype 7 pointsize 3.3 notitle \n";
-
-		gp << str;
-
-		for (int i = 0; i < arcs.size(); i++) {
-			if (!arcs[i].empty())
-				gp.send1d(arcs[i]);
-
-		}
-
-		gp.send1d(nodePoints);
-		gp.send1d(Depot);
 	}
 	
 }
@@ -216,30 +220,29 @@ void graphAlgorithm::sepByStrongComp(vector<Node*>& graph, vector<vector<Node*>>
 
 	int index = 0;
 
-	vector<vector<Node *>> Loop;
-	vector <NodeStrong *> S;
+	stack <NodeStrong *> S;
 	for (Node *node : graph) {
 		NodeStrong *nodeStr = NodeStrong::getStrongNode(node);
 		if (nodeStr->getIndex() == -1) {
-			strongConnect(*nodeStr, index, S, result, Loop);
+			strongConnect(*nodeStr, index, S, result);
 		}
 	}
 }
 
 
-void graphAlgorithm::strongConnect(NodeStrong & node, int &index, vector <NodeStrong*> &S, vector<vector<Node*>> & result, vector<vector <Node *>> &AllLoops)
+void graphAlgorithm::strongConnect(NodeStrong & node, int &index, stack <NodeStrong*> &S, vector<vector<Node*>> & result)
 {
 	NodeStrong *endNode;
 	node.setIndex(index);
 	node.setLowLink(index);
 	index += 1;
-	S.push_back(&node);
+	S.push(&node);
 	node.setOnStack(true);
 	
 	for (NodeStrong::Edge *edge : (node.getEdges())) {
 		endNode = NodeStrong::getStrongNode(edge->getEndNode());
 		if (endNode->getIndex() == -1) {
-			strongConnect(*endNode, index, S, result, AllLoops);
+			strongConnect(*endNode, index, S, result);
 			node.setLowLink(min(node.getLowLink(), endNode->getLowLink()));
 
 			if (!endNode->isOnStack()) { //End node is finished and part of strong component. No edge between strong components
@@ -248,9 +251,9 @@ void graphAlgorithm::strongConnect(NodeStrong & node, int &index, vector <NodeSt
 			}
 		}
 		else if (endNode->isOnStack())
-		{
+		
 			node.setLowLink(min(node.getLowLink(), endNode->getIndex()));
-			int ind = endNode->getIndex();
+		/*{int ind = endNode->getIndex();
 			//Identified loop, potential subtour
 			int low = node.getLowLink();
 			int i;
@@ -277,7 +280,7 @@ void graphAlgorithm::strongConnect(NodeStrong & node, int &index, vector <NodeSt
 			if (Loop.size() <= 5) {
 				result.push_back(Loop);
 			}
-		}
+		}*/
 
 		else {//Cross edge in tree. Set edge value to -1
 			edge->setValue(-1);
@@ -290,9 +293,9 @@ void graphAlgorithm::strongConnect(NodeStrong & node, int &index, vector <NodeSt
 	NodeStrong * NodePtr;
 		do{
 			//Add strong component to result
-			NodePtr = S[S.size()-1];
+			NodePtr = S.top();
 			StrongComponent.push_back(NodePtr);
-			S.pop_back();
+			S.pop();
 			NodePtr->setOnStack(false);
 			int a = 1;
 			//printf("%d	", NodePtr->getId());

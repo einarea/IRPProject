@@ -73,7 +73,7 @@ private:
 	bool initializeVariables();
 	bool initializeParameters();
 	bool formulateProblem();
-	void buildGraph(vector <Node*> &, int, bool includeDepot);
+	void buildGraph(vector <Node*> &, int, bool includeDepot, double weight=0.01);
 
 	void printGraph(vector <Node> &);
 
@@ -86,7 +86,7 @@ private:
 
 
 public:
-	
+	vector<vector<vector<XPRBvar>>> subtourIndices;
 	//Sets
 	int startTime;
 	vector  <int> Periods;

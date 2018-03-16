@@ -18,7 +18,7 @@ public:
 	static int getColor(double value);
 
 private:
-	static void strongConnect(NodeStrong&, int&, vector <NodeStrong*> &, vector<vector<Node*>> &result, vector<vector<Node *>> &Loop);
+	static void strongConnect(NodeStrong&, int&, stack <NodeStrong*> &, vector<vector<Node*>> &result);
 	
 };
 
