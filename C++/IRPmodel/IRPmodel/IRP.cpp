@@ -1182,21 +1182,49 @@ double IRP::Solution::getNumberOfRoutes(int period)
 
 double IRP::Solution::getNodeVisits(int period)
 {
+	return getDeliveryNodeVisits(period) + getPickupNodeVisits(period);
+}
+
+double IRP::Solution::getDeliveryNodeVisits(int period)
+{
 	double nodeVisits = 0;
 	for (auto node : NodeHolder)
-		if (node->quantity(period) >= 0.01)
+		if(node->isDelivery() && node->quantity(period) >= 0.01)
 			nodeVisits += 1;
 
 	return nodeVisits;
 }
 
-double IRP::Solution::getService(int period)
+double IRP::Solution::getPickupNodeVisits(int period)
+{
+	double nodeVisits = 0;
+	for (auto node : NodeHolder)
+		if (!node->isDelivery() && node->quantity(period) >= 0.01)
+			nodeVisits += 1;
+
+	return nodeVisits;
+}
+
+double IRP::Solution::getDelivery(int period)
 {
 	double service = 0;
 	for (auto node : NodeHolder)
-		service += node->quantity(period);
+		if(node->isDelivery())
+			service += node->quantity(period);
+		if (service > 0.01)
+			return service / getDeliveryNodeVisits(period);
+	else
+		return 0;
+}
+
+double IRP::Solution::getPickup(int period)
+{
+	double service = 0;
+	for (auto node : NodeHolder)
+		if (!node->isDelivery())
+			service += node->quantity(period);
 	if (service > 0.01)
-		return service / getNodeVisits(period);
+		return service / getPickupNodeVisits(period);
 	else
 		return 0;
 }

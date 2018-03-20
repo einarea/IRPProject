@@ -199,7 +199,10 @@ public:
 		bool isRouteFeasible(IRP::Route *);
 		double getNumberOfRoutes(int period);
 		double getNodeVisits(int period);
-		double getService(int period);
+		double getDeliveryNodeVisits(int period);
+		double getPickupNodeVisits(int period);
+		double getDelivery(int period);
+		double getPickup(int period);
 		NodeIRPHolder * getNode(int id);
 		int newRoute(vector <Node*> & route, int period);
 

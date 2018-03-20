@@ -117,20 +117,20 @@ double Calculations::getStdDev(vector<double> &v, double average = -1)
 
 double *** Calculations::getRouteInformation()
 {
-	vector<int> RouteSet = { Routes, nNodeVisits, Service };
+	vector<int> RouteSet = { Routes, nNodeVisits, Delivery, Pickup};
 
 	for (int t = 1; t <= nPeriods; t++) {
 		RouteData[nVehicles][t][Average] = totalAvg[Construction][Routes][t] - totalAvg[Exact][Routes][t];
 		RouteData[nNodes][t][Average] = (totalAvg[Construction][nNodeVisits][t] - totalAvg[Exact][nNodeVisits][t]) / totCostAvg[Exact][nNodeVisits] * 100;
-		RouteData[dService][t][Average] = (totalAvg[Construction][Service][t] - totalAvg[Exact][Service][t]) / totCostAvg[Exact][Service] * 100;
+		RouteData[dDelivery][t][Average] = (totalAvg[Construction][Delivery][t] - totalAvg[Exact][Delivery][t]) / totCostAvg[Exact][Delivery] * 100;
+		RouteData[dPickup][t][Average] = (totalAvg[Construction][Pickup][t] - totalAvg[Exact][Pickup][t]) / totCostAvg[Exact][Pickup] * 100;
 
 	}
 	//Calculate the cumulative vehicles
 	RouteData[nVehicles][nPeriods + 1][Average] = totCostAvg[Construction][Routes] - totCostAvg[Exact][Routes];
-	double a = totCostAvg[Construction][Service];
-	double b = totCostAvg[Exact][Service];
 	RouteData[nNodes][nPeriods + 1][Average] = (totCostAvg[Construction][nNodeVisits]- totCostAvg[Exact][nNodeVisits]) / totCostAvg[Exact][nNodeVisits]*100;
-	RouteData[dService][nPeriods + 1][Average] = (totCostAvg[Construction][Service] - totCostAvg[Exact][Service]) / totCostAvg[Exact][Service] * 100;
+	RouteData[dDelivery][nPeriods + 1][Average] = (totCostAvg[Construction][Delivery] - totCostAvg[Exact][Delivery]) / totCostAvg[Exact][Delivery] * 100;
+	RouteData[dPickup][nPeriods + 1][Average] = (totCostAvg[Construction][Pickup] - totCostAvg[Exact][Pickup]) / totCostAvg[Exact][Pickup] * 100;
 	return RouteData;
 }
 
