@@ -12,37 +12,22 @@
 
 using namespace ::dashoptimization;
 
-/*void XPRS_CC acceptInt(XPRSprob oprob, void * vd) {
+void XPRS_CC acceptInt(XPRSprob oprob, void * vd, int soltype, int * ifreject, double *cutoff) {
 	IRP * modelInstance;
 	modelInstance = (IRP*)vd;
 	vector<XPRBcut> subtourCut;
 
-
 	modelInstance->getProblem()->beginCB(oprob);
 	modelInstance->getProblem()->sync(XPRB_XPRS_SOL);
 	bool addedCuts = modelInstance->sepStrongComponents(subtourCut);
-	
-	modelInstance->getProblem()->
-
-	//int i = 0;
-	//if (addedCuts) {
-		for (XPRBcut cut : subtourCut)
-		{
-
-			
-			cut.print();
-
-			modelInstance->nSubtourCuts += 1;
-
-			int a = modelInstance->getProblem()->addCuts(&cut, 1);
-
-			i++;
-		}
-		
+	if (addedCuts) {
+		*ifreject = 1;
 	}
 	modelInstance->getProblem()->endCB();
+}
 
-}*/
+
+
 
 //Global callBack manager
 int XPRS_CC cbmng(XPRSprob oprob, void * vd)
@@ -216,14 +201,15 @@ IRP::Solution * IRP::solveModel()
 	oprob = prob.getXPRSprob();
 	startTime = XPRB::getTime();
 	
-	//Enable subtour elimination
-	//int a=prob.setCutMode(1); // Enable the cut mode
-	//XPRSsetcbcutmgr(oprob,  cbmng, &(*this));
-	//XPRSsetcbintsol(oprob, acceptInt, &(*this));
-
-	//double b =prob.lpOptimize();
-	//int b = prob.getLPStat();
-	
+	if (ARC_RELAXED) {
+		//Enable subtour elimination
+		int a = prob.setCutMode(1); // Enable the cut mode
+		XPRSsetcbcutmgr(oprob, cbmng, &(*this));
+		//XPRSsetcbintsol(oprob, acceptInt, &(*this));
+		XPRSsetcbpreintsol(oprob, acceptInt, &(*this));
+		//double b =prob.lpOptimize();
+		//int b = prob.getLPStat();
+	}
 	int d = prob.mipOptimise();
 	//prob.print();
 	int SolID = allocateIRPSolution();
@@ -371,12 +357,12 @@ bool IRP::sepStrongComponents(vector<XPRBcut> & cut)
 	bool newCut = false;
 	for (int t : Periods) {
 		buildGraph(graph, t, true, 0.01); //include depot
-		graphAlgorithm::printGraph(graph, *this, "Subtour/LPrelax" + to_string(t), ModelParameters::X);
+		//graphAlgorithm::printGraph(graph, *this, "Subtour/LPrelax" + to_string(t), ModelParameters::X);
 		graph.clear();
 		buildGraph(graph, t, false, 0.5); //Do not include depot in graph
-		graphAlgorithm::printGraph(graph, *this, "Subtour/DepotGone" + to_string(t), ModelParameters::X);
+		//graphAlgorithm::printGraph(graph, *this, "Subtour/DepotGone" + to_string(t), ModelParameters::X);
 		graphAlgorithm::sepByStrongComp(graph, result);
-		graphAlgorithm::printGraph(graph, *this, "Subtour/Separation" + to_string(t), ModelParameters::X);
+		//graphAlgorithm::printGraph(graph, *this, "Subtour/Separation" + to_string(t), ModelParameters::X);
 		addSubtourCut(result, t, newCut, cut);
 		graph.clear();
 		result.clear();
@@ -502,8 +488,8 @@ void IRP::addSubtourCut(vector<vector<Node *>>& strongComp, int t, bool &newCut,
 
 				for (Node *node : strongComp[i]) {
 					rSide += y[node->getId()][t];
-					y[node->getId()][t].print();
-					cout << "\n";
+					//y[node->getId()][t].print();
+					//cout << "\n";
 					rSideStr = rSideStr + " + " + "y_" + to_string(node->getId());
 					subtour[1].push_back(y[node->getId()][t]);
 					for (Node::Edge *edge : node->getEdges()) {
@@ -512,8 +498,8 @@ void IRP::addSubtourCut(vector<vector<Node *>>& strongComp, int t, bool &newCut,
 							int v = edge->getEndNode()->getId();
 							//printf("x_%d%d + ", u, v);
 							lSide += x[node->getId()][edge->getEndNode()->getId()][t];
-							x[node->getId()][edge->getEndNode()->getId()][t].print();
-							cout << "\n";
+							//x[node->getId()][edge->getEndNode()->getId()][t].print();
+							//cout << "\n";
 
 							subtour[0].push_back(x[node->getId()][edge->getEndNode()->getId()][t]);
 
