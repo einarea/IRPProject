@@ -1174,6 +1174,28 @@ IRP::Route * IRP::getRoute(int id)
 	return routes[id];
 }
 
+void IRP::addVisitConstraint(double ** VisitedMatrix)
+{
+	XPRBexpr p1;
+	int visits;
+	for (int t : Periods) {
+		p1 = 0;
+		visits = 0;
+		for (int i : Nodes) {
+			if (VisitedMatrix[i][t] == 0) {
+				visits += 1;
+				p1 += y[i][t];
+			}
+		}
+		prob.newCtr("MinVisits", p1 >= floor(visits*0.6));
+	}
+}
+
+int IRP::getNumOfNodes()
+{
+	return Nodes.size();
+}
+
 
 vector<IRP::Route const *> IRP::getRoutes()
 {

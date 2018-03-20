@@ -236,6 +236,8 @@ public:
 	void addValidIneq();
 
 	//Route functions
+	void IRP::addVisitConstraint(double ** VisitedMatrix);
+	int getNumOfNodes();
 	void printRouteMatrix();
 	void addRoutesToVector();
 	void printMatrix();
