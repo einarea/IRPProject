@@ -188,7 +188,7 @@ public:
 		vector<vector <IRP::Route*>> Routes;
 
 		//void buildGraph(vector<Node*> &graph, int t);
-		void print(string filname,int weight);
+		void print(string filname,int weight=0);
 
 		vector <NodeIRP *> getVisitedNodes(int period);
 		void sort(vector <NodeIRP>*);

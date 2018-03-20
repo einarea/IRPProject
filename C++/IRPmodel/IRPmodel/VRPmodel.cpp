@@ -24,7 +24,7 @@ void VRPmodel::solveModel()
 	//prob.lpOptimize();
 	//int b = prob.getLPStat();
 
-	prob.print();
+	//prob.print();
 	int d = prob.mipOptimise();
 	if (extraVehicle.getSol() > 0)
 		int a = 1;

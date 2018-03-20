@@ -171,7 +171,7 @@ IRP::Solution * IRP::solveModel()
 	
 	//Enable subtour elimination
 //	int a=prob.setCutMode(1); // Enable the cut mode
-	XPRSsetcbcutmgr(oprob, cbmng, &(*this));
+	//XPRSsetcbcutmgr(oprob, cbmng, &(*this));
 
 	//double b =prob.lpOptimize();
 	//int b = prob.getLPStat();
