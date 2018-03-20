@@ -12,6 +12,38 @@
 
 using namespace ::dashoptimization;
 
+/*void XPRS_CC acceptInt(XPRSprob oprob, void * vd) {
+	IRP * modelInstance;
+	modelInstance = (IRP*)vd;
+	vector<XPRBcut> subtourCut;
+
+
+	modelInstance->getProblem()->beginCB(oprob);
+	modelInstance->getProblem()->sync(XPRB_XPRS_SOL);
+	bool addedCuts = modelInstance->sepStrongComponents(subtourCut);
+	
+	modelInstance->getProblem()->
+
+	//int i = 0;
+	//if (addedCuts) {
+		for (XPRBcut cut : subtourCut)
+		{
+
+			
+			cut.print();
+
+			modelInstance->nSubtourCuts += 1;
+
+			int a = modelInstance->getProblem()->addCuts(&cut, 1);
+
+			i++;
+		}
+		
+	}
+	modelInstance->getProblem()->endCB();
+
+}*/
+
 //Global callBack manager
 int XPRS_CC cbmng(XPRSprob oprob, void * vd)
 {
@@ -26,7 +58,7 @@ int XPRS_CC cbmng(XPRSprob oprob, void * vd)
 	XPRSgetdblattrib(oprob, XPRS_LPOBJVAL, &objval);
 
 	vector<XPRBcut> subtourCut;
-	
+
 	IRP * modelInstance;
 	modelInstance = (IRP*)vd;
 
@@ -38,11 +70,25 @@ int XPRS_CC cbmng(XPRSprob oprob, void * vd)
 	//Load LP relaxation currently held in the optimizer
 	modelInstance->getProblem()->beginCB(oprob);
 	modelInstance->getProblem()->sync(XPRB_XPRS_SOL);
+
 	//double a = modelInstance->getProblem()->getObjVal();
 	//Add subtourconstraints
+
+	XPRBprob *bprob = modelInstance->getProblem();
+
+	//XPRBcut vv = bprob->newCut(modelInstance->x[1][7][1] + modelInstance->x[7][10][1] + modelInstance->x[10][1][1] - modelInstance->y[7][1] - modelInstance->y[10][1] <= 0);
+	/*modelInstance->x[1][7][1].print();
+	cout << "\n";
+	modelInstance->x[7][10][1].print();
+	cout << "\n";
+	modelInstance->x[10][1][1].print();
+	cout << "\n";*/
+
+	//double aaa = bprob->addCuts(&vv, 1);
+
+	//vv.print();
 	bool addedCuts = modelInstance->sepStrongComponents(subtourCut);
 
-	
 	if (addedCuts) {
 		int node;
 		/*double *lBound;
@@ -66,7 +112,7 @@ int XPRS_CC cbmng(XPRSprob oprob, void * vd)
 		int i = 0;
 		for (XPRBcut cut : subtourCut)
 		{
-			int *mcols;
+			/*int *mcols;
 			double *dmatval;
 			vector<XPRBvar> subtourX(modelInstance -> subtourIndices[i][0]);
 			vector<XPRBvar> subtourY(modelInstance->subtourIndices[i][1]);
@@ -82,19 +128,20 @@ int XPRS_CC cbmng(XPRSprob oprob, void * vd)
 				mcols[subtourX.size() + i] = subtourY[i].getColNum();
 				cout << mcols[i+subtourX.size()] << "  ";
 				dmatval[subtourX.size() + i] = -1;
-			}
+			}*/
 
 			
 			cut.print();
+			//modelInstance -> x[2][17][1].print();
 			modelInstance->nSubtourCuts += 1;
 			cutId = modelInstance->nSubtourCuts;
-		
-			XPRSstorecuts(oprob, nCuts, 1, mtype, qrtype, drhs, mstart, mindex, mcols, dmatval);
-			
-			modelInstance->getProblem()->addCuts(&cut, 1);
+			//XPRSstorecuts(oprob, nCuts, 1, mtype, qrtype, drhs, mstart, mindex, mcols, dmatval);
+			//cut = bprob->newCut(aa<=-0.5);
+			int a = bprob->addCuts(&cut, 1);
+	
 			i++;
 		}
-		XPRSloadcuts(oprob, 1, -1, -1, NULL);
+		//XPRSloadcuts(oprob, 1, -1, -1, NULL);
 
 	}
 	
@@ -170,8 +217,9 @@ IRP::Solution * IRP::solveModel()
 	startTime = XPRB::getTime();
 	
 	//Enable subtour elimination
-//	int a=prob.setCutMode(1); // Enable the cut mode
-	XPRSsetcbcutmgr(oprob, cbmng, &(*this));
+	//int a=prob.setCutMode(1); // Enable the cut mode
+	//XPRSsetcbcutmgr(oprob,  cbmng, &(*this));
+	//XPRSsetcbintsol(oprob, acceptInt, &(*this));
 
 	//double b =prob.lpOptimize();
 	//int b = prob.getLPStat();
@@ -435,12 +483,12 @@ void IRP::addSubtourCut(vector<vector<Node *>>& strongComp, int t, bool &newCut,
 
 			}
 
-			if (circleFlow >= visitSum - maxVisitSum + 0.1) {
+			if (circleFlow >= visitSum - maxVisitSum + 0.4) {
 				//print subtour
 				vector<vector<XPRBvar>> subtour;
 				subtour.resize(2);
 				
-				graphAlgorithm::printGraph(strongComp[i], *this, "Subtour\subtour");
+			//	graphAlgorithm::printGraph(strongComp[i], *this, "Subtour\subtour");
 				// save current basis
 				//SavedBasis.push_back(prob.saveBasis());
 				//addSubtour constraint
@@ -454,6 +502,8 @@ void IRP::addSubtourCut(vector<vector<Node *>>& strongComp, int t, bool &newCut,
 
 				for (Node *node : strongComp[i]) {
 					rSide += y[node->getId()][t];
+					y[node->getId()][t].print();
+					cout << "\n";
 					rSideStr = rSideStr + " + " + "y_" + to_string(node->getId());
 					subtour[1].push_back(y[node->getId()][t]);
 					for (Node::Edge *edge : node->getEdges()) {
@@ -462,22 +512,32 @@ void IRP::addSubtourCut(vector<vector<Node *>>& strongComp, int t, bool &newCut,
 							int v = edge->getEndNode()->getId();
 							//printf("x_%d%d + ", u, v);
 							lSide += x[node->getId()][edge->getEndNode()->getId()][t];
+							x[node->getId()][edge->getEndNode()->getId()][t].print();
+							cout << "\n";
+
 							subtour[0].push_back(x[node->getId()][edge->getEndNode()->getId()][t]);
 
 						}
 					}
 				}
 				subtourIndices.push_back(subtour);
-				lSide -= 1;
+				rSide -= y[maxVisitID][t];
 				rSideStr = rSideStr + " - " + "y_" + to_string(maxVisitID);
 				//cout << rSideStr << "\n";
 				nSubtourCuts += 1;
 	
 				XPRBcut vv = prob.newCut( lSide <= rSide);
-				vv.print();
+				//vv.print();
+				
  				SubtourCut.push_back(vv);
+
+
+				//SubtourCut.push_back(vv);
+			
+				//SubtourCut.push_back(vv);
 				newCut = true;		
 				maxVisitID = -1;
+				
 			}
 		}
 	}

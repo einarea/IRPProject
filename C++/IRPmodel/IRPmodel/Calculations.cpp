@@ -78,6 +78,7 @@ void Calculations::AnalyzeModel(vector<double> *** & modelData)
 			double A = 0;
 			for (int period = 1; period <= nPeriods; period++) {
 				totalAvg[model][field][period] += getAverage(modelData[model][field][period]);
+				double a = getAverage(modelData[model][field][period]);
 				totCostAvg[model][field] += totalAvg[model][field][period];
 			}
 			A = totCostAvg[model][field];

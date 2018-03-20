@@ -42,8 +42,8 @@ private:
 	//Map map;
 
 	//Variables
-	XPRBvar *** x;					//Arc variables
-	XPRBvar ** y;					//Customer visits variables
+					//Arc variables
+				//Customer visits variables
 	XPRBvar ** inventory;		
 	XPRBvar ** delivery;
 	XPRBvar ** pickup;
@@ -86,6 +86,8 @@ private:
 
 
 public:
+	XPRBvar ** y;
+	XPRBvar *** x;
 	vector<vector<vector<XPRBvar>>> subtourIndices;
 	//Sets
 	int startTime;
