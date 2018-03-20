@@ -5,9 +5,6 @@
 #include "graphAlgorithm.h"
 #include "ModelParameters.h"
 
-#include <boost/tuple/tuple.hpp>
-
-#include "gnuplot-iostream.h"
 
 
 using namespace ::dashoptimization;
@@ -323,12 +320,12 @@ bool IRP::sepStrongComponents(vector<XPRBcut> & cut)
 	bool newCut = false;
 	for (int t : Periods) {
 		buildGraph(graph, t, true, 0.01); //include depot
-		graphAlgorithm::printGraph(graph, *this, "Subtour/LPrelax" + to_string(t), ModelParameters::X);
+	
 		graph.clear();
 		buildGraph(graph, t, false, 0.5); //Do not include depot in graph
-		graphAlgorithm::printGraph(graph, *this, "Subtour/DepotGone" + to_string(t), ModelParameters::X);
+
 		graphAlgorithm::sepByStrongComp(graph, result);
-		graphAlgorithm::printGraph(graph, *this, "Subtour/Separation" + to_string(t), ModelParameters::X);
+
 		addSubtourCut(result, t, newCut, cut);
 		graph.clear();
 		result.clear();
@@ -440,7 +437,7 @@ void IRP::addSubtourCut(vector<vector<Node *>>& strongComp, int t, bool &newCut,
 				vector<vector<XPRBvar>> subtour;
 				subtour.resize(2);
 				
-				graphAlgorithm::printGraph(strongComp[i], *this, "Subtour\subtour");
+		
 				// save current basis
 				//SavedBasis.push_back(prob.saveBasis());
 				//addSubtour constraint
@@ -1068,7 +1065,7 @@ void IRP::Solution::print(string filename, int load)
 	vector<Node *> graph;
 	for (int t : Instance.Periods) {
 		Instance.buildGraph(graph, t, this);
-		graphAlgorithm::printGraph(graph, Instance, filename+to_string(t), load);
+
 		graph.clear();
 	}
 }

@@ -11,7 +11,7 @@ graphAlgorithm::graphAlgorithm()
 
 
 
-void graphAlgorithm::printGraph(vector<Node*>& graph, IRP &instance, string filename, int weight) {
+/*void graphAlgorithm::printGraph(vector<Node*>& graph, IRP &instance, string filename, int weight) {
 
 
 	FILE *gnuplotPipe = _popen("C:\\Octave\\3.2.4_gcc-4.4.0\\bin\\gnuplot", "w");
@@ -168,7 +168,7 @@ void graphAlgorithm::printGraph(vector<Node*>& graph, IRP &instance, string file
 		}
 	}
 	
-}
+}*/
 
 void graphAlgorithm::getRoutes(vector<Node*>& graph,  vector<vector<Node*>>& routes)
 {
