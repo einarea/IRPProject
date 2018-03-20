@@ -1166,6 +1166,11 @@ double IRP::Solution::getNumberOfRoutes(int period)
 	return depot->getOutflow(period);
 }
 
+double IRP::Solution::getResidualCapacity(int period)
+{
+	return 0.0;
+}
+
 double IRP::Solution::getNodeVisits(int period)
 {
 	return getDeliveryNodeVisits(period) + getPickupNodeVisits(period);
@@ -1215,6 +1220,11 @@ double IRP::Solution::getPickup(int period)
 		return 0;
 }
 
+vector<IRP::Route*> IRP::Solution::getRoutes(int period)
+{
+	return Routes[period];
+}
+
 IRP::NodeIRPHolder * IRP::Solution::getNode(int id)
 {
 	for (NodeIRPHolder * n : NodeHolder) {
@@ -1245,6 +1255,23 @@ double IRP::Solution::getObjective()
 		return getHoldingCost() + getTransportationCost();
 }
 
+
+void IRP::addVisitConstraint(double ** VisitedMatrix)
+{
+	XPRBexpr p1;
+	int visits;
+	for (int t : Periods) {
+		p1 = 0;
+		visits = 0;
+		for (int i : Nodes) {
+			if (VisitedMatrix[i][t] == 0) {
+				visits += 1;
+				p1 += y[i][t];
+			}
+		}
+		prob.newCtr("MinVisits", p1 >= floor(visits*0.6));
+	}
+}
 
 IRP::Route * IRP::getRoute(int id)
 {
@@ -1312,6 +1339,11 @@ void IRP::printRouteMatrix()
 			}
 		}
 	}
+}
+
+int IRP::getNumOfNodes()
+{
+	return Nodes.size();
 }
 
 void IRP::addRoutesToVector()
@@ -1681,6 +1713,21 @@ int ** IRP::Route::getRouteMatrix(IRP * const Instance)
 		route[i][j] = 1;
 	}
 	return route;
+}
+
+double IRP::Route::getResidualCapacity()
+{
+	double load = 0;
+	
+	double maxLoad = 0;
+	for (auto node : route) {
+		auto edge = node->getEdge();
+		load = node->getEdge()->LoadDel + node->getEdge()->LoadPick;
+		if (load > maxLoad) {
+			maxLoad = load;
+		}
+	}
+	return  Instance.Capacity - maxLoad;
 }
 
 IRP::Route::Route(vector<NodeIRP*>& path, int ref, IRP & Instance, int t = 0)

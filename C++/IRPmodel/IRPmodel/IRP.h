@@ -119,6 +119,7 @@ public:
 		int getId();
 		int ** getRouteMatrix(IRP * const instance);
 		int period;
+		double getResidualCapacity();
 		Route(vector <NodeIRP*> & path, int id, IRP &instance, int t);
 		//Graph 
 		vector <NodeIRP*> route;
@@ -164,6 +165,7 @@ public:
 
 		//Changes
 		void addEdge(double loadDel, double loadPic, NodeIRPHolder * child, int period, double value);
+
 		//Information
 		void propInvForw(int period);
 		double getOutflow(int period);
@@ -198,11 +200,13 @@ public:
 		bool isFeasible();
 		bool isRouteFeasible(IRP::Route *);
 		double getNumberOfRoutes(int period);
+		double getResidualCapacity(int period);
 		double getNodeVisits(int period);
 		double getDeliveryNodeVisits(int period);
 		double getPickupNodeVisits(int period);
 		double getDelivery(int period);
 		double getPickup(int period);
+		vector <IRP::Route *> getRoutes(int period);
 		NodeIRPHolder * getNode(int id);
 		int newRoute(vector <Node*> & route, int period);
 
@@ -234,7 +238,7 @@ public:
 	IRP(CustomerIRPDB&, bool relaxed = false, bool maskOn = false, int ** VisitMask = 0);
 	//void addSolution(int ** y, int ***x, int **d, int **pic, int ***loadDel, int ***loadPic, int **inv, int ** t);
 
-
+	void addVisitConstraint(double ** VisitedMatrix);
 	Route * getRoute(int id);
 	vector<Route const*> getRoutes();
 	int newRoute(vector <Node*> &path);
@@ -242,6 +246,7 @@ public:
 
 	//Route functions
 	void printRouteMatrix();
+	int getNumOfNodes();
 	void addRoutesToVector();
 	void printMatrix();
 	int getCapacity();
