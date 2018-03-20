@@ -1176,6 +1176,32 @@ double IRP::Solution::getNodeVisits(int period)
 	return getDeliveryNodeVisits(period) + getPickupNodeVisits(period);
 }
 
+double ** IRP::Solution::getVisitedMatrix()
+{
+	double ** VisitedMatrix;
+	VisitedMatrix = new double *[Instance.getNumOfNodes + 1];
+	for (auto node : NodeHolder) {
+		cout << "\n";
+		for (auto period : Instance.Periods) {
+			cout << "\t";
+			if (node->getId() != 0) {
+				if (node->quantity(period) > 0.01) {
+					VisitedMatrix[node->getId()][period] = 1;
+					cout << VisitedMatrix[node->getId()][period];
+				}
+				else {
+					VisitedMatrix[node->getId()][period] = 0;
+					cout << VisitedMatrix[node->getId()][period];
+				}
+			}
+		}
+		
+	}
+	return VisitedMatrix;
+}
+		
+
+
 double IRP::Solution::getDeliveryNodeVisits(int period)
 {
 	double nodeVisits = 0;
@@ -1325,6 +1351,11 @@ void IRP::addValidIneq()
 		}
 	}
 
+}
+
+double ** IRP::getVisitDifference(Solution sol1, Solution sol2)
+{
+	return nullptr;
 }
 
 void IRP::printRouteMatrix()

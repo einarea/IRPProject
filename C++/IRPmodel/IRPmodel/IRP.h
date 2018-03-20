@@ -202,6 +202,7 @@ public:
 		double getNumberOfRoutes(int period);
 		double getResidualCapacity(int period);
 		double getNodeVisits(int period);
+		double ** getVisitedMatrix();
 		double getDeliveryNodeVisits(int period);
 		double getPickupNodeVisits(int period);
 		double getDelivery(int period);
@@ -244,6 +245,8 @@ public:
 	int newRoute(vector <Node*> &path);
 	void addValidIneq();
 
+	//Solution information
+	double ** getVisitDifference(Solution sol1, Solution sol2);
 	//Route functions
 	void printRouteMatrix();
 	int getNumOfNodes();
