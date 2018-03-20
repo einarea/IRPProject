@@ -84,8 +84,10 @@ bool VRPmodel::initializeSets()
 
 bool VRPmodel::initializeParameters()
 {
+	int nNodes = ModelBase::getMax(AllNodes) + 1;
+
 	MaxTime = ModelParameters::maxTime;
-	Demand = new int [Nodes.back()];
+	Demand = new int [nNodes];
 	int cust;
 
 	for (int i : DeliveryNodes) {
@@ -100,10 +102,10 @@ bool VRPmodel::initializeParameters()
 		Demand[i] = database.getDemand(cust, Customer::PICKUP);
 	} // end demand
 
-	TransCost = new int *[AllNodes.back()];
+	TransCost = new int *[nNodes];
 	for (int i : AllNodes) {
 		//printf("\n");
-		TransCost[i] = new int[AllNodes.back()];
+		TransCost[i] = new int[nNodes];
 		for (int j : AllNodes)
 			if (map.inArcSet(i, j))
 			{
@@ -117,9 +119,9 @@ bool VRPmodel::initializeParameters()
 	} // end transcost
 
 	//TravelTime
-	TravelTime = new int *[AllNodes.back()];
+	TravelTime = new int *[nNodes];
 	for (int i : AllNodes) {
-		TravelTime[i] = new int[AllNodes.back()];
+		TravelTime[i] = new int[nNodes];
 		for (int j : AllNodes)
 			if (map.inArcSet(i, j)) {
 				TravelTime[i][j] = map.getTravelTime(i, j, ModelParameters::TRAVELTIME_MULTIPLIER, ModelParameters::SERVICETIME);
@@ -131,25 +133,25 @@ bool VRPmodel::initializeParameters()
 	return true;
 }
 
-
 bool VRPmodel::initializeVariables()
 {
 	//Loading variables
 
 
 	//Initialize routing variables, load and penalty variables
-	loadDelivery = new XPRBvar *[AllNodes.back()];
-	loadPickup = new XPRBvar *[AllNodes.back()];
-	pCapacity = new XPRBvar *[AllNodes.back()];
+	int nNodes = ModelBase::getMax(AllNodes) + 1;
+	loadDelivery = new XPRBvar *[nNodes];
+	loadPickup = new XPRBvar *[nNodes];
+	pCapacity = new XPRBvar *[nNodes];
 
-	x = new XPRBvar * [AllNodes.back()];
+	x = new XPRBvar * [nNodes];
 
 	for (int i : AllNodes) {
-		x[i] = new XPRBvar[AllNodes.back()];
+		x[i] = new XPRBvar[nNodes];
 
-		pCapacity[i] = new XPRBvar[AllNodes.back()];
-		loadDelivery[i] = new XPRBvar[AllNodes.back()];
-		loadPickup[i] = new XPRBvar[AllNodes.back()];
+		pCapacity[i] = new XPRBvar[nNodes];
+		loadDelivery[i] = new XPRBvar[nNodes];
+		loadPickup[i] = new XPRBvar[nNodes];
 
 		for (int j : AllNodes) {
 			if (map.inArcSet(i, j)) {
@@ -163,7 +165,7 @@ bool VRPmodel::initializeVariables()
 		}
 	}
 
-	y = new XPRBvar[AllNodes.back()];
+	y = new XPRBvar[nNodes];
 	for (int i : Nodes) {
 		y[i] = prob.newVar(XPRBnewname("y%d", i), XPRB_PL, 0, 1);
 	}
@@ -176,7 +178,7 @@ bool VRPmodel::initializeVariables()
 
 
 	//Time variables
-	time = new XPRBvar[AllNodes.back()];
+	time = new XPRBvar[nNodes];
 	for (int i : AllNodes) {
 		time[i] = prob.newVar(XPRBnewname("time_%d", i), XPRB_PL, 0, MaxTime);
 	}

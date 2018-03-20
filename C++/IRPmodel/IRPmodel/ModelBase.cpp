@@ -27,6 +27,15 @@ void ModelBase::createRangeSet(int start, int end, vector<int> &set)
 	}
 }
 
+int ModelBase::getMax(vector<int> values)
+{
+	int max = -10000;
+	for (auto i : values)
+		if (i > max)
+			max = i;
+	return max;
+}
+
 
 
 ModelBase::~ModelBase()

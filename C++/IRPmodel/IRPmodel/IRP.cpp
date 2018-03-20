@@ -187,6 +187,17 @@ IRP::IRP(CustomerIRPDB& db, bool ArcRel, bool maskOn, int ** VisitMask)
 		return;
 	}
 
+	//initialize tabu matrix and countMatrix
+	TabuMatrix = new double *[getNumOfNodes() + 1];
+	CountMatrix = new double *[getNumOfNodes() + 1];
+	for (auto i : Nodes) {
+		TabuMatrix[i] = new double[getNumOfPeriods() + 1];
+		CountMatrix[i] = new double[getNumOfPeriods() + 1];
+		for (auto t : Periods) {
+			TabuMatrix[i][t] = 0;
+			CountMatrix[i][t] = 0;
+		}
+	}
 
 
 	formulateProblem();
@@ -1282,7 +1293,7 @@ double IRP::Solution::getObjective()
 }
 
 
-void IRP::addVisitConstraint(double ** VisitedMatrix)
+void IRP::addVisitConstraint()
 {
 	XPRBexpr p1;
 	int visits;
@@ -1290,7 +1301,8 @@ void IRP::addVisitConstraint(double ** VisitedMatrix)
 		p1 = 0;
 		visits = 0;
 		for (int i : Nodes) {
-			if (VisitedMatrix[i][t] == 0) {
+			if (TabuMatrix[i][t] == TABU) {
+
 				visits += 1;
 				p1 += y[i][t];
 			}
@@ -1353,9 +1365,28 @@ void IRP::addValidIneq()
 
 }
 
-double ** IRP::getVisitDifference(Solution sol1, Solution sol2)
+//Returns the difference in visits from sol2 to sol1
+double ** IRP::getVisitDifference(Solution * sol1, Solution * sol2)
 {
-	return nullptr;
+	double ** changedMatrix;
+	double ** newVisitedMatrix = sol1->getVisitedMatrix();
+	double ** prevVisitedMatrix = sol2->getVisitedMatrix();
+	changedMatrix = new double *[getNumOfNodes() + 1];
+	for (auto i : Nodes) {
+		cout << "\n";
+		changedMatrix[i] = new double[getNumOfPeriods() + 1];
+		for (auto j : Periods) {
+			double a = newVisitedMatrix[i][j];
+			double b = prevVisitedMatrix[i][j];
+			changedMatrix[i][j] = newVisitedMatrix[i][j] - prevVisitedMatrix[i][j];
+			cout << changedMatrix[i][j] << "\t";
+		}
+	}
+
+	delete newVisitedMatrix;
+	delete prevVisitedMatrix;
+
+	return changedMatrix;
 }
 
 void IRP::printRouteMatrix()
@@ -1370,6 +1401,30 @@ void IRP::printRouteMatrix()
 			}
 		}
 	}
+}
+
+void IRP::updateTabuMatrix(double ** changeMatrix)
+{
+	for(auto i : Nodes)
+		for (auto t : Periods) {
+			if (changeMatrix[i][t] != 0)
+				CountMatrix[i][t] += changeMatrix[i][t];
+
+			//Remove from tabu if Count is outside tabulength
+			if (CountMatrix[i][t] > ModelParameters::TabuLength || CountMatrix[i][t] < -ModelParameters::TabuLength) {
+				CountMatrix[i][t] = 0;
+				prob.delCtr(TabuMatrix[i][t]);
+				TabuMatrix[i][t] = 0;
+			}
+
+			//If new visit, lock that visit
+			if (CountMatrix[i][t] == 1)
+				TabuMatrix[i][t] = prob.newCtr(y[i][t] >= 1);
+
+			//Else if visit removed, lock that to no visit
+			else if(CountMatrix[i][t] == -1)
+				TabuMatrix[i][t] = prob.newCtr(y[i][t] <= 0);
+		}
 }
 
 int IRP::getNumOfNodes()

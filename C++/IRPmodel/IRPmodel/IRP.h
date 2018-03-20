@@ -15,6 +15,7 @@ using namespace::std;
 class IRP
 {
 private:
+
 	//Problem
 	CustomerIRPDB database;
 	MapIRP map;
@@ -50,6 +51,9 @@ private:
 	XPRBvar *** loadDelivery;
 	XPRBvar *** loadPickup;
 	XPRBvar ** time;
+
+	XPRBctr ** TabuMatrix;
+	double ** CountMatrix;
 
 	//Route matrix
 	vector<int **>A;
@@ -239,16 +243,17 @@ public:
 	IRP(CustomerIRPDB&, bool relaxed = false, bool maskOn = false, int ** VisitMask = 0);
 	//void addSolution(int ** y, int ***x, int **d, int **pic, int ***loadDel, int ***loadPic, int **inv, int ** t);
 
-	void addVisitConstraint(double ** VisitedMatrix);
+	void addVisitConstraint();
 	Route * getRoute(int id);
 	vector<Route const*> getRoutes();
 	int newRoute(vector <Node*> &path);
 	void addValidIneq();
 
 	//Solution information
-	double ** getVisitDifference(Solution sol1, Solution sol2);
+	double ** getVisitDifference(Solution * sol1, Solution * sol2);
 	//Route functions
 	void printRouteMatrix();
+	void updateTabuMatrix(double ** changeMatrix);
 	int getNumOfNodes();
 	void addRoutesToVector();
 	void printMatrix();

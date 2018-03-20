@@ -47,7 +47,10 @@ public:
 	static const int InitInventoryPick = 15; //Pickup nodes
 	
 	
-	static const int LBPick = 0;			
+	static const int LBPick = 0;		
+
+	//Tabu list size
+	static const int TabuLength = 2;
 
 	//Valid inequalitites
 	static const int MinimumNodeVisit = 1;
