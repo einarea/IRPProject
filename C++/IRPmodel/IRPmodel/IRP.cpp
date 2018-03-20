@@ -1174,7 +1174,7 @@ IRP::Route * IRP::getRoute(int id)
 	return routes[id];
 }
 
-void IRP::addVisitConstraint(double ** VisitedMatrix)
+XPRBctr & IRP::addVisitConstraint(double ** VisitedMatrix)
 {
 	XPRBexpr p1;
 	int visits;
@@ -1187,7 +1187,7 @@ void IRP::addVisitConstraint(double ** VisitedMatrix)
 				p1 += y[i][t];
 			}
 		}
-		prob.newCtr("MinVisits", p1 >= floor(visits*0.6));
+		return prob.newCtr("MinVisits", p1 >= ceil(visits*0.1));
 	}
 }
 
