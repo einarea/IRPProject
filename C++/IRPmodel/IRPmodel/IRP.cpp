@@ -188,10 +188,10 @@ IRP::IRP(CustomerIRPDB& db, bool ArcRel, bool maskOn, int ** VisitMask)
 	}
 
 	//initialize tabu matrix and countMatrix
-	TabuMatrix = new double *[getNumOfNodes() + 1];
+	TabuMatrix = new XPRBctr *[getNumOfNodes() + 1];
 	CountMatrix = new double *[getNumOfNodes() + 1];
 	for (auto i : Nodes) {
-		TabuMatrix[i] = new double[getNumOfPeriods() + 1];
+		TabuMatrix[i] = new XPRBctr[getNumOfPeriods() + 1];
 		CountMatrix[i] = new double[getNumOfPeriods() + 1];
 		for (auto t : Periods) {
 			TabuMatrix[i][t] = 0;
@@ -1190,23 +1190,26 @@ double IRP::Solution::getNodeVisits(int period)
 double ** IRP::Solution::getVisitedMatrix()
 {
 	double ** VisitedMatrix;
-	VisitedMatrix = new double *[Instance.getNumOfNodes + 1];
+	cout << "\n\nVisitMatrix: 1 = visited, 0 = not visited";
+	VisitedMatrix = new double *[Instance.getNumOfNodes() + 1];
 	for (auto node : NodeHolder) {
-		cout << "\n";
-		for (auto period : Instance.Periods) {
-			cout << "\t";
-			if (node->getId() != 0) {
-				if (node->quantity(period) > 0.01) {
-					VisitedMatrix[node->getId()][period] = 1;
-					cout << VisitedMatrix[node->getId()][period];
-				}
-				else {
-					VisitedMatrix[node->getId()][period] = 0;
-					cout << VisitedMatrix[node->getId()][period];
+		if (node->getId() != 0) {
+			cout << "\n";
+			VisitedMatrix[node->getId()] = new double [Instance.getNumOfPeriods() + 1];
+			for (auto period : Instance.Periods) {
+				cout << "\t";
+				if (node->getId() != 0) {
+					if (node->quantity(period) > 0.01) {
+						VisitedMatrix[node->getId()][period] = 1;
+						cout << VisitedMatrix[node->getId()][period];
+					}
+					else {
+						VisitedMatrix[node->getId()][period] = 0;
+						cout << VisitedMatrix[node->getId()][period];
+					}
 				}
 			}
-		}
-		
+		}	
 	}
 	return VisitedMatrix;
 }
@@ -1293,22 +1296,30 @@ double IRP::Solution::getObjective()
 }
 
 
-void IRP::addVisitConstraint()
+void IRP::addVisitConstraint(double ** Visit)
 {
 	XPRBexpr p1;
+	p1 = 0;
+	cout << "\n";
+	if (VisitCtr.isValid()) {
+		prob.delCtr(VisitCtr);
+	}
+
 	int visits;
 	for (int t : Periods) {
-		p1 = 0;
+		
 		visits = 0;
 		for (int i : Nodes) {
-			if (TabuMatrix[i][t] == TABU) {
-
+			if(Visit[i][t] == 0 && !TabuMatrix[i][t].isValid())
+			{
 				visits += 1;
 				p1 += y[i][t];
 			}
 		}
-		prob.newCtr("MinVisits", p1 >= floor(visits*0.6));
 	}
+	VisitCtr = prob.newCtr("MinVisits", p1 >= ceil(visits*0.1));
+	VisitCtr.print();
+	cout << "\n";
 }
 
 IRP::Route * IRP::getRoute(int id)
@@ -1368,9 +1379,12 @@ void IRP::addValidIneq()
 //Returns the difference in visits from sol2 to sol1
 double ** IRP::getVisitDifference(Solution * sol1, Solution * sol2)
 {
+	
 	double ** changedMatrix;
 	double ** newVisitedMatrix = sol1->getVisitedMatrix();
 	double ** prevVisitedMatrix = sol2->getVisitedMatrix();
+	cout << "\n";
+	cout << "\nChangeMatrix: 1 added visit, -1 removed visit\n";
 	changedMatrix = new double *[getNumOfNodes() + 1];
 	for (auto i : Nodes) {
 		cout << "\n";
@@ -1405,10 +1419,19 @@ void IRP::printRouteMatrix()
 
 void IRP::updateTabuMatrix(double ** changeMatrix)
 {
-	for(auto i : Nodes)
+	cout << "\n\nCountMatrix: Times since last changed , >0 added visit, <0 removed visit. \n";
+	for (auto i : Nodes) {
+		cout << "\n";
 		for (auto t : Periods) {
-			if (changeMatrix[i][t] != 0)
-				CountMatrix[i][t] += changeMatrix[i][t];
+			if (changeMatrix[i][t] != 0) {
+				CountMatrix[i][t] = changeMatrix[i][t];
+			}
+			else if (CountMatrix[i][t] >= 1)
+				CountMatrix[i][t] += 1;
+			else if (CountMatrix[i][t] <= -1)
+				CountMatrix[i][t] -= 1;
+
+			cout << CountMatrix[i][t] << "\t";
 
 			//Remove from tabu if Count is outside tabulength
 			if (CountMatrix[i][t] > ModelParameters::TabuLength || CountMatrix[i][t] < -ModelParameters::TabuLength) {
@@ -1418,13 +1441,28 @@ void IRP::updateTabuMatrix(double ** changeMatrix)
 			}
 
 			//If new visit, lock that visit
-			if (CountMatrix[i][t] == 1)
+			if (CountMatrix[i][t] == 1) {
 				TabuMatrix[i][t] = prob.newCtr(y[i][t] >= 1);
+			
+			}
 
 			//Else if visit removed, lock that to no visit
-			else if(CountMatrix[i][t] == -1)
+			else if (CountMatrix[i][t] == -1) {
 				TabuMatrix[i][t] = prob.newCtr(y[i][t] <= 0);
+				
+			}
 		}
+	}
+
+	for (auto i : Nodes) {
+		cout << "\n";
+		for (auto t : Periods) {
+			if (TabuMatrix[i][t].isValid()) {
+				TabuMatrix[i][t].print();
+				cout << "\t";
+			}
+		}
+	}
 }
 
 int IRP::getNumOfNodes()
