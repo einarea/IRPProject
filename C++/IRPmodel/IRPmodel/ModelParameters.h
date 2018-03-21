@@ -18,6 +18,8 @@ public:
 	static const int nVehicles = 3;
 
 	//Heurestic
+	static const int TabuLength = 2;
+
 	//static const double VisitRatio = 0.5;
 
 	//************For generating customers********************//
@@ -48,6 +50,9 @@ public:
 	
 	
 	static const int LBPick = 0;			
+
+	//Tabu length
+
 
 	//Valid inequalitites
 	static const int MinimumNodeVisit = 1;
