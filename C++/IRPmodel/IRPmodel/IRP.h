@@ -120,7 +120,8 @@ public:
 		//int removeNode(NodeIRP*, IRP::Route *);
 		//void insertSubRoute(vector<NodeIRP *>, NodeIRP * start, NodeIRP * end);
 	
-
+		int getTotalDelivery();
+		int getTotalPickup();
 		int getPosition(Node * node);
 		int getId();
 		int ** getRouteMatrix(IRP * const instance);
@@ -173,9 +174,10 @@ public:
 		void addEdge(double loadDel, double loadPic, NodeIRPHolder * child, int period, double value);
 
 		//Information
-		void propInvForw(int period);
+		void propInvForw(int period, double quantity);
 		double getOutflow(int period);
 		double quantity(int period);
+		double inventory(int period);
 		double timeServed(int period);
 
 		vector <NodeIRP::EdgeIRP*> getEdges(int period);
@@ -207,10 +209,15 @@ public:
 		bool isRouteFeasible(IRP::Route *);
 		double getNumberOfRoutes(int period);
 		double getResidualCapacity(int period);
+		//Returns the amount of total product deliveried less the capacity x (number of vehicles used - 1)
+		double getTotalDelivery(int period);
+		//Returns the amount of total product pickup up less the capacity x (number of vehicles used - 1)
+		double getTotalPickup(int period);
 		double getNodeVisits(int period);
 		double ** getVisitedMatrix();
 		double getDeliveryNodeVisits(int period);
 		double getPickupNodeVisits(int period);
+		//Returns average delivery per node
 		double getDelivery(int period);
 		double getPickup(int period);
 		vector <IRP::Route *> getRoutes(int period);
@@ -239,7 +246,18 @@ public:
 	}; //End class solution
 
 	
+	class LocalSearch {
+	public:
+		LocalSearch(IRP & model, IRP::Solution *origSol);
 
+		IRP::Solution * ShiftQuantity();
+
+		//Returns period with the highest transportation costs
+		int ChoosePeriod();
+	private:
+		IRP & Instance;
+		IRP::Solution * OrigSol;
+	};
 	
 
 	IRP(CustomerIRPDB&, bool relaxed = false, bool maskOn = false, int ** VisitMask = 0);
@@ -253,6 +271,9 @@ public:
 
 	//Solution information
 	double ** getVisitDifference(Solution * sol1, Solution * sol2);
+
+
+
 	//Route functions
 	void printRouteMatrix();
 	void updateTabuMatrix(double ** changeMatrix);

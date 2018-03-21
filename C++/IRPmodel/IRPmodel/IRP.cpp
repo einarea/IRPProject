@@ -214,15 +214,15 @@ IRP::Solution * IRP::solveModel()
 	
 	if (ARC_RELAXED) {
 		//Enable subtour elimination
-		int a = prob.setCutMode(1); // Enable the cut mode
-		XPRSsetcbcutmgr(oprob, cbmng, &(*this));
+		//int a = prob.setCutMode(1); // Enable the cut mode
+		//XPRSsetcbcutmgr(oprob, cbmng, &(*this));
 		//XPRSsetcbintsol(oprob, acceptInt, &(*this));
-		XPRSsetcbpreintsol(oprob, acceptInt, &(*this));
+		//XPRSsetcbpreintsol(oprob, acceptInt, &(*this));
 		//double b =prob.lpOptimize();
 		//int b = prob.getLPStat();
 	}
 	int d = prob.mipOptimise();
-	//prob.print();
+	prob.print();
 	int SolID = allocateIRPSolution();
 
 	return getSolution(SolID);
@@ -1130,6 +1130,7 @@ void IRP::Solution::print(string filename, int load)
 	}
 }
 
+//Returns the visited nodes in a period
 vector<IRP::NodeIRP*> IRP::Solution::getVisitedNodes(int period)
 {
 	vector<IRP::NodeIRP*> visitedNodes;
@@ -1180,6 +1181,26 @@ double IRP::Solution::getNumberOfRoutes(int period)
 double IRP::Solution::getResidualCapacity(int period)
 {
 	return 0.0;
+}
+
+double IRP::Solution::getTotalDelivery(int period)
+{
+	double totalDelivery = 0;
+	for (auto node : NodeHolder)
+		if(node->isDelivery())
+			totalDelivery += node->quantity(period);
+
+	return totalDelivery;
+}
+
+double IRP::Solution::getTotalPickup(int period)
+{
+	double totalPickup = 0;
+	for (auto node : NodeHolder)
+		if (!node->isDelivery())
+			totalPickup += node->quantity(period);
+
+	return totalPickup;
 }
 
 double IRP::Solution::getNodeVisits(int period)
@@ -1306,7 +1327,8 @@ void IRP::addVisitConstraint(double ** Visit)
 	}
 
 	int visits;
-	for (int t : Periods) {
+	int t = 1;
+	//for (int t : Periods) {
 		
 		visits = 0;
 		for (int i : Nodes) {
@@ -1316,9 +1338,10 @@ void IRP::addVisitConstraint(double ** Visit)
 				p1 += y[i][t];
 			}
 		}
-	}
+	//}
 	VisitCtr = prob.newCtr("MinVisits", p1 >= ceil(visits*0.1));
 	VisitCtr.print();
+	bool a = VisitCtr.isValid();
 	cout << "\n";
 }
 
@@ -1402,6 +1425,7 @@ double ** IRP::getVisitDifference(Solution * sol1, Solution * sol2)
 
 	return changedMatrix;
 }
+
 
 void IRP::printRouteMatrix()
 {
@@ -1806,6 +1830,21 @@ vector<IRP::NodeIRP*> IRP::Solution::selectPair(IRP::Route * r, int Selection)
 	
 }*/
 
+int IRP::Route::getTotalDelivery()
+{
+	double totalDelivery = 0;
+	for (auto node : route)
+		if (Instance.getMap()->isDelivery(node->getId()))
+			totalDelivery += node->Quantity;
+
+	return totalDelivery;
+}
+
+int IRP::Route::getTotalPickup()
+{
+	return 0;
+}
+
 int IRP::Route::getPosition(Node * node)
 {
 	int position = 0;
@@ -1969,12 +2008,14 @@ void IRP::NodeIRPHolder::addEdge(double loadDel, double loadPick, NodeIRPHolder 
 	u->addEdge(loadDel, loadPick, v, value);
 }
 
-void IRP::NodeIRPHolder::propInvForw(int period)
+//Propagate the inventory with the quantity. Positive if more is delivered, negative if more is picked up
+void IRP::NodeIRPHolder::propInvForw(int period, double quantity)
 {
-		if (period <= Instance.getNumOfPeriods()) {
-			Nodes[period]->Inventory = Nodes[period-1]->Inventory + Nodes[period]->Quantity;
-			propInvForw(period + 1);
-		}
+		if (period <= Instance.getNumOfPeriods()) 
+			{
+				Nodes[period]->Inventory = Nodes[period - 1]->Inventory + quantity;
+				propInvForw(period + 1, quantity);
+			}
 
 }
 
@@ -1986,6 +2027,11 @@ double IRP::NodeIRPHolder::getOutflow(int period)
 double IRP::NodeIRPHolder::quantity(int period)
 {
 	return Nodes[period]->Quantity;
+}
+
+double IRP::NodeIRPHolder::inventory(int period)
+{
+	return Nodes[period]->Inventory;
 }
 
 double IRP::NodeIRPHolder::timeServed(int period)
@@ -2011,22 +2057,120 @@ double IRP::NodeIRPHolder::getHoldCost(int period)
 void IRP::NodeIRPHolder::changeQuantity(int period, int quantity)
 {
 	// Remove the service
-		if (isDelivery()) {
-			Nodes[period]->Quantity = quantity;
-		}
-		else
-			Nodes[period]->Quantity = -quantity;
+	Nodes[period]->Quantity = quantity;
 
-	updateInventory(period);
+	propInvForw(period, quantity);
 }
 
-void IRP::NodeIRPHolder::updateInventory(int t)
-{
-	Nodes[t]->Inventory = Nodes[t]->Inventory - Nodes[t]->Quantity;
-	propInvForw(t + 1);
-}
 
 bool IRP::NodeIRPHolder::isDelivery()
 {
 	return Instance.getMap()->isDelivery(getId());
+}
+
+IRP::LocalSearch::LocalSearch(IRP & model, IRP::Solution * origSol)
+	:
+	Instance(model),
+	OrigSol(origSol)
+{
+}
+
+IRP::Solution * IRP::LocalSearch::ShiftQuantity()
+{
+	
+	double shiftDel;
+	double shiftPick;
+	double pushDel;
+	double pushPick;
+
+
+	//Shift from period with the greatest transportation costs
+	IRP::Solution * newSol = new IRP::Solution(*OrigSol);
+	int period = ChoosePeriod();
+	shiftDel = OrigSol->getTotalDelivery(period);
+	shiftPick = OrigSol->getTotalPickup(period);
+
+	for(auto node : newSol->NodeHolder){
+		//Move quantity for visited nodes
+		if(node->quantity(period) > 0.01)
+	
+			//Decide how much quantity to move and update quantity
+			if (node->isDelivery()) {
+				pushDel = min(node->quantity(period), node->inventory(period) - Instance.map.getLowerLimit(node->getId()), shiftDel);
+				node->changeQuantity(period, node->quantity(period) - pushDel);
+				//Deliver less -> Inventory decreases in subsequent periods
+				node->propInvForw(period, -pushDel);
+				}
+			else {
+				pushPick = min(node->quantity(period), Instance.map.getUpperLimit(node->getId()) - node->inventory(period), shiftPick);
+				node->changeQuantity(period, node->quantity(period) - pushPick);
+				//Pick up less -> Inventory increases in subsequent periods
+				node->propInvForw(period, pushPick);
+			}
+
+			//Update inventory,
+		
+			//Try to shift forward in time
+			if (period <= Instance.getNumOfPeriods()) {
+				//Check if node is visited in next period
+				if (node->quantity(period + 1) > 0.01) {
+					if (node->isDelivery()) {
+						pushDel = min(Instance.map.getUpperLimit(node->getId()) - node->inventory(period), shiftDel);
+						node->changeQuantity(period + 1, node->quantity(period + 1) + pushDel);
+						shiftDel -= pushDel;
+
+						//Update inventory. Deliver -> Inventory increases in sub. periods
+						node->propInvForw(period, pushDel);
+					}
+					else {
+						pushPick = min(node->inventory(period) - Instance.map.getLowerLimit(node->getId()), shiftPick);
+						node->changeQuantity(period, node->quantity(period) + pushPick);
+						shiftPick -= pushPick;
+
+						//Update inventory. Pick up -> Inventory increases in sub. periods
+						node->propInvForw(period, -pushPick);
+					}
+				}	
+			}	 // end shift forward
+		
+
+			//Try to shift backwards in time if more to distribute
+			if ((shiftDel > 0 || shiftPick > 0 ) && period - 1 > 0) {
+				if (node->quantity(period - 1) > 0.01) {
+					if (node->isDelivery()) {
+						pushDel = min(Instance.map.getUpperLimit(node->getId()) - node->inventory(period - 1), shiftDel);
+						node->changeQuantity(period - 1, pushDel);
+
+						shiftDel -= pushDel;
+
+						node->propInvForw(period, pushDel);
+					}
+					else {
+						pushPick = min(node->inventory(period - 1) - Instance.map.getLowerLimit(node->getId()), shiftPick);
+						node->changeQuantity(period - 1, pushPick);
+
+						shiftPick -= pushPick;
+
+						node->propInvForw(period, pushPick);
+					}
+				}
+			} //end shift backward
+			
+		
+	}
+	return newSol;
+}
+
+int IRP::LocalSearch::ChoosePeriod()
+{
+	double maxCost = -100;
+	int period = -1;
+	for (auto t : Instance.Periods) {
+		if (maxCost <= OrigSol->getTransportationCost()) {
+			maxCost = OrigSol->getTransportationCost();
+			period = t;
+		}
+	}
+
+	return period;
 }
