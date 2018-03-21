@@ -21,8 +21,7 @@ SequentialEnum(Content,
 	Routes,
 	Objective,
 	nNodeVisits,
-	Delivery,
-	Pickup,
+	Service,
 );
 
 
@@ -38,8 +37,7 @@ SequentialEnum(CostData,
 SequentialEnum(RouteData,
 	nVehicles,
 	nNodes,
-	dDelivery,
-	dPickup
+	dService
 );
 
 SequentialEnum(DataType,

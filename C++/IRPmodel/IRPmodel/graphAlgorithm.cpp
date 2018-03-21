@@ -11,7 +11,7 @@ graphAlgorithm::graphAlgorithm()
 
 
 
-void graphAlgorithm::printGraph(vector<Node*>& graph, IRP &instance, string filename, int weight) {
+/*void graphAlgorithm::printGraph(vector<Node*>& graph, IRP &instance, string filename, int weight) {
 
 
 	FILE *gnuplotPipe = _popen("C:\\Octave\\3.2.4_gcc-4.4.0\\bin\\gnuplot", "w");
@@ -168,7 +168,7 @@ void graphAlgorithm::printGraph(vector<Node*>& graph, IRP &instance, string file
 		}
 	}
 	
-}
+}*/
 
 void graphAlgorithm::getRoutes(vector<Node*>& graph,  vector<vector<Node*>>& routes)
 {
@@ -181,11 +181,11 @@ void graphAlgorithm::getRoutes(vector<Node*>& graph,  vector<vector<Node*>>& rou
 	for (Node::Edge* edge : edges) {
 		Node * start = new Node(0);
 		Node * v = edge->getEndNode();
-		start->addEdge(edge);
+		start->addEdge(*v);
 
 		route.push_back(start);
 		while (v->getId() != 0) {
-			Node * u = v;
+			Node * const u = new Node(*v);
 			route.push_back(u);
 			Node * temp = v->getEdge()->getEndNode();
 			v = temp;

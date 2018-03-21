@@ -78,7 +78,6 @@ void Calculations::AnalyzeModel(vector<double> *** & modelData)
 			double A = 0;
 			for (int period = 1; period <= nPeriods; period++) {
 				totalAvg[model][field][period] += getAverage(modelData[model][field][period]);
-				double a = getAverage(modelData[model][field][period]);
 				totCostAvg[model][field] += totalAvg[model][field][period];
 			}
 			A = totCostAvg[model][field];
@@ -117,20 +116,20 @@ double Calculations::getStdDev(vector<double> &v, double average = -1)
 
 double *** Calculations::getRouteInformation()
 {
-	vector<int> RouteSet = { Routes, nNodeVisits, Delivery, Pickup};
+	vector<int> RouteSet = { Routes, nNodeVisits, Service };
 
 	for (int t = 1; t <= nPeriods; t++) {
 		RouteData[nVehicles][t][Average] = totalAvg[Construction][Routes][t] - totalAvg[Exact][Routes][t];
 		RouteData[nNodes][t][Average] = (totalAvg[Construction][nNodeVisits][t] - totalAvg[Exact][nNodeVisits][t]) / totCostAvg[Exact][nNodeVisits] * 100;
-		RouteData[dDelivery][t][Average] = (totalAvg[Construction][Delivery][t] - totalAvg[Exact][Delivery][t]) / totCostAvg[Exact][Delivery] * 100;
-		RouteData[dPickup][t][Average] = (totalAvg[Construction][Pickup][t] - totalAvg[Exact][Pickup][t]) / totCostAvg[Exact][Pickup] * 100;
+		RouteData[dService][t][Average] = (totalAvg[Construction][Service][t] - totalAvg[Exact][Service][t]) / totCostAvg[Exact][Service] * 100;
 
 	}
 	//Calculate the cumulative vehicles
 	RouteData[nVehicles][nPeriods + 1][Average] = totCostAvg[Construction][Routes] - totCostAvg[Exact][Routes];
+	double a = totCostAvg[Construction][Service];
+	double b = totCostAvg[Exact][Service];
 	RouteData[nNodes][nPeriods + 1][Average] = (totCostAvg[Construction][nNodeVisits]- totCostAvg[Exact][nNodeVisits]) / totCostAvg[Exact][nNodeVisits]*100;
-	RouteData[dDelivery][nPeriods + 1][Average] = (totCostAvg[Construction][Delivery] - totCostAvg[Exact][Delivery]) / totCostAvg[Exact][Delivery] * 100;
-	RouteData[dPickup][nPeriods + 1][Average] = (totCostAvg[Construction][Pickup] - totCostAvg[Exact][Pickup]) / totCostAvg[Exact][Pickup] * 100;
+	RouteData[dService][nPeriods + 1][Average] = (totCostAvg[Construction][Service] - totCostAvg[Exact][Service]) / totCostAvg[Exact][Service] * 100;
 	return RouteData;
 }
 
