@@ -24,10 +24,9 @@ void VRPmodel::solveModel()
 	//prob.lpOptimize();
 	//int b = prob.getLPStat();
 
-	prob.print();
+	//prob.print();
 	int d = prob.mipOptimise();
-	if (extraVehicle.getSol() > 0)
-		int a = 1;
+
 	/*for (int i : AllNodes)
 		for (int j : AllNodes)
 			if (map.inArcSet(i, j))
@@ -58,7 +57,6 @@ void VRPmodel::solveModel()
 
 		
 	}*/
-	int c = prob.getObjVal();
 }
 
 

@@ -222,7 +222,8 @@ IRP::Solution * IRP::solveModel()
 		//int b = prob.getLPStat();
 	}
 	int d = prob.mipOptimise();
-	prob.print();
+//	prob.print();
+
 	int SolID = allocateIRPSolution();
 
 	return getSolution(SolID);
@@ -1120,6 +1121,8 @@ IRP::Solution::Solution(IRP &model, vector<vector<IRP::Route*>>& routes, bool in
 }
 
 
+
+
 void IRP::Solution::print(string filename, int load)
 {
 	vector<Node *> graph;
@@ -1186,9 +1189,10 @@ double IRP::Solution::getResidualCapacity(int period)
 double IRP::Solution::getTotalDelivery(int period)
 {
 	double totalDelivery = 0;
-	for (auto node : NodeHolder)
-		if(node->isDelivery())
+	for (auto node : NodeHolder) {
+		if (node->isDelivery() && node->getId() != 0)
 			totalDelivery += node->quantity(period);
+	}
 
 	return totalDelivery;
 }
@@ -2087,8 +2091,8 @@ IRP::Solution * IRP::LocalSearch::ShiftQuantity()
 	//Shift from period with the greatest transportation costs
 	IRP::Solution * newSol = new IRP::Solution(*OrigSol);
 	int period = ChoosePeriod();
-	shiftDel = OrigSol->getTotalDelivery(period);
-	shiftPick = OrigSol->getTotalPickup(period);
+	shiftDel = max(OrigSol->getTotalDelivery(period) - Instance.Capacity*(OrigSol->getNumberOfRoutes(period) - 1);
+	shiftPick = OrigSol->getTotalPickup(period) - Instance.Capacity*(OrigSol->getNumberOfRoutes(period) - 1);;
 
 	for(auto node : newSol->NodeHolder){
 		//Move quantity for visited nodes
@@ -2166,8 +2170,8 @@ int IRP::LocalSearch::ChoosePeriod()
 	double maxCost = -100;
 	int period = -1;
 	for (auto t : Instance.Periods) {
-		if (maxCost <= OrigSol->getTransportationCost()) {
-			maxCost = OrigSol->getTransportationCost();
+		if (maxCost <= OrigSol->getTransportationCost(t)) {
+			maxCost = OrigSol->getTransportationCost(t);
 			period = t;
 		}
 	}

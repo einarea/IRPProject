@@ -196,6 +196,7 @@ public:
 		double **pCapacity;
 		vector<NodeIRPHolder *> NodeHolder;
 
+		vector<NodeIRPHolder *> getNodes();
 		//The set of routes for each period
 		vector<vector <IRP::Route*>> Routes;
 
