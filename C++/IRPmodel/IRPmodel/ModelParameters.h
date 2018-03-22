@@ -64,6 +64,12 @@ public:
 	//weights to color graphs
 	static const int LOAD = 1;
 	static const int X = 2;
+
+	//Constants
+	//Infeasibility identifiers
+	static const int LOWER_LIMIT_BREAK = 51;
+	static const int UPPER_LIMIT_BREAK = 52;
+	static const int WITHIN_LIMITS = 53;
 	~ModelParameters();
 };
 

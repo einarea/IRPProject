@@ -169,6 +169,11 @@ public:
 		NodeIRPHolder(int id, IRP &instance);
 		IRP & Instance;
 		vector<NodeIRP*> Nodes;
+		//
+		int isInventoryFeasible();
+		int isInventoryFeasible(int period);
+		void insertMinQuantity();
+		void removeMinQuantity();
 
 		//Changes
 		void addEdge(double loadDel, double loadPic, NodeIRPHolder * child, int period, double value);
@@ -184,7 +189,6 @@ public:
 		NodeIRP::EdgeIRP * getEdge(int period);
 		double getHoldCost(int period);
 		void changeQuantity(int period, int quantity);
-		void updateInventory(int period);
 		bool isDelivery();
 	};
 

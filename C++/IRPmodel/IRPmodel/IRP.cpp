@@ -2005,6 +2005,44 @@ IRP::NodeIRPHolder::NodeIRPHolder(int id, IRP &instance)
 	}
 }
 
+int IRP::NodeIRPHolder::isInventoryFeasible()
+{
+	for (auto t : Instance.Periods) {
+		if (isInventoryFeasible(t) == ModelParameters::LOWER_LIMIT_BREAK || isInventoryFeasible(t) == ModelParameters::UPPER_LIMIT_BREAK)
+			return isInventoryFeasible(t);
+	}
+	return  ModelParameters::WITHIN_LIMITS;
+}
+
+int IRP::NodeIRPHolder::isInventoryFeasible(int period)
+{
+	if (Nodes[period]->Inventory < Instance.map.getLowerLimit(getId()))
+		return ModelParameters::LOWER_LIMIT_BREAK;
+	if (Nodes[period]->Inventory > Instance.map.getUpperLimit(getId()))
+		return ModelParameters::UPPER_LIMIT_BREAK;
+	else
+		return ModelParameters::WITHIN_LIMITS;
+}
+
+//inserts minimum quantity to make node feasible with respect to lower bound
+void IRP::NodeIRPHolder::insertMinQuantity()
+{
+	for (auto t : Instance.Periods) {
+		if (isInventoryFeasible(t) == ModelParameters::LOWER_LIMIT_BREAK)
+			changeQuantity(t, Instance.map.getLowerLimit(getId()) - inventory(t));
+	}
+}
+
+void IRP::NodeIRPHolder::removeMinQuantity()
+{
+	for (auto t : Instance.Periods) {
+		if (isInventoryFeasible(t) == ModelParameters::UPPER_LIMIT_BREAK)
+			cout<< inventory(t) - Instance.map.getUpperLimit(getId());
+			changeQuantity(t, inventory(t) - Instance.map.getUpperLimit(getId()));
+			return;
+	}
+}
+
 void IRP::NodeIRPHolder::addEdge(double loadDel, double loadPick, NodeIRPHolder * NodeHolder, int period, double value)
 {
 	NodeIRP * u = Nodes[period];
@@ -2017,7 +2055,7 @@ void IRP::NodeIRPHolder::propInvForw(int period, double quantity)
 {
 		if (period <= Instance.getNumOfPeriods()) 
 			{
-				Nodes[period]->Inventory = Nodes[period - 1]->Inventory + quantity;
+				Nodes[period]->Inventory += quantity;
 				propInvForw(period + 1, quantity);
 			}
 
@@ -2061,9 +2099,12 @@ double IRP::NodeIRPHolder::getHoldCost(int period)
 void IRP::NodeIRPHolder::changeQuantity(int period, int quantity)
 {
 	// Remove the service
-	Nodes[period]->Quantity = quantity;
+	Nodes[period]->Quantity += quantity;
 
-	propInvForw(period, quantity);
+	if(isDelivery())
+		propInvForw(period, quantity);
+	else
+		propInvForw(period, -quantity);
 }
 
 
@@ -2091,76 +2132,94 @@ IRP::Solution * IRP::LocalSearch::ShiftQuantity()
 	//Shift from period with the greatest transportation costs
 	IRP::Solution * newSol = new IRP::Solution(*OrigSol);
 	int period = ChoosePeriod();
-	shiftDel = max(OrigSol->getTotalDelivery(period) - Instance.Capacity*(OrigSol->getNumberOfRoutes(period) - 1);
-	shiftPick = OrigSol->getTotalPickup(period) - Instance.Capacity*(OrigSol->getNumberOfRoutes(period) - 1);;
+	shiftDel = max(OrigSol->getTotalDelivery(period) - Instance.Capacity*(OrigSol->getNumberOfRoutes(period) - 1), 0);
+	shiftPick = max(OrigSol->getTotalPickup(period) - Instance.Capacity*(OrigSol->getNumberOfRoutes(period) - 1), 0) - 20;
 
-	for(auto node : newSol->NodeHolder){
+	for (auto node : newSol->NodeHolder) {
 		//Move quantity for visited nodes
-		if(node->quantity(period) > 0.01)
-	
-			//Decide how much quantity to move and update quantity
+		if (node->quantity(period) > 0.01)
+
+			//Delivery move
 			if (node->isDelivery()) {
-				pushDel = min(node->quantity(period), node->inventory(period) - Instance.map.getLowerLimit(node->getId()), shiftDel);
-				node->changeQuantity(period, node->quantity(period) - pushDel);
-				//Deliver less -> Inventory decreases in subsequent periods
-				node->propInvForw(period, -pushDel);
+				if (shiftDel > 0) {
+					//Decide how much quantity to move and update quantity
+					pushDel = shiftDel;
+					
+
+					//Try to shift forward
+					if (period <= Instance.getNumOfPeriods()) {
+						//Check if node is visited in next period
+						if (node->quantity(period + 1) > 0.01) {
+							pushDel = shiftDel;
+
+							//Move from period
+							node->changeQuantity(period, -pushDel);
+							//insert in period
+							node->changeQuantity(period + 1, pushDel);
+							shiftDel -= pushDel;
+							break;
+						}
+					}
+
+					//Try to shift backwards
+					if (period - 1 > 0) {
+						if (node->quantity(period - 1) > 0.01) {
+							pushDel = shiftDel;
+							//Move from period
+							node->changeQuantity(period, -pushDel);
+							//insert in period
+							node->changeQuantity(period - 1, pushDel);
+							shiftDel -= pushDel;
+						}
+					}
+				
+
+				while (ModelParameters::WITHIN_LIMITS != node->isInventoryFeasible()) {
+					if (node->isInventoryFeasible() == ModelParameters::LOWER_LIMIT_BREAK)
+						node->insertMinQuantity();
+					else
+						node->removeMinQuantity();	
 				}
-			else {
-				pushPick = min(node->quantity(period), Instance.map.getUpperLimit(node->getId()) - node->inventory(period), shiftPick);
-				node->changeQuantity(period, node->quantity(period) - pushPick);
-				//Pick up less -> Inventory increases in subsequent periods
-				node->propInvForw(period, pushPick);
+				} //end shift del
 			}
 
-			//Update inventory,
-		
-			//Try to shift forward in time
-			if (period <= Instance.getNumOfPeriods()) {
-				//Check if node is visited in next period
-				if (node->quantity(period + 1) > 0.01) {
-					if (node->isDelivery()) {
-						pushDel = min(Instance.map.getUpperLimit(node->getId()) - node->inventory(period), shiftDel);
-						node->changeQuantity(period + 1, node->quantity(period + 1) + pushDel);
-						shiftDel -= pushDel;
+		//Pickup node
+			else if (shiftPick > 0) {
+				//Decide how much quantity to move and update quantity
+				pushPick = shiftPick;
 
-						//Update inventory. Deliver -> Inventory increases in sub. periods
-						node->propInvForw(period, pushDel);
-					}
-					else {
-						pushPick = min(node->inventory(period) - Instance.map.getLowerLimit(node->getId()), shiftPick);
-						node->changeQuantity(period, node->quantity(period) + pushPick);
+				//Try to shift forward
+				if (period <= Instance.getNumOfPeriods()) {
+					if (node->quantity(period + 1) > 0.01) {
+						pushPick = shiftPick;
+
+						//Remove from period
+						node->changeQuantity(period, -pushPick);
+						//Insert in period
+						node->changeQuantity(period + 1, pushPick);
 						shiftPick -= pushPick;
-
-						//Update inventory. Pick up -> Inventory increases in sub. periods
-						node->propInvForw(period, -pushPick);
-					}
-				}	
-			}	 // end shift forward
-		
-
-			//Try to shift backwards in time if more to distribute
-			if ((shiftDel > 0 || shiftPick > 0 ) && period - 1 > 0) {
-				if (node->quantity(period - 1) > 0.01) {
-					if (node->isDelivery()) {
-						pushDel = min(Instance.map.getUpperLimit(node->getId()) - node->inventory(period - 1), shiftDel);
-						node->changeQuantity(period - 1, pushDel);
-
-						shiftDel -= pushDel;
-
-						node->propInvForw(period, pushDel);
-					}
-					else {
-						pushPick = min(node->inventory(period - 1) - Instance.map.getLowerLimit(node->getId()), shiftPick);
-						node->changeQuantity(period - 1, pushPick);
-
-						shiftPick -= pushPick;
-
-						node->propInvForw(period, pushPick);
 					}
 				}
-			} //end shift backward
-			
-		
+
+				//Try to shift backwards
+				if (period - 1 > 0 && (shiftPick > 0)) {
+					if (node->quantity(period - 1) > 0.01) {
+						pushPick = shiftPick;
+						//Remove from period
+						node->changeQuantity(period, -pushPick);
+						//Insert in period
+						node->changeQuantity(period - 1, pushPick);
+						shiftPick -= pushPick;
+					}
+				}
+
+				while (ModelParameters::WITHIN_LIMITS != node->isInventoryFeasible()) {
+					if (node->isInventoryFeasible() == ModelParameters::LOWER_LIMIT_BREAK)
+						node->insertMinQuantity();
+					else
+						node->removeMinQuantity();
+				}
+			}
 	}
 	return newSol;
 }
