@@ -9,6 +9,7 @@
 #include <string.h>
 #include "Node.h"
 
+
 using namespace ::dashoptimization;
 using namespace::std;
 
@@ -45,7 +46,7 @@ private:
 	//Variables
 	//Arc variables
 	//Customer visits variables
-	XPRBvar ** inventory;
+
 	XPRBvar ** delivery;
 	XPRBvar ** pickup;
 	XPRBvar *** loadDelivery;
@@ -94,6 +95,7 @@ private:
 public:
 	XPRBvar ** y;
 	XPRBvar *** x;
+	XPRBvar ** inventory;
 	vector<vector<vector<XPRBvar>>> subtourIndices;
 	//Sets
 	int startTime;

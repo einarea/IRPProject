@@ -4,10 +4,29 @@
 #include <algorithm>
 #include "graphAlgorithm.h"
 #include "ModelParameters.h"
+#include <ctime>
 
 
 
 using namespace ::dashoptimization;
+
+void XPRS_CC acceptIntQuantity(XPRSprob oprob, void * vd, int soltype, int * ifreject, double *cutoff) {
+	IRP * modelInstance;
+	modelInstance = (IRP*)vd;
+	vector<XPRBcut> subtourCut;
+
+	modelInstance->getProblem()->beginCB(oprob);
+	modelInstance->getProblem()->sync(XPRB_XPRS_SOL);
+	for (auto i : modelInstance->Nodes)
+		for (auto t : modelInstance->Periods)
+			if (modelInstance->inventory[i][t].getSol() - round(modelInstance->inventory[i][t].getSol()) > 0.01) {
+				cout << modelInstance->inventory[i][t].getSol() << "\t";
+				cout << round(modelInstance->inventory[i][t].getSol()) << "\n";
+				*ifreject = 1;
+				break;
+			}
+	modelInstance->getProblem()->endCB();
+}
 
 void XPRS_CC acceptInt(XPRSprob oprob, void * vd, int soltype, int * ifreject, double *cutoff) {
 	IRP * modelInstance;
@@ -210,10 +229,11 @@ IRP::Solution * IRP::solveModel()
 	startTime = XPRB::getTime();
 
 	if (ARC_RELAXED) {
+
 		//Enable subtour elimination
 		//int a = prob.setCutMode(1); // Enable the cut mode
 		//XPRSsetcbcutmgr(oprob, cbmng, &(*this));
-		//XPRSsetcbintsol(oprob, acceptInt, &(*this));
+		XPRSsetcbpreintsol(oprob, acceptIntQuantity, &(*this));
 		//XPRSsetcbpreintsol(oprob, acceptInt, &(*this));
 		//double b =prob.lpOptimize();
 		//int b = prob.getLPStat();
@@ -1302,8 +1322,9 @@ void IRP::addVisitConstraint(double ** Visit)
 	}
 
 	int visits;
-	for (int t : Periods) {
-
+	int t = 1;
+	//for (int t : Periods) {
+		
 		visits = 0;
 		for (int i : Nodes) {
 			if (Visit[i][t] == 0 && !TabuMatrix[i][t].isValid())
@@ -1312,7 +1333,7 @@ void IRP::addVisitConstraint(double ** Visit)
 				p1 += y[i][t];
 			}
 		}
-	}
+	//}
 	VisitCtr = prob.newCtr("MinVisits", p1 >= ceil(visits*0.1));
 	VisitCtr.print();
 	cout << "\n";
@@ -1415,10 +1436,21 @@ void IRP::printRouteMatrix()
 
 void IRP::updateTabuMatrix(double ** changeMatrix)
 {
-	cout << "\n\nCountMatrix: Times since last changed , >0 added visit, <0 removed visit. \n";
+	srand(std::time(0));
+	int counter = 0;
+	int i = 0;
+	cout << "\n\nCountMatrix: Times since last changed , >0 added visit, <0 removed visit. * locked variable\n";
 	for (auto i : Nodes) {
 		cout << "\n";
 		for (auto t : Periods) {
+
+			//Clear the tabu matrix
+			if (TabuMatrix[i][t].isValid()) {
+				prob.delCtr(TabuMatrix[i][t]);
+				TabuMatrix[i][t] = 0;
+			}
+
+			//Update count matrix
 			if (changeMatrix[i][t] != 0) {
 				CountMatrix[i][t] = changeMatrix[i][t];
 			}
@@ -1427,28 +1459,84 @@ void IRP::updateTabuMatrix(double ** changeMatrix)
 			else if (CountMatrix[i][t] <= -1)
 				CountMatrix[i][t] -= 1;
 
-			cout << CountMatrix[i][t] << "\t";
+			
 
 			//Remove from tabu if Count is outside tabulength
 			if (CountMatrix[i][t] > ModelParameters::TabuLength || CountMatrix[i][t] < -ModelParameters::TabuLength) {
 				CountMatrix[i][t] = 0;
-				prob.delCtr(TabuMatrix[i][t]);
-				TabuMatrix[i][t] = 0;
 			}
+				
+			cout << CountMatrix[i][t];
+			//If visit, lock that visit with 50% chance in period 1 or 25% chance in other periods
+			if (CountMatrix[i][t] >= 1) {
+				if (t == 1) {
+					if (rand() % 100 + 1 <= 50) {
+						counter += 1;
+						TabuMatrix[i][t] = prob.newCtr(y[i][t] >= 1);
+						cout << "*\t";
+					}
+					else
+						cout << "\t";
 
-			//If new visit, lock that visit
-			if (CountMatrix[i][t] == 1) {
-				TabuMatrix[i][t] = prob.newCtr(y[i][t] >= 1);
-
+				}
+				else
+					if (rand() % 100 + 1 <= 25) {
+						TabuMatrix[i][t] = prob.newCtr(y[i][t] >= 1);
+						cout << "*\t";
+					}
+					else
+						cout << "\t";
 			}
+			else if (CountMatrix[i][t] == 0) cout << "\t";
 
-			//Else if visit removed, lock that to no visit
-			else if (CountMatrix[i][t] == -1) {
-				TabuMatrix[i][t] = prob.newCtr(y[i][t] <= 0);
+			//Else if visit removed, lock that visit with 50% chance in period 1 or 25% in other periods
+			else if (CountMatrix[i][t] <= -1) {
+				if (t == 1) {
+					if (rand() % 100 + 1 <= 50) {
+						TabuMatrix[i][t] = prob.newCtr(y[i][t] <= 0);
+						counter += 1;
+						cout << "*\t";
+					}
+					else
+						cout << "\t";
+			
+				}
+				else
+					if (rand() % 100 + 1 <= 25) {
+						TabuMatrix[i][t] = prob.newCtr(y[i][t] <= 0);
+						cout << "*\t";
+					}
+					else
+						cout << "\t";
 
 			}
 		}
 	}
+
+	//If no locked continue.
+	while (counter < 1 && i <= 20) {
+		for (auto i : Nodes) {
+			if (CountMatrix[i][1] >= 1)
+			{
+				if (rand() % 100 + 1 <= 50) {
+					counter += 1;
+					TabuMatrix[i][1] = prob.newCtr(y[i][1] >= 1);
+					cout << "y" << i << 1 << "=" << 1;
+					break;
+				}
+			}
+			else if (CountMatrix[i][1] <= -1) {
+				if (rand() % 100 + 1 <= 50) {
+					TabuMatrix[i][1] = prob.newCtr(y[i][1] <= 0);
+					counter += 1;
+					cout << "y" << i << 1 << "=" << 0;
+					break;
+				}
+			}
+		}
+		i++;
+	} // end while
+
 
 	for (auto i : Nodes) {
 		cout << "\n";

@@ -20,6 +20,7 @@ Customer::Customer(int id, int randSeed)
 	:
 	CustomerID(id)
 {
+	//std::time_t time(0);
 	srand(time(0) + randSeed);
 	posX = (rand() % 100 + 0) - 50;
 	posY = (rand() % 100 + 0) - 50;
