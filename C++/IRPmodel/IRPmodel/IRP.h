@@ -172,7 +172,9 @@ public:
 		//
 		int isInventoryFeasible();
 		int isInventoryFeasible(int period);
-		void insertMinQuantity();
+		double moveQuantity(int from, int to, double quantity);
+		double getMinQuantity();
+		double getExcessQuantity();
 		void removeMinQuantity();
 
 		//Changes
@@ -188,8 +190,13 @@ public:
 		vector <NodeIRP::EdgeIRP*> getEdges(int period);
 		NodeIRP::EdgeIRP * getEdge(int period);
 		double getHoldCost(int period);
-		void changeQuantity(int period, int quantity);
+		void changeQuantity(int period, double quantity);
 		bool isDelivery();
+
+	private:
+		double getFeasibleServiceIncrease(int period);
+		double getFeasibleServiceDecrease(int period);
+		double getFeasibleServiceMove(int from, int to);
 	};
 
 	class Solution {
@@ -255,10 +262,11 @@ public:
 	public:
 		LocalSearch(IRP & model, IRP::Solution *origSol);
 
-		IRP::Solution * ShiftQuantity();
+		void ShiftQuantity(Solution *);
+
 
 		//Returns period with the highest transportation costs
-		int ChoosePeriod();
+		int ChoosePeriod(int selection);
 	private:
 		IRP & Instance;
 		IRP::Solution * OrigSol;
@@ -289,7 +297,7 @@ public:
 	Map * getMap();
 	void calculateExcess();
 	void IRP::buildGraph(vector<NodeIRP*> &graph, int t, Solution * solution);
-	int allocateSolution();
+	Solution * allocateSolution();
 	int allocateIRPSolution();
 	bool sepStrongComponents(vector<XPRBcut> &);
 	void addSubtourCut(vector<vector <Node *>> &, int t, bool &, vector<XPRBcut> &);

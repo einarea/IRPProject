@@ -24,7 +24,7 @@ void VRPmodel::solveModel()
 	//prob.lpOptimize();
 	//int b = prob.getLPStat();
 
-	//prob.print();
+	prob.print();
 	int d = prob.mipOptimise();
 
 	/*for (int i : AllNodes)
@@ -257,7 +257,7 @@ bool VRPmodel::formulateProblem()
 	//Max visit
 	for (int i : Nodes) {
 		p1 = y[i];
-		prob.newCtr("Max visit", p1 = 1);
+		prob.newCtr("Max visit", p1 == 1);
 		p1 = 0;
 	}
 
@@ -352,6 +352,7 @@ bool VRPmodel::formulateProblem()
 	
 
 	//Valid inequalitites
+	/*
 	for (int i : AllNodes) {
 		for (int j : AllNodes) {
 			if (map.inArcSet(i, j))
@@ -360,11 +361,11 @@ bool VRPmodel::formulateProblem()
 	}
 
 	p2 = ModelParameters::maxTime*(y[0] + extraVehicle);
-	prob.newCtr("Totaltume", p1 <= p2);
+	prob.newCtr("Totaltime", p1 <= p2);
 
 	p1 = 0;
 	p2 = 0;
-
+	*/
 	return false;
 }
 

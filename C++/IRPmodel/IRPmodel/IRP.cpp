@@ -321,7 +321,7 @@ int IRP::allocateIRPSolution()
 	return getCounter();
 }
 
-int IRP::allocateSolution()
+IRP::Solution * IRP::allocateSolution()
 {
 	SolutionCounter++;
 	Solution * sol = new Solution(*this, true);
@@ -358,7 +358,7 @@ int IRP::allocateSolution()
 
 	solutions.push_back(sol);
 	//Return ID to solution
-	return getCounter();
+	return sol;
 }
 
 bool IRP::sepStrongComponents(vector<XPRBcut> & cut)
@@ -1183,7 +1183,11 @@ double IRP::Solution::getNumberOfRoutes(int period)
 
 double IRP::Solution::getResidualCapacity(int period)
 {
-	return 0.0;
+	double residual = 0;
+	for (auto node : NodeHolder) {
+		residual += node->quantity(period);
+	}
+	return residual / getNumberOfRoutes(period);
 }
 
 double IRP::Solution::getTotalDelivery(int period)
@@ -2024,13 +2028,53 @@ int IRP::NodeIRPHolder::isInventoryFeasible(int period)
 		return ModelParameters::WITHIN_LIMITS;
 }
 
-//inserts minimum quantity to make node feasible with respect to lower bound
-void IRP::NodeIRPHolder::insertMinQuantity()
+double IRP::NodeIRPHolder::moveQuantity(int from, int to, double quantity)
 {
+	double holder;
+	//Move from period
+		//move from period, check capacity feasible
+		quantity = min(getFeasibleServiceMove(from, to), quantity);
+		changeQuantity(from, -quantity);
+		//insert in period
+		changeQuantity(to, quantity);
+
+		//Check if inventory and capacity is feasible
+		while (ModelParameters::WITHIN_LIMITS !=  isInventoryFeasible()) {
+			if (isInventoryFeasible() == ModelParameters::LOWER_LIMIT_BREAK) {
+				holder = getMinQuantity();
+				changeQuantity(from, holder);
+				changeQuantity(to, -holder);
+			}
+			else {
+				holder = getExcessQuantity();
+				changeQuantity(from, holder);
+				changeQuantity(to, -holder);
+			}
+		}
+		return quantity;
+}
+
+
+
+//inserts minimum quantity to make node feasible with respect to lower bound
+double IRP::NodeIRPHolder::getMinQuantity()
+{
+	double minQuantity = 0;
 	for (auto t : Instance.Periods) {
 		if (isInventoryFeasible(t) == ModelParameters::LOWER_LIMIT_BREAK)
-			changeQuantity(t, Instance.map.getLowerLimit(getId()) - inventory(t));
+			minQuantity = max(minQuantity, Instance.map.getLowerLimit(getId()) - inventory(t));
 	}
+
+	return minQuantity;
+}
+
+double IRP::NodeIRPHolder::getExcessQuantity()
+{
+	double temp = 0;
+	for (auto t : Instance.Periods) {
+		temp = max(temp, inventory(t) - Instance.map.getUpperLimit(getId()));
+	}
+	return temp;
 }
 
 void IRP::NodeIRPHolder::removeMinQuantity()
@@ -2096,15 +2140,16 @@ double IRP::NodeIRPHolder::getHoldCost(int period)
 	return Instance.map.getHoldCost(getId()) * Nodes[period]->Inventory;
 }
 
-void IRP::NodeIRPHolder::changeQuantity(int period, int quantity)
-{
-	// Remove the service
+//Returns quantity inserted
+void IRP::NodeIRPHolder::changeQuantity(int period, double quantity)
+{	
 	Nodes[period]->Quantity += quantity;
 
 	if(isDelivery())
 		propInvForw(period, quantity);
 	else
 		propInvForw(period, -quantity);
+
 }
 
 
@@ -2113,6 +2158,24 @@ bool IRP::NodeIRPHolder::isDelivery()
 	return Instance.getMap()->isDelivery(getId());
 }
 
+double IRP::NodeIRPHolder::getFeasibleServiceIncrease(int period)
+{
+	// Check if quantity is feasible, if not adjust it
+	return Instance.Capacity - quantity(period);
+}
+
+double IRP::NodeIRPHolder::getFeasibleServiceDecrease(int period)
+{
+	// Check if quantity is feasible, if not adjust it
+	return quantity(period);
+}
+
+double IRP::NodeIRPHolder::getFeasibleServiceMove(int from, int to)
+{
+	return min(getFeasibleServiceDecrease(from), getFeasibleServiceIncrease(to));
+}
+
+
 IRP::LocalSearch::LocalSearch(IRP & model, IRP::Solution * origSol)
 	:
 	Instance(model),
@@ -2120,7 +2183,7 @@ IRP::LocalSearch::LocalSearch(IRP & model, IRP::Solution * origSol)
 {
 }
 
-IRP::Solution * IRP::LocalSearch::ShiftQuantity()
+void IRP::LocalSearch::ShiftQuantity(IRP::Solution * sol)
 {
 	
 	double shiftDel;
@@ -2130,10 +2193,16 @@ IRP::Solution * IRP::LocalSearch::ShiftQuantity()
 
 
 	//Shift from period with the greatest transportation costs
-	IRP::Solution * newSol = new IRP::Solution(*OrigSol);
-	int period = ChoosePeriod();
-	shiftDel = max(OrigSol->getTotalDelivery(period) - Instance.Capacity*(OrigSol->getNumberOfRoutes(period) - 1), 0);
-	shiftPick = max(OrigSol->getTotalPickup(period) - Instance.Capacity*(OrigSol->getNumberOfRoutes(period) - 1), 0) - 20;
+	//initialize with the current solution
+	IRP::Solution * newSol = sol;
+	//Clear all nodes edges from the nodes.
+
+	int period = ChoosePeriod(ModelParameters::HIGHEST_TRANSPORTATIONCOST);
+	double a = OrigSol->getTotalDelivery(period);
+	double c = OrigSol->getTotalPickup(period);
+	double b = Instance.Capacity;
+	shiftDel = max(OrigSol->getTotalDelivery(period) - Instance.Capacity*(OrigSol->getNumberOfRoutes(period) - 1), 0) + floor(0.1*OrigSol->getTotalDelivery(period));
+	shiftPick = max(OrigSol->getTotalPickup(period) - Instance.Capacity*(OrigSol->getNumberOfRoutes(period) - 1), 0) + floor(0.1*OrigSol->getTotalDelivery(period));
 
 	for (auto node : newSol->NodeHolder) {
 		//Move quantity for visited nodes
@@ -2150,14 +2219,19 @@ IRP::Solution * IRP::LocalSearch::ShiftQuantity()
 					if (period <= Instance.getNumOfPeriods()) {
 						//Check if node is visited in next period
 						if (node->quantity(period + 1) > 0.01) {
-							pushDel = shiftDel;
 
-							//Move from period
-							node->changeQuantity(period, -pushDel);
-							//insert in period
-							node->changeQuantity(period + 1, pushDel);
+							pushDel = shiftDel;
+							pushDel = node-> moveQuantity(period, period + 1, pushDel);
 							shiftDel -= pushDel;
-							break;
+						}
+					}
+
+					//Try to shift forward two period
+					if (period <= Instance.getNumOfPeriods()+1) {
+						if (node->quantity(period + 2) > 0.01) {
+							pushDel = shiftDel;
+							pushDel = node->moveQuantity(period, period + 2, pushDel);
+							shiftDel -= pushDel;
 						}
 					}
 
@@ -2165,21 +2239,12 @@ IRP::Solution * IRP::LocalSearch::ShiftQuantity()
 					if (period - 1 > 0) {
 						if (node->quantity(period - 1) > 0.01) {
 							pushDel = shiftDel;
-							//Move from period
-							node->changeQuantity(period, -pushDel);
-							//insert in period
-							node->changeQuantity(period - 1, pushDel);
+							pushDel = node->moveQuantity(period, period - 1, pushDel);
 							shiftDel -= pushDel;
 						}
 					}
 				
-
-				while (ModelParameters::WITHIN_LIMITS != node->isInventoryFeasible()) {
-					if (node->isInventoryFeasible() == ModelParameters::LOWER_LIMIT_BREAK)
-						node->insertMinQuantity();
-					else
-						node->removeMinQuantity();	
-				}
+			
 				} //end shift del
 			}
 
@@ -2188,15 +2253,20 @@ IRP::Solution * IRP::LocalSearch::ShiftQuantity()
 				//Decide how much quantity to move and update quantity
 				pushPick = shiftPick;
 
-				//Try to shift forward
+				//Try to shift forward, only if visited in next period
 				if (period <= Instance.getNumOfPeriods()) {
 					if (node->quantity(period + 1) > 0.01) {
 						pushPick = shiftPick;
+						pushPick = node->moveQuantity(period, period + 1, pushPick);
+						shiftPick -= pushPick;
+					}
+				}
 
-						//Remove from period
-						node->changeQuantity(period, -pushPick);
-						//Insert in period
-						node->changeQuantity(period + 1, pushPick);
+				//Try to shift forward two period
+				if (period <= Instance.getNumOfPeriods()+1) {
+					if (node->quantity(period + 2) > 0.01) {
+						pushPick = shiftPick;
+						pushPick = node->moveQuantity(period, period + 2, pushPick);
 						shiftPick -= pushPick;
 					}
 				}
@@ -2205,35 +2275,44 @@ IRP::Solution * IRP::LocalSearch::ShiftQuantity()
 				if (period - 1 > 0 && (shiftPick > 0)) {
 					if (node->quantity(period - 1) > 0.01) {
 						pushPick = shiftPick;
-						//Remove from period
-						node->changeQuantity(period, -pushPick);
-						//Insert in period
-						node->changeQuantity(period - 1, pushPick);
+						pushPick = node->moveQuantity(period, period - 1, pushPick);
 						shiftPick -= pushPick;
 					}
 				}
 
-				while (ModelParameters::WITHIN_LIMITS != node->isInventoryFeasible()) {
-					if (node->isInventoryFeasible() == ModelParameters::LOWER_LIMIT_BREAK)
-						node->insertMinQuantity();
-					else
-						node->removeMinQuantity();
-				}
-			}
+			} //end pickup nodes
 	}
-	return newSol;
+	cout << Instance.Capacity;
 }
 
-int IRP::LocalSearch::ChoosePeriod()
+
+
+
+int IRP::LocalSearch::ChoosePeriod(int selection)
 {
-	double maxCost = -100;
+	double maxValue = -100;
 	int period = -1;
-	for (auto t : Instance.Periods) {
-		if (maxCost <= OrigSol->getTransportationCost(t)) {
-			maxCost = OrigSol->getTransportationCost(t);
-			period = t;
+
+	if (selection == ModelParameters::HIGHEST_TRANSPORTATIONCOST) {	
+		for (auto t : Instance.Periods) {
+			if (maxValue <= OrigSol->getTransportationCost(t)) {
+				maxValue = OrigSol->getTransportationCost(t);
+				period = t;
+			}
 		}
+
+		return period;
 	}
 
-	return period;
+	if (selection == ModelParameters::HIGHEST_RESIDUAL_CAPACITY) {
+		for (auto t : Instance.Periods) {
+			if (maxValue <= OrigSol->getResidualCapacity(t)) {
+				maxValue = OrigSol->getResidualCapacity(t);
+				period = t;
+			}
+		}
+
+		return period;
+	}
+
 }

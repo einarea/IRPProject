@@ -59,6 +59,8 @@ public:
 	//Operators
 	static const int REMOVE_SERVICE = 0;
 	static const int HIGHEST_HOLDINGCOST = 1;
+	static const int HIGHEST_TRANSPORTATIONCOST = 22;
+	static const int HIGHEST_RESIDUAL_CAPACITY = 23;
 	static const int HIGHEST_TOTALCOST = 2;
 
 	//weights to color graphs
