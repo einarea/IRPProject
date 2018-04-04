@@ -72,6 +72,9 @@ public:
 	static const int LOWER_LIMIT_BREAK = 51;
 	static const int UPPER_LIMIT_BREAK = 52;
 	static const int WITHIN_LIMITS = 53;
+
+	//Route selection
+	static const int MIN_SERVICE = 33;
 	~ModelParameters();
 };
 

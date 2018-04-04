@@ -28,6 +28,9 @@ private:
 	bool ARC_RELAXED;
 	int ** VisitNode; //Crossover mask. Which customer to visit.
 
+	void addInventoryAndLoadingCtr(XPRBprob & problem);
+
+
 	int NumOfCustomers;
 	int MaxTime;
 	int Capacity;
@@ -40,6 +43,8 @@ private:
 	int * LowerLimit;
 	int ** Demand;
 	int ** TravelTime;
+
+
 	//Map map;
 
 	//Variables
@@ -55,8 +60,7 @@ private:
 	XPRBctr ** TabuMatrix;
 	double ** CountMatrix;
 
-	//Route matrix
-	vector<int **>A;
+
 
 
 	XPRBexpr objective;
@@ -79,6 +83,7 @@ private:
 	bool initializeVariables();
 	bool initializeParameters();
 	bool formulateProblem();
+
 	void buildGraph(vector <Node*> &, int, bool includeDepot, double weight=0.01);
 
 	void printGraph(vector <Node> &);
@@ -86,14 +91,13 @@ private:
 	int SolutionCounter; // Tracks number of solutions, solution's ID equals the counter value at the time added
 	int getCounter();
 	
-
-	vector <Route *> routes;
 	vector <Solution *> solutions;
 
 
 public:
 	XPRBvar ** y;
 	XPRBvar *** x;
+
 	vector<vector<vector<XPRBvar>>> subtourIndices;
 	//Sets
 	int startTime;
@@ -105,10 +109,20 @@ public:
 	vector  <int> AllNodes;
 	vector  <int> Depot;
 	vector <int> integers1;
+
+
+	void clearVariables();
 	
 	//For valid ineq
 	double ** ExcessConsumption;
 	double ** ExcessProd;
+
+	//Solving the aggregated model
+	class IRPproblem
+	{
+
+
+	};
 
 	//*****************Inner classes************************//
 	//Class to store routes and cost of routes
@@ -124,13 +138,15 @@ public:
 		int getTotalPickup();
 		int getPosition(Node * node);
 		int getId();
-		int ** getRouteMatrix(IRP * const instance);
+		int ** getRouteMatrix();
 		int period;
 		double getResidualCapacity();
 		Route(vector <NodeIRP*> & path, int id, IRP &instance, int t);
 		//Graph 
 		vector <NodeIRP*> route;
 	}; //end class Route
+
+
 
 	//Class to store solutions to the instance
 
@@ -203,13 +219,17 @@ public:
 	public:
 		Solution(IRP &model, bool integer);
 		Solution(IRP &model, vector<vector<IRP::Route*>> & r,bool integer);
+		Solution(IRP &instance, vector<NodeIRPHolder*> nodes);
 		int SolID;
 		double **pCapacity;
+		int *** getRouteMatrix();
 		vector<NodeIRPHolder *> NodeHolder;
 
 		vector<NodeIRPHolder *> getNodes();
 		//The set of routes for each period
 		vector<vector <IRP::Route*>> Routes;
+
+		vector<vector <IRP::Route*>> getRoutes();
 
 		//void buildGraph(vector<Node*> &graph, int t);
 		void print(string filname,int weight);
@@ -273,6 +293,33 @@ public:
 	};
 	
 
+	class RouteProblem{
+	public:
+		RouteProblem(IRP & Instance);
+		void addRouteConstraints();
+	
+		void formulateRouteProblem(vector <Route*> routes, int objectiveSelection);
+		void initializeRouteParameters(vector <Route*> routes);
+		void initializeRouteVariables();
+		void printRouteMatrix();
+		void addRoutesToVector();
+		Solution * solveProblem();
+	private:
+		XPRBprob routeProblem;
+		Route * getRoute(int routeId);
+		Solution * allocateSolution();
+		//Holder of all routes
+		vector <Route *> routes;
+		IRP & Instance;
+		//Parameters*********
+		//Route matrix
+		vector<int **>A;
+		//Variables
+		XPRBvar ** travelRoute;
+		//Set of all routes
+		vector <int> Routes;
+	};
+
 	IRP(CustomerIRPDB&, bool relaxed = false, bool maskOn = false, int ** VisitMask = 0);
 	//void addSolution(int ** y, int ***x, int **d, int **pic, int ***loadDel, int ***loadPic, int **inv, int ** t);
 
@@ -288,10 +335,10 @@ public:
 
 
 	//Route functions
-	void printRouteMatrix();
+
 	void updateTabuMatrix(double ** changeMatrix);
 	int getNumOfNodes();
-	void addRoutesToVector();
+
 	void printMatrix();
 	int getCapacity();
 	Map * getMap();
