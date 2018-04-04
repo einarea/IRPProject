@@ -165,11 +165,6 @@ IRP::IRP(CustomerIRPDB& db, bool ArcRel, bool maskOn, int ** VisitMask)
 {
 
 
-	//Initialize sets
-	if(!initializeSets()) {
-		cout<<"Data Error: Could not initialize sets.";
-		return;
-	}
 
 	if (MaskOn) {
 		generateMask(VisitMask);

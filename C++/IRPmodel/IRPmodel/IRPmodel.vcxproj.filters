@@ -87,6 +87,9 @@
     <ClInclude Include="DataSets.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ModelInstance.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -144,6 +147,9 @@
       <Filter>Source Files\Node</Filter>
     </ClCompile>
     <ClCompile Include="Calculations.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Instance.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

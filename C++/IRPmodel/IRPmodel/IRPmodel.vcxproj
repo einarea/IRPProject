@@ -159,6 +159,7 @@
     <ClInclude Include="CustomerVRPDB.h" />
     <ClInclude Include="DataSets.h" />
     <ClInclude Include="graphAlgorithm.h" />
+    <ClInclude Include="ModelInstance.h" />
     <ClInclude Include="IRP.h" />
     <ClInclude Include="IRPmodel.h" />
     <ClInclude Include="Map.h" />
@@ -182,6 +183,7 @@
     <ClCompile Include="CustomerVRP.cpp" />
     <ClCompile Include="CustomerVRPDB.cpp" />
     <ClCompile Include="graphAlgorithm.cpp" />
+    <ClCompile Include="Instance.cpp" />
     <ClCompile Include="IRP.cpp" />
     <ClCompile Include="IRPmodel.cpp" />
     <ClCompile Include="Map.cpp" />

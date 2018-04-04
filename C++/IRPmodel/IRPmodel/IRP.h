@@ -8,15 +8,18 @@
 #include "xprs.h"
 #include <string.h>
 #include "Node.h"
+#include "ModelInstance.h"
 
 using namespace ::dashoptimization;
 using namespace::std;
 
-class IRP
+class IRP : 
+	public ModelInstance
 {
 private:
 
 	//Problem
+	ModelInstance Instance;
 	CustomerIRPDB database;
 	MapIRP map;
 	XPRBprob prob;
@@ -101,15 +104,7 @@ public:
 	vector<vector<vector<XPRBvar>>> subtourIndices;
 	//Sets
 	int startTime;
-	vector  <int> Periods;
-	vector  <int> AllPeriods;
-	vector  <int> DeliveryNodes;
-	vector <int> PickupNodes;
-	vector  <int> Nodes;
-	vector  <int> AllNodes;
-	vector  <int> Depot;
-	vector <int> integers1;
-
+	
 
 	void clearVariables();
 	
