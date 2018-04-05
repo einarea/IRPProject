@@ -94,9 +94,14 @@ private:
 	vector <Solution *> solutions;
 
 
+
+
 public:
 	XPRBvar ** y;
 	XPRBvar *** x;
+
+	//To store all routes that are generated
+	vector <Route *> routes;
 
 	vector<vector<vector<XPRBvar>>> subtourIndices;
 	//Sets
@@ -129,7 +134,7 @@ public:
 	class Route {
 		public:
 		IRP & Instance;
-		int getCost();
+		double getTransportationCost();
 		int id;
 		//int removeNode(NodeIRP*, IRP::Route *);
 		//void insertSubRoute(vector<NodeIRP *>, NodeIRP * start, NodeIRP * end);
@@ -139,9 +144,8 @@ public:
 		int getPosition(Node * node);
 		int getId();
 		int ** getRouteMatrix();
-		int period;
 		double getResidualCapacity();
-		Route(vector <NodeIRP*> & path, int id, IRP &instance, int t);
+		Route(vector <NodeIRP*> & path, int id, IRP &instance);
 		//Graph 
 		vector <NodeIRP*> route;
 	}; //end class Route
@@ -218,7 +222,6 @@ public:
 	class Solution {
 	public:
 		Solution(IRP &model, bool integer);
-		Solution(IRP &model, vector<vector<IRP::Route*>> & r,bool integer);
 		Solution(IRP &instance, vector<NodeIRPHolder*> nodes);
 		int SolID;
 		double **pCapacity;
@@ -295,29 +298,56 @@ public:
 
 	class RouteProblem{
 	public:
-		RouteProblem(IRP & Instance);
+		RouteProblem(IRP & Instance, vector<IRP::Route*> routes);
 		void addRouteConstraints();
-	
-		void formulateRouteProblem(vector <Route*> routes, int objectiveSelection);
-		void initializeRouteParameters(vector <Route*> routes);
+		void formulateRouteProblem(int objectiveSelection);
+		void initializeRouteParameters();
 		void initializeRouteVariables();
+		void addInventoryCtr();
+		void initializeRoutes();
 		void printRouteMatrix();
 		void addRoutesToVector();
 		Solution * solveProblem();
 	private:
 		XPRBprob routeProblem;
+
+		//Variables
+		XPRBvar ** inventory;
+		XPRBvar ** delivery;
+		XPRBvar ** pickup;
+		XPRBvar *** loadDelivery;
+		XPRBvar *** loadPickup;
+		XPRBvar ** travelRoute;
+
+	
 		Route * getRoute(int routeId);
 		Solution * allocateSolution();
+		void fillRoutes(vector<vector<IRP::Route* >>& routes);
+		void fillNodes(vector<NodeIRPHolder*> &nodeHolder);
+		void fillLoad(IRP::Route *, vector<NodeIRPHolder*> &nodeHolder, int period);
 		//Holder of all routes
 		vector <Route *> routes;
 		IRP & Instance;
 		//Parameters*********
+		vector<double> RouteCost;
 		//Route matrix
 		vector<int **>A;
 		//Variables
-		XPRBvar ** travelRoute;
+	
 		//Set of all routes
 		vector <int> Routes;
+	};
+
+	//Class that solves a VRP for a period while pushing quantity to other periods and its existing routes
+	class RouteProblemWithVRP : public RouteProblem {
+	public:
+		RouteProblemWithVRP(IRP & Instance, int period, vector<IRP::Route*> routes);
+		void initializeVaribles();
+		void formulateProblem();
+		void solveProblem();
+		void addRoutingConstraints();
+	private:
+		int VRPperiod;
 	};
 
 	IRP(CustomerIRPDB&, bool relaxed = false, bool maskOn = false, int ** VisitMask = 0);
