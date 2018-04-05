@@ -377,12 +377,15 @@ void VRPmodel::addToIRPSolution(int t, IRP::Solution * sol, IRP &instance)
 {
 	//Add load variables
 	for (int i : AllNodes) {
+		//Clear edges of all nodes
+		sol->NodeHolder[i]->Nodes[t]->deleteEdges();
 		for (int j : AllNodes) {
 			if (map.inArcSet(i, j)) {
 				if(x[i][j].getSol()>0.001)
 				//get solution from VRP
 				sol->NodeHolder[i]->addEdge(loadDelivery[i][j].getSol(), loadPickup[i][j].getSol(), sol->NodeHolder[j], t, x[i][j].getSol());
 			}
+
 		
 		}
 	}

@@ -132,6 +132,7 @@ public:
 	//*****************Inner classes************************//
 	//Class to store routes and cost of routes
 	class Route {
+		static int counter;
 		public:
 		IRP & Instance;
 		double getTransportationCost();
@@ -145,7 +146,7 @@ public:
 		int getId();
 		int ** getRouteMatrix();
 		double getResidualCapacity();
-		Route(vector <NodeIRP*> & path, int id, IRP &instance);
+		Route(vector <NodeIRP*> & path, IRP &instance);
 		//Graph 
 		vector <NodeIRP*> route;
 	}; //end class Route
@@ -227,7 +228,7 @@ public:
 		double **pCapacity;
 		int *** getRouteMatrix();
 		vector<NodeIRPHolder *> NodeHolder;
-
+		int selectPeriod(int selection);
 		vector<NodeIRPHolder *> getNodes();
 		//The set of routes for each period
 		vector<vector <IRP::Route*>> Routes;
@@ -307,6 +308,10 @@ public:
 		void initializeRoutes();
 		void printRouteMatrix();
 		void addRoutesToVector();
+		void lockRoutes(vector<vector<IRP::Route*>> RouteHolder);
+
+		int ShiftPeriod;
+	
 		Solution * solveProblem();
 	private:
 		XPRBprob routeProblem;
@@ -319,8 +324,8 @@ public:
 		XPRBvar *** loadPickup;
 		XPRBvar ** travelRoute;
 
-	
-		Route * getRoute(int routeId);
+		void lockRoute(int period, int routeId);
+		int getRoutePosition(int routeId);
 		Solution * allocateSolution();
 		void fillRoutes(vector<vector<IRP::Route* >>& routes);
 		void fillNodes(vector<NodeIRPHolder*> &nodeHolder);

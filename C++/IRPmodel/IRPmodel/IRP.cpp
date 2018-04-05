@@ -750,7 +750,7 @@ void IRP::RouteProblem::formulateRouteProblem(int minimizeSelection)
 	if (minimizeSelection == ModelParameters::HIGHEST_TOTALCOST)
 	{
 		XPRBexpr obj = 0;
-		int t = 2;
+		int t = 3;
 		//Trans cost
 		for (int r : Routes)
 			for (int t : Instance.Periods)
@@ -768,7 +768,7 @@ void IRP::RouteProblem::formulateRouteProblem(int minimizeSelection)
 	//Minimize the service in the period
 	if (minimizeSelection == ModelParameters::MIN_SERVICE) {
 		XPRBexpr obj = 0;
-		int t = 2;
+		int t = ShiftPeriod;
 		for (int i : Instance.DeliveryNodes)
 			obj += Instance.delivery[i][t];
 		for (int i : Instance.PickupNodes)
@@ -777,7 +777,6 @@ void IRP::RouteProblem::formulateRouteProblem(int minimizeSelection)
 		routeProblem.setObj(routeProblem.newCtr("OBJ", obj));  /* Set the objective function */
 	}
 
-	routeProblem.print();
 
 }
 
@@ -1477,6 +1476,7 @@ IRP::Solution::Solution(IRP &model, vector<NodeIRPHolder*> nodes)
 	Instance(model),
 	NodeHolder(nodes)
 {
+	Routes.resize(Instance.getNumOfPeriods() + 1);
 }
 //Returns Aijt vector where 1 if arc ij is traversed in period t
 int *** IRP::Solution::getRouteMatrix()
@@ -1518,6 +1518,22 @@ int *** IRP::Solution::getRouteMatrix()
 	return RouteMatrix;
 }
 
+//Returns a period based on a selection criteria
+int IRP::Solution::selectPeriod(int selection)
+{
+	int period = -1;
+	int resCap = -100;
+	if (selection == ModelParameters::HIGHEST_RESIDUAL_CAPACITY) {
+		for (int t : Instance.Periods) {
+			if (resCap <= getResidualCapacity(t) + 0.01) {
+				resCap = getResidualCapacity(t);
+				period = t;
+			}
+		}
+	}
+	return period;
+}
+
 
 
 
@@ -1542,7 +1558,8 @@ vector<IRP::NodeIRP*> IRP::Solution::getVisitedNodes(int period)
 	vector<IRP::NodeIRP*> visitedNodes;
 	for (auto node : NodeHolder) {
 		if (node->quantity(period) > 0.01) {
-			visitedNodes.push_back(node->Nodes[period]);
+			auto nodeIRP = node->Nodes[period];
+			visitedNodes.push_back(nodeIRP);
 		}
 	}
 	return visitedNodes;
@@ -1712,8 +1729,7 @@ int IRP::Solution::newRoute(vector<Node*>& route, int t)
 		IRP::NodeIRP * nodeptr = static_cast<IRP::NodeIRP*> (n);
 		ptrHolder.push_back(nodeptr);
 	}
-	int id = Routes[t].size();
-	Routes[t].push_back(new Route(ptrHolder, id, Instance));
+	Routes[t].push_back(new Route(ptrHolder, Instance));
 	return Routes[t].size() - 1;
 }
 
@@ -1915,13 +1931,48 @@ void IRP::RouteProblem::addRoutesToVector()
 		
 }
 
+void IRP::RouteProblem::lockRoutes(vector<vector<IRP::Route*>> RouteHolder)
+{
+	int counter = 0;
+	//Select what routes to lock
+	for (auto t : Instance.Periods)
+		for (auto route : RouteHolder[t]) {
+			lockRoute(t, route->getId());
+			counter++;
+		}
+	//Lock the number of routes
+	XPRBexpr p1 = 0;
+	for (auto r : Routes) {
+		for (auto t : Instance.Periods)
+			p1 += travelRoute[r][t];
+
+		routeProblem.newCtr("Number of routes", p1 <= counter);
+	}
+}
+
+void IRP::RouteProblem::lockRoute(int period, int routeID)
+{
+	int route = getRoutePosition(routeID);
+	routeProblem.newCtr("RouteLock", travelRoute[route][period] == 1).print();
+}
+
 IRP::Solution * IRP::RouteProblem::solveProblem()
 {
+	//routeProblem.print();
 	routeProblem.mipOptimise();
 	Solution * sol = allocateSolution();
 	return sol;
 }
 
+
+int IRP::RouteProblem::getRoutePosition(int routeId)
+{
+	for (int i : Routes)
+	{
+		if (routes[i]->getId() == routeId)
+			return i;
+	}
+}
 
 IRP::Solution * IRP::RouteProblem::allocateSolution()
 {
@@ -2411,11 +2462,13 @@ double IRP::Route::getResidualCapacity()
 	return  Instance.Capacity - maxLoad;
 }
 
-IRP::Route::Route(vector<NodeIRP*>& path, int ref, IRP & Instance)
+int IRP::Route::counter = 1;
+
+IRP::Route::Route(vector<NodeIRP*>& path, IRP & Instance)
 	:
 	Instance(Instance),
 	route(path),
-	id(ref)
+	id(counter++)
 {
 }
 
