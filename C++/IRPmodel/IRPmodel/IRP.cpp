@@ -165,6 +165,7 @@ IRP::IRP(CustomerIRPDB& db, bool ArcRel, bool maskOn, int ** VisitMask)
 {
 
 
+
 	//Initialize sets
 	if(!initializeSets()) {
 		cout<<"Data Error: Could not initialize sets.";
@@ -186,6 +187,9 @@ IRP::IRP(CustomerIRPDB& db, bool ArcRel, bool maskOn, int ** VisitMask)
 		cout << "Data Error: Could not initialize variables.";
 		return;
 	}
+
+	//Calculate excess consumption and production
+	calculateExcess();
 
 	//initialize tabu matrix and countMatrix
 	TabuMatrix = new XPRBctr *[getNumOfNodes() + 1];
@@ -237,33 +241,65 @@ Map * IRP::getMap()
 void IRP::calculateExcess()
 {
 	int excess = 0;
-	ExcessConsumption = new double *[DeliveryNodes.size()];
+	ExcessConsumption = new double **[DeliveryNodes.size()];
 	for (int i : DeliveryNodes) {
-		ExcessConsumption[i] = new double[Periods.size()];
-		excess = LowerLimit[i] - InitInventory[i];
-		for (int t : Periods) {
-			excess += Demand[i][t];
-			if (excess >= 1) ExcessConsumption[i][t] = excess;
-			else  ExcessConsumption[i][t] = 0;
+		ExcessConsumption[i] = new double *[Periods.size() + 1];
+		
+		for (int t1 : Periods) {
+			ExcessConsumption[i][t1] = new double[Periods.size() + 1];
+			for (int t2 : Periods) {
 
-			cout << "Node: " << i << "\tperiod: " << t << "\tExcessDelivery: " << ExcessConsumption[i][t]<<"\n";
+				//initialize excess
+				if (t1 == 1) {
+					excess = LowerLimit[i] - InitInventory[i];
+				}
+				else
+					excess = LowerLimit[i] - UpperLimit[i];
+
+				//calculate excess between period t1 and t2
+				if (t1 <= t2) {
+					for (int t = t1; t <= t2; t++)
+						excess += Demand[i][t];
+					if (excess >= 1) ExcessConsumption[i][t1][t2] = excess;
+					else  ExcessConsumption[i][t1][t2] = 0;
+					cout << "Node: " << i << "\tperiod: " << t1 << t2<< "\tExcessDelivery: " << ExcessConsumption[i][t1][t2] << "\n";
+				}
+
+
+			}
+			
 		}
 	}
-	
+
 	excess = 0;
-	ExcessProd = new double *[Nodes.size()+1];
+	ExcessProd = new double **[Nodes.size() + 1];
 	for (int i : PickupNodes) {
-		ExcessProd[i] = new double[Periods.size()];
-		excess = InitInventory[i] - UpperLimit[i];
-		for (int t : Periods) {
-			excess += Demand[i][t];
-			if (excess >= 1) ExcessProd[i][t] = excess;
-			else  ExcessProd[i][t] = 0;
+		ExcessProd[i] = new double *[Periods.size() + 1];
+	
+		for (int t1 : Periods) {
+			ExcessProd[i][t1] = new double[Periods.size() + 1];
+			for (int t2 : Periods) {
 
-			cout << "Node: " << i << "\tperiod: " << t << "\tExcessPickup: " << ExcessProd[i][t] << "\n";
+				//initialize excess
+				if (t1 == 1) {
+					excess = InitInventory[i] - UpperLimit[i];
+				}
+				else
+					excess = LowerLimit[i] - UpperLimit[i];
+
+				//calculate excess between period t1 and t2
+				if (t1 <= t2) {
+					for (int t = t1; t <= t2; t++)
+						excess += Demand[i][t];
+					if (excess >= 1) ExcessProd[i][t1][t2] = excess;
+					else  ExcessProd[i][t1][t2] = 0;
+
+					//cout << "Node: " << i << "\tperiod: " << t1 << t2<<"\tExcessPickup: " << ExcessProd[i][t1][t2] << "\n";
+				}
+			}
 		}
-	}
 
+	}
 }
 
 int IRP::allocateIRPSolution()
@@ -770,9 +806,9 @@ void IRP::RouteProblem::formulateRouteProblem(int minimizeSelection)
 		XPRBexpr obj = 0;
 		int t = ShiftPeriod;
 		for (int i : Instance.DeliveryNodes)
-			obj += Instance.delivery[i][t];
+			obj += delivery[i][t];
 		for (int i : Instance.PickupNodes)
-			obj += Instance.pickup[i][t];
+			obj += pickup[i][t];
 
 		routeProblem.setObj(routeProblem.newCtr("OBJ", obj));  /* Set the objective function */
 	}
@@ -785,6 +821,7 @@ void IRP::RouteProblem::initializeRouteParameters()
 	RouteCost.resize(routes.size());
 	int nRoutes = 0;
 	for (auto r : routes) {
+		r->printRoute();
 		Routes.push_back(nRoutes);
 		RouteCost[nRoutes] = r->getTransportationCost();
 		//Initialize the A holder
@@ -945,6 +982,33 @@ void IRP::RouteProblem::addInventoryCtr()
 
 }
 
+void IRP::RouteProblem::shiftQuantityCtr(int quantity, int period)
+{
+	XPRBexpr p1;
+	//Add shift variables
+	for (auto node : Instance.Nodes) {
+		shift[i] = new XPRBvar[Instance.Nodes.size + 1]
+	}
+
+	//Balance shift
+	for (auto i : Instance.DeliveryNodes) {
+		p1 += delivery[i][period];
+	}
+
+	for (auto i : Instance.PickupNodes) {
+		p1 += pickup[i][period];
+	}
+
+	for (auto i : Instance.DeliveryNodes) {
+		for (auto t : Instance.Periods) {
+			if (t != period)
+				p1 += delivery[i][t];
+		}
+		
+	}
+	quantity - p1 
+}
+
 
 void IRP::RouteProblem::initializeRoutes()
 {
@@ -1065,6 +1129,53 @@ bool IRP::initializeParameters() {
 
 
 
+
+void IRP::getSubset(vector<int> subset, int subsetSize, int nodePos, vector<int> & searchNodes, int t1, int t2)
+{
+	subset.push_back(searchNodes[nodePos]);
+
+	if (subset.size() < subsetSize) {
+	
+		vector<int> localSubset = subset;
+		
+		for (int i = nodePos; i < searchNodes.size() - 1; i++) {
+			getSubset(subset, subsetSize, i+1,  searchNodes, t1, t2);
+		
+		}
+	}
+	else {
+		XPRBexpr p1;
+		XPRBexpr p2;
+		double flow;
+
+
+
+		for (auto i : subset)
+			flow = ExcessConsumption[i][t1][t2];
+
+		if (ceil(flow / Capacity) - flow/Capacity> 0.3*subset.size()){
+
+			cout << "\nPeriod" << t1 << t2 << "\n";
+			for (auto i : subset) {
+
+				cout << i << " - ";
+
+			}
+			cout << "\n";
+			//Get difference set
+
+			vector <int> Difference = ModelBase::createDifferenceSet(AllNodes, subset);
+			//Add minimum flow constraint
+			for (int t = t1; t <= t2; t++)
+				for (auto i : subset)
+					for (auto j : Difference)
+						p1 += x[i][j][t];
+
+			p2 = ceil(flow / Capacity);
+			prob.newCtr("MinFlow", p1 >= p2).print();
+		}
+	}	
+}
 
 void IRP::addInventoryAndLoadingCtr(XPRBprob & problem)
 {
@@ -1584,6 +1695,19 @@ bool IRP::Solution::isFeasible()
 	return true;
 }
 
+void IRP::Solution::clearEdges(int period)
+{
+	for (auto node : NodeHolder) {
+		node->Nodes[period]->deleteEdges();
+	}
+}
+
+//Returns the period shifted from
+int IRP::Solution::shiftQuantity(int PeriodSelection, int ObjectiveSelection)
+{
+	return 0;
+}
+
 bool IRP::Solution::isRouteFeasible(IRP::Route * r)
 {
 
@@ -1788,41 +1912,137 @@ vector<IRP::Route const *> IRP::getRoutes()
 }*/
 
 
-void IRP::addValidIneq()
+void IRP::addValidIneq(int ValidIneq)
 
 {
-	XPRBexpr p1;
-
+	XPRBexpr p1 = 0;
+	XPRBexpr p2 = 0;
+	XPRBexpr p3 = 0;
 	//Minimum visit
 
-	calculateExcess();
+	if (ValidIneq == ModelParameters::MinimumNodeVisit) {
+		double minVisit;
 
-	double minVisit;
-
-	for (int i : DeliveryNodes) {
-		minVisit = 0;
-		p1 = 0;
-			for (int t : Periods) {
-				p1 += y[i][t];
-				minVisit = ExcessConsumption[i][t] / min(Capacity, UpperLimit[i] - LowerLimit[i]);
-				if (ceil(minVisit) - minVisit >= 0.3)
-				{
-					prob.newCtr("MinVisitDelivery", p1 >= ceil(minVisit));
+		for (int i : DeliveryNodes) {
+			minVisit = 0;
+			p1 = 0;
+			for (int t2 : Periods) {
+				for (int t1 : Periods) {
+					if (t1 <= t2) {
+						for (int t = t1; t <= t2; t++) {
+							p1 += y[i][t];
+						}
+						minVisit = ExcessConsumption[i][t1][t2] / min(Capacity, UpperLimit[i] - LowerLimit[i]);
+						if (ceil(minVisit) - minVisit >= 0.3)
+						{
+							prob.newCtr("MinVisitDelivery", p1 >= ceil(minVisit)).print();
+						}
+						p1 = 0;
+						minVisit = 0;
+					}
 				}
 			}
-	}
-	for (int i : PickupNodes) {
-		minVisit = 0;
-		p1 = 0;
-		for (int t : Periods) {
-			p1 += y[i][t];
-			minVisit = ExcessProd[i][t] / min(Capacity, UpperLimit[i] - LowerLimit[i]);
-			if (ceil(minVisit) - minVisit >= 0.3)
-			{
-				prob.newCtr("MinVisitPickup", p1 >= ceil(minVisit));
+		} // end delivery nodes
+
+		for (int i : PickupNodes) {
+			minVisit = 0;
+			p1 = 0;
+			for (int t2 : Periods) {
+				for (int t1 : Periods) {
+					if (t1 <= t2) {
+						for (int t = t1; t <= t2; t++) {
+							p1 += y[i][t];
+						}
+						minVisit = ExcessProd[i][t1][t2] / min(Capacity, UpperLimit[i] - LowerLimit[i]);
+						if (ceil(minVisit) - minVisit >= 0.3)
+						{
+							prob.newCtr("MinVisitPickup", p1 >= ceil(minVisit)).print();
+						}
+					}
+				}
 			}
-		}
-	}
+		} //End pickup nodes
+	} // End minimum visits
+
+	if (ValidIneq == ModelParameters::MinimumInventory) {
+
+		for (int i : DeliveryNodes) {
+			for (int t2 : Periods) {
+				for (int t1 : Periods) {
+					if (t1 <= t2) {
+						for (int t = t1; t <= t2; t++)
+						{
+							p2 += Demand[i][t];
+							p3 += y[i][t];
+						}
+
+						p3 = 1 - p3;
+						p1 = inventory[i][t1 - 1];
+
+						prob.newCtr("MinInventory", p1 >= p2*p3 + map.getLowerLimit(i)).print();
+						p1 = 0;
+						p2 = 0;
+						p3 = 0;
+					}
+				}	
+			}
+		} // End delivery nodes
+
+		for (int i : PickupNodes) {
+			for (int t2 : Periods) {
+				for (int t1 : Periods) {
+					if (t1 <= t2) {
+						for (int t = t1; t <= t2; t++)
+						{
+							p2 += Demand[i][t];
+							p3 += y[i][t];
+						}
+
+						p3 = 1 - p3;
+						p1 = inventory[i][t1 - 1];
+
+						prob.newCtr("MinInventory", p1 <= map.getUpperLimit(i) - p2*p3 ).print();
+						p1 = 0;
+						p2 = 0;
+						p3 = 0;
+					}
+				}
+			}
+		} // End pickup nodes
+
+	} // End minimum inventory
+
+	if (ValidIneq == ModelParameters::MinimumFlow) {
+		//Check all subsets with positive excess demand 
+		bool includeNode = true;
+
+			vector<vector<vector<int>>> IncludedNodes;
+			IncludedNodes.resize(Periods.size()+1);
+	
+			for (auto t1 : Periods) {
+				IncludedNodes[t1].resize(Periods.size() + 1);
+				for (auto t2 : Periods) {
+					if (t1 <= t2)
+						includeNode = true;
+						for (auto i : DeliveryNodes) {
+							if (ExcessConsumption[i][t1][t2] >= 0.01)
+								IncludedNodes[t1][t2].push_back(i);
+						}
+				
+				}
+			}
+		//Recursively check all possible subsets up to the subsetSize
+
+		for (auto t1 : Periods)
+			for (auto t2 : Periods) {
+				if (t1 <= t2){
+					vector<int> subset;
+					for (int subsetSize = 1; subsetSize <= ModelParameters::SubsetSizeMinFlow; subsetSize++)
+						for (auto nodePos = 0; nodePos < IncludedNodes[t1][t2].size(); nodePos++)
+							getSubset(subset, subsetSize, nodePos, IncludedNodes[t1][t2], t1, t2);
+				}
+			}
+	} //End minimumflow
 
 }
 
@@ -1990,9 +2210,10 @@ IRP::Solution * IRP::RouteProblem::allocateSolution()
 
 	//Fill load on the edges in the routes
 	for(auto t : Instance.Periods)
-		for(auto r : routeHolder[t])
+		for (auto r : routeHolder[t]) {
+			r->printRoute();
 			fillLoad(r, nodeHolder, t);
-
+		}
 
 	IRP::Solution * sol = new IRP::Solution(Instance, nodeHolder);
 
@@ -2001,14 +2222,16 @@ IRP::Solution * IRP::RouteProblem::allocateSolution()
 
 void IRP::RouteProblem::fillRoutes(vector<vector<IRP::Route* >>& routeHolder)
 {
-	for(auto t: Instance.Periods)
+	for (auto t : Instance.Periods) {
+		cout << "Period " << t << ":\n";
 		for (auto r : Routes) {
 			if (travelRoute[r][t].getSol() > 0.01) {
 				auto route = routes[r];
 				routeHolder[t].push_back(route);
-				
+				route->printRoute();
 			}
 		}
+	}
 }
 
 
@@ -2095,8 +2318,8 @@ void IRP::Solution::printSolution()
 			else {
 				printf("Inv_%d: %.2f\t", i, NodeHolder[i]->Nodes[t]->Inventory);
 
-
-				if (NodeHolder[i]->Nodes[t]->Quantity > 0.5) {
+				for (NodeIRP::EdgeIRP *edge : NodeHolder[i]->getEdges(t))
+				{
 					printf("y%d: %.2f\t", i, NodeHolder[i]->getOutflow(t));
 					printf("t%d: %.2f\t", i, NodeHolder[i]->timeServed(t));
 
@@ -2107,13 +2330,13 @@ void IRP::Solution::printSolution()
 						printf("qP_%d: %.2f\t", i, NodeHolder[i]->quantity(t));
 					}
 
-					for (NodeIRP::EdgeIRP *edge : NodeHolder[i]->getEdges(t)) {
+					
 						j = edge->getEndNode()->getId();
 						printf("x%d%d: %.2f\t", i, j, edge->getValue());
 						printf("loadDel%d%d: %.2f\t", i, j, edge->LoadDel);
 						printf("loadPick%d%d: %.2f\t", i, j, edge->LoadPick);
-					}
 				}
+			
 					
 			} // end if
 		} // end t
@@ -2445,6 +2668,14 @@ int ** IRP::Route::getRouteMatrix()
 		route[i][j] = 1;
 	}
 	return route;
+}
+
+void IRP::Route::printRoute()
+{
+	for (auto node : route)
+		cout<<(node->getId())<<" - " ;
+
+	cout << "0 \n";
 }
 
 double IRP::Route::getResidualCapacity()

@@ -20,11 +20,32 @@ void ModelBase::createUnion(vector<int> &set1, vector<int> &set2, vector<int> &r
 	}
 }
 
+
+
 void ModelBase::createRangeSet(int start, int end, vector<int> &set)
 {
 	for (int i = start; i <= end; i++) {
 		set.push_back(i);
 	}
+}
+
+//Removes set2 from set1
+vector<int> ModelBase::createDifferenceSet(vector<int>& set1, vector<int>& set2)
+{
+	vector<int> difference;
+	bool include;
+	for (auto i : set1) {
+		include = true;
+		for (auto j : set2) {
+			if (i == j)
+				include = false;
+		}
+
+		if (include)
+			difference.push_back(i);
+	}
+
+	return difference;
 }
 
 int ModelBase::getMax(vector<int> values)

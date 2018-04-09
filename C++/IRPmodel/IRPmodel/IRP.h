@@ -22,7 +22,7 @@ private:
 	XPRBprob prob;
 	XPRSprob oprob;		//Express problem to use with cuts
 	bool MaskOn;
-
+	void getSubset(vector <int>  subset, int subsetSize, int node, vector <int> & IncludeNodes, int t1, int t2);
 
 	//Parameters
 	bool ARC_RELAXED;
@@ -119,8 +119,8 @@ public:
 	void clearVariables();
 	
 	//For valid ineq
-	double ** ExcessConsumption;
-	double ** ExcessProd;
+	double *** ExcessConsumption;
+	double *** ExcessProd;
 
 	//Solving the aggregated model
 	class IRPproblem
@@ -145,6 +145,7 @@ public:
 		int getPosition(Node * node);
 		int getId();
 		int ** getRouteMatrix();
+		void printRoute();
 		double getResidualCapacity();
 		Route(vector <NodeIRP*> & path, IRP &instance);
 		//Graph 
@@ -242,6 +243,8 @@ public:
 		void sort(vector <NodeIRP>*);
 		bool IntegerSolution;
 		bool isFeasible();
+		void clearEdges(int period);
+		int shiftQuantity(int PeriodSelection, int ObjectiveSelection);
 		bool isRouteFeasible(IRP::Route *);
 		double getNumberOfRoutes(int period);
 		double getResidualCapacity(int period);
@@ -305,6 +308,7 @@ public:
 		void initializeRouteParameters();
 		void initializeRouteVariables();
 		void addInventoryCtr();
+		void shiftQuantityCtr(int quantity);
 		void initializeRoutes();
 		void printRouteMatrix();
 		void addRoutesToVector();
@@ -362,7 +366,7 @@ public:
 	Route * getRoute(int id);
 	vector<Route const*> getRoutes();
 	int newRoute(vector <Node*> &path);
-	void addValidIneq();
+	void addValidIneq(int ValidInequality);
 
 	//Solution information
 	double ** getVisitDifference(Solution * sol1, Solution * sol2);

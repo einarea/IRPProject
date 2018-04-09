@@ -53,7 +53,10 @@ public:
 	static const int TabuLength = 2;
 
 	//Valid inequalitites
-	static const int MinimumNodeVisit = 1;
+	static const int MinimumNodeVisit = 22;
+	static const int MinimumFlow = 23;
+	static const int MinimumInventory = 24;
+	static const int SubsetSizeMinFlow = 3;
 
 
 	//Operators
