@@ -1878,34 +1878,58 @@ double IRP::Solution::getObjective()
 }
 
 
-void IRP::addVisitConstraint(double ** Visit)
+void IRP::addVisitConstraint(double ** Visit, int selection)
 {
-	XPRBexpr p1;
-	p1 = 0;
+	XPRBexpr p1 = 0;
+	XPRBexpr p2 = 0;
+
 	cout << "\n";
 	if (VisitCtr.isValid()) {
 
 		prob.delCtr(VisitCtr);
 	}
 
-	int visits;
-	int t = 1;
-	//for (int t : Periods) {
-		
+	if (selection == ModelParameters::ForceVisits) {
+		int visits;
+		int t = 1;
+		//for (int t : Periods) {
+
 		visits = 0;
 		for (int i : Nodes) {
-			if(Visit[i][t] == 0 && !TabuMatrix[i][t].isValid())
+			if (Visit[i][t] == 0 && !TabuMatrix[i][t].isValid())
 			{
 				visits += 1;
 				p1 += y[i][t];
 			}
 		}
-	//}
-	VisitCtr = prob.newCtr("MinVisits", p1 >= ceil(visits*0.1));
-	VisitCtr.print();
-	bool a = VisitCtr.isValid();
-	cout << "\n";
-}
+		//}
+		VisitCtr = prob.newCtr("MinVisits", p1 >= ceil(visits*0.1));
+		VisitCtr.print();
+		bool a = VisitCtr.isValid();
+		cout << "\n";
+	}
+
+	if (selection == ModelParameters::ForceChanges) {
+		for (int t : Periods) {
+			for (int i : Nodes) {
+				if (Visit[i][t] == 0 && !TabuMatrix[i][t].isValid()) {
+					p1 += y[i][t];
+				}
+				else if (Visit[i][t] == 1 && !TabuMatrix[i][t].isValid()) {
+					p2 += (1 - y[i][t]);
+				}
+			}
+		}
+
+		//add constraint
+		VisitCtr = prob.newCtr("MinVisits", p1 - p2 >= ceil(Nodes.size()*0.1));
+		p1 = 0;
+		VisitCtr.print();
+		cout << "\n";
+
+	} //End force changes
+
+} //end add visit constraint
 
 /*IRP::Route * IRP::getRoute(int id)
 {

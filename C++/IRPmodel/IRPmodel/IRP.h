@@ -363,7 +363,7 @@ public:
 	IRP(CustomerIRPDB&, bool relaxed = false, bool maskOn = false, int ** VisitMask = 0);
 	//void addSolution(int ** y, int ***x, int **d, int **pic, int ***loadDel, int ***loadPic, int **inv, int ** t);
 
-	void addVisitConstraint(double ** VisitMatrix);
+	void addVisitConstraint(double ** VisitMatrix, int selection);
 	Route * getRoute(int id);
 	vector<Route const*> getRoutes();
 	int newRoute(vector <Node*> &path);

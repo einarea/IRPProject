@@ -51,6 +51,8 @@ public:
 
 	//Tabu list size
 	static const int TabuLength = 2;
+	static const int ForceVisits = 33;
+	static const int ForceChanges = 34;
 
 	//Valid inequalitites
 	static const int MinimumNodeVisit = 22;
