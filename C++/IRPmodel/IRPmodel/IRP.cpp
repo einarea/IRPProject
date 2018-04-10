@@ -227,7 +227,7 @@ IRP::Solution * IRP::solveModel()
 		//int b = prob.getLPStat();
 	}
 	int d = prob.mipOptimise();
-//	prob.print();
+	prob.print();
 
 	int SolID = allocateIRPSolution();
 
