@@ -4,7 +4,6 @@
 #include <algorithm>
 #include "graphAlgorithm.h"
 #include "ModelParameters.h"
-#include <string.h>
 #include <boost/tuple/tuple.hpp>
 #include "gnuplot-iostream.h"
 
@@ -150,7 +149,6 @@ void IRP::printBounds()
 	for (int i : Nodes) {
 		for (int t : Periods)
 			if(y[i][t].getUB()<=0.5)
-				cout<<y[i][t].getSol();
 	}
 }
 
@@ -224,8 +222,9 @@ IRP::Solution * IRP::solveModel()
 		//int b = prob.getLPStat();
 	}
 	int d = prob.mipOptimise();
-	prob.print();
+	//prob.print();
 
+	cout << simAction[1][7][1].getSol();
 	int SolID = allocateIRPSolution();
 
 	return getSolution(SolID);
@@ -320,6 +319,31 @@ int IRP::allocateIRPSolution()
 			} //endif
 		} //end for j
 	} // end x and loading
+
+	//Reallocate empty arcs
+	if (ModelParameters::Simultaneous) {
+		for (int i : DeliveryNodes) {
+			for (int j : PickupNodes) {
+				if (map.isColocated(i, j)) {
+					for (int t : Periods) {
+
+						//If no simultaneous action, reorder edges
+						if (x[i][j][t].getSol() >= 0.01 && simAction[i][j][t] <= 0.01) {
+							auto edge = sol->NodeHolder[i]->Nodes[t]->getEdge();
+							//Delete two edges
+							auto endNode = sol->NodeHolder[i]->Nodes[t]->getEdge()->getEndNode()->getEdge()->getEndNode();
+							sol->NodeHolder[i]->Nodes[t]->getEdge()->getEndNode()->deleteEdges();
+							sol->NodeHolder[i]->Nodes[t]->deleteEdges();
+
+							sol->NodeHolder[i]->Nodes[t]->addEdge(edge->LoadDel, edge->LoadPick, endNode, 1);
+
+							//Add new edge
+						
+						}
+							
+					}
+				}
+	}
 
 	  //Fill inventory
 	for (int i : Nodes) {
@@ -650,7 +674,7 @@ bool IRP::formulateProblem()
 				if(map.isColocated(i, j)) {
 					for (int t : Periods) {
 						p1 = actionDelivery[i][t] + actionPickup[j][t] - epsilon* simAction[i][j][t];
-						prob.newCtr("SimAction", p1 <= 0);
+						prob.newCtr("SimAction", p1 <= 2 - epsilon);
 						p1 = 0;
 					}
 				}
@@ -1519,14 +1543,14 @@ bool IRP::initializeVariables()
 		for (int i : DeliveryNodes) {
 			actionDelivery[i] = new XPRBvar[Periods.size() + 1];
 			for (int t : Periods) {
-				actionDelivery[i][t] = prob.newVar(XPRBnewname("Action-d%d", i, t), XPRB_BV, 0, 1);
+				actionDelivery[i][t] = prob.newVar(XPRBnewname("ActionDel_%d%d", i, t), XPRB_BV, 0, 1);
 			}
 		}
 
 		for (int i : PickupNodes) {
 			actionPickup[i] = new XPRBvar[Periods.size() + 1];
 			for (int t : Periods) {
-				actionPickup[i][t] = prob.newVar(XPRBnewname("Action-d%d", i, t), XPRB_BV, 0, 1);
+				actionPickup[i][t] = prob.newVar(XPRBnewname("ActionPic_%d%d", i, t), XPRB_BV, 0, 1);
 			}
 		}
 
@@ -1537,7 +1561,7 @@ bool IRP::initializeVariables()
 				simAction[i][j] = new XPRBvar[Periods.size() + 1];
 				for (int t : Periods) {
 					if (map.isColocated(i, j)) {
-						simAction[i][j][t] = prob.newVar(XPRBnewname("Action-d%d", i, j, t), XPRB_BV, 0, 1);
+						simAction[i][j][t] = prob.newVar(XPRBnewname("Sim_%d%d%d", i, j, t), XPRB_BV, 0, 1);
 					}
 				}
 			}

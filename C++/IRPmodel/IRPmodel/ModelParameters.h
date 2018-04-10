@@ -18,7 +18,7 @@ public:
 	static const int nVehicles = 4;
 
 	//Simultanous
-	static const bool Simultaneous = false;
+	static const bool Simultaneous = true;
 
 	//Heurestic
 	//static const double VisitRatio = 0.5;
