@@ -1884,6 +1884,7 @@ void IRP::addVisitConstraint(double ** Visit)
 	p1 = 0;
 	cout << "\n";
 	if (VisitCtr.isValid()) {
+
 		prob.delCtr(VisitCtr);
 	}
 
