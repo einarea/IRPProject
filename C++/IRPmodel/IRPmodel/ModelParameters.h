@@ -17,6 +17,9 @@ public:
 	static const int overTime = 3;
 	static const int nVehicles = 4;
 
+	//Simultanous
+	static const bool Simultaneous = false;
+
 	//Heurestic
 	//static const double VisitRatio = 0.5;
 

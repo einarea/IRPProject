@@ -4,7 +4,8 @@
 #include <math.h>
 #include <algorithm>
 using namespace ::std;
-#include "IRP.h";
+#include "IRP.h"
+#include "ModelParameters.h"
 #include "math.h"
 
 
@@ -22,7 +23,7 @@ Map::Map(CustomerDB& db)
 	:
 	database(db)
 {	
-}
+}	
 
 int Map::getTransCost(int node1, int node2, int TRANSCOST_MULTIPLIER, int SERVICECOST_MULTIPLER)
 {
@@ -112,10 +113,34 @@ int Map::getY(int id)
 
 
 
-bool Map::inArcSet(int i, int j)
+
+
+bool Map::inExtensiveArcSet(int i , int j)
 {
 	bool a = (i == j || (i == database.getnCustomers() + j && j != 0));
 	return !a;
+}
+
+bool Map::inSimultaneousArcSet(int i, int j)
+{
+	//Check if incident from delivery node and not to co-located pickup node
+	if (isDelivery(i) && !isColocated(i, j))
+		return false;
+
+	//Check if incident to pickup node and not from co-located delivery node
+	if (!isDelivery(j) && !isColocated(i, j))
+		return false;
+
+	return inExtensiveArcSet(i, j);
+}
+
+bool Map::isColocated(int delivery, int pickup)
+{
+	if (pickup == (getNumCustomers() + delivery)  && delivery != 0) {
+		return true;
+	}
+	else
+		return false;
 }
 
 
@@ -125,6 +150,14 @@ int Map::nodeToCustomer(int node)
 		return node - database.getnCustomers();
 	else
 		return node;
+}
+
+bool Map::inArcSet(int i, int j)
+{
+	if (ModelParameters::Simultaneous)
+		return inSimultaneousArcSet(i, j);
+	else
+		return inExtensiveArcSet(i, j);
 }
 
 Map::~Map()

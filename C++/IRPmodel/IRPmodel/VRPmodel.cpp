@@ -24,7 +24,7 @@ void VRPmodel::solveModel()
 	//prob.lpOptimize();
 	//int b = prob.getLPStat();
 
-	prob.print();
+	//prob.print();
 	int d = prob.mipOptimise();
 
 	/*for (int i : AllNodes)
@@ -194,9 +194,8 @@ bool VRPmodel::formulateProblem()
 			if (map.inArcSet(i, j)) {
 				objective += TransCost[i][j] * x[i][j];
 				int a = TransCost[i][j];
-				printf("%d\n", a);
 			}
-			}
+		}
 
 	//Vehicle penalty
 	objective += ModelParameters::VehiclePenalty * extraVehicle;
@@ -296,7 +295,6 @@ bool VRPmodel::formulateProblem()
 			}
 		}
 		p1 += Demand[i];
-		printf("%d\n", Demand[i]);
 		prob.newCtr("LoadBalance pickup", p1 == 0);
 		prob.newCtr("DeliveryBalance at pickupNodes", p2 == 0);
 		p1 = 0;
@@ -381,7 +379,7 @@ void VRPmodel::addToIRPSolution(int t, IRP::Solution * sol, IRP &instance)
 		sol->NodeHolder[i]->Nodes[t]->deleteEdges();
 		for (int j : AllNodes) {
 			if (map.inArcSet(i, j)) {
-				if(x[i][j].getSol()>0.001)
+				if(x[i][j].getSol()>0.01)
 				//get solution from VRP
 				sol->NodeHolder[i]->addEdge(loadDelivery[i][j].getSol(), loadPickup[i][j].getSol(), sol->NodeHolder[j], t, x[i][j].getSol());
 			}

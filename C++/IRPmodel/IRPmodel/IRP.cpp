@@ -5,13 +5,12 @@
 #include "graphAlgorithm.h"
 #include "ModelParameters.h"
 #include <string.h>
-
 #include <boost/tuple/tuple.hpp>
-
 #include "gnuplot-iostream.h"
 
 
 using namespace ::dashoptimization;
+using namespace::std;
 
 void XPRS_CC acceptInt(XPRSprob oprob, void * vd, int soltype, int * ifreject, double *cutoff) {
 	IRP * modelInstance;
@@ -165,8 +164,6 @@ IRP::IRP(CustomerIRPDB& db, bool ArcRel, bool maskOn, int ** VisitMask)
 	MaskOn(maskOn)
 {
 
-
-
 	//Initialize sets
 	if(!initializeSets()) {
 		cout<<"Data Error: Could not initialize sets.";
@@ -263,7 +260,7 @@ void IRP::calculateExcess()
 						excess += Demand[i][t];
 					if (excess >= 1) ExcessConsumption[i][t1][t2] = excess;
 					else  ExcessConsumption[i][t1][t2] = 0;
-					cout << "Node: " << i << "\tperiod: " << t1 << t2<< "\tExcessDelivery: " << ExcessConsumption[i][t1][t2] << "\n";
+					//cout << "Node: " << i << "\tperiod: " << t1 << t2<< "\tExcessDelivery: " << ExcessConsumption[i][t1][t2] << "\n";
 				}
 
 
@@ -614,15 +611,31 @@ void IRP::addSubtourCut(vector<vector<Node *>>& strongComp, int t, bool &newCut,
 
 bool IRP::formulateProblem()
 {
+	bool arcIndicator;
 	/****OBJECTIVE****/
+	if (ModelParameters::Simultaneous)
 
-	//Transportation costs
-	for (int i : AllNodes)
-		for (int j : AllNodes)
-			for (int t : Periods) {
-				if (map.inArcSet(i, j))
-					objective += TransCost[i][j] * x[i][j][t];
+		//Transportation costs
+		for (int i : AllNodes)
+			for (int j : AllNodes) {
+				if (ModelParameters::Simultaneous)
+					arcIndicator = (map.inSimultaneousArcSet(i, j) && !map.isColocated(i, j));
+				else
+					arcIndicator = map.inExtensiveArcSet(i, j);
+
+				for (int t : Periods) {
+					if (arcIndicator)
+						objective += TransCost[i][j] * x[i][j][t];
+				}
 			}
+
+	if (ModelParameters::Simultaneous) {
+		for (int i : DeliveryNodes)
+			for (int j : PickupNodes)
+				if (map.isColocated(i, j))
+					for(int t: Periods)
+						objective += simAction[i][j][t] * TransCost[i][j];
+	}
 	//Holding costs
 	for (int i : Nodes)
 		for (int t : Periods)
@@ -632,9 +645,40 @@ bool IRP::formulateProblem()
 	//end objective
 
 	/**** CONSTRAINTS ****/
+	XPRBexpr p1;
+	if (ModelParameters::Simultaneous) {
+		for(int i: DeliveryNodes)
+			for (int j : PickupNodes) {
+				if(map.isColocated(i, j)) {
+					for (int t : Periods) {
+						p1 = actionDelivery[i][t] + actionPickup[j][t] - epsilon* simAction[i][j][t];
+						prob.newCtr("SimAction", p1 <= 0);
+						p1 = 0;
+					}
+				}
+			}
+
+
+		for(int i : PickupNodes)
+			for (int t : Periods)
+			{
+				p1 = pickup[i][t] - min(Capacity, UpperLimit[i] - LowerLimit[i])*actionPickup[i][t];
+				prob.newCtr("PickupAction", p1 <= 0);
+				p1 = 0;
+			}
+
+		for (int i : DeliveryNodes)
+			for (int t : Periods)
+			{
+				p1 = delivery[i][t] - min(Capacity, UpperLimit[i] - LowerLimit[i])*actionDelivery[i][t];
+				prob.newCtr("PickupAction", p1 <= 0);
+				p1 = 0;
+			}
+	}
+	
 
 	if (MaskOn) {
-		XPRBexpr p1;
+
 		int visits;
 		for (int t : Periods) {
 			p1 = 0;
@@ -646,23 +690,25 @@ bool IRP::formulateProblem()
 				}
 			}
 			prob.newCtr("MinVisits", p1 >= floor(visits*0.6));
+			p1 = 0;
 		}
 	}
 
 	//Routing constraints
-	XPRBexpr p1;
+
 	XPRBexpr p2;
 	for (int i : AllNodes){
 		for (int t : Periods) {
 			for (int j : AllNodes) {
+
 				if (map.inArcSet(i, j)) {
 					p1 += x[i][j][t];
 				}
-				if (map.inArcSet(j, i)) {
+
+				if (map.inArcSet(j, i)){
 					p2 += x[j][i][t];
 				}
 			}
-			p1.print();
 			prob.newCtr("RoutingFlow", p1 - p2 == 0);
 			p1 = 0;
 			p2 = 0;
@@ -779,14 +825,22 @@ void IRP::RouteProblem::formulateRouteProblem(int minimizeSelection)
 	//initialize route matrix
 	initializeRouteParameters();
 	initializeRoutes();
-	printRouteMatrix();
+	//printRouteMatrix();
 	addInventoryCtr();
 	addRouteConstraints();
 
+	XPRBexpr obj = 0;
+
+	//To get practical right answer
+	for (auto node : Instance.Nodes) {
+		for (auto t : Instance.Periods) {
+			obj += 0.01 * loadPickup[0][node][t];
+		}
+	}
+
 	//Minimize the total cost
-	if (minimizeSelection == ModelParameters::HIGHEST_TOTALCOST)
-	{
-		XPRBexpr obj = 0;
+	if (minimizeSelection == ModelParameters::HIGHEST_TOTALCOST){
+	
 		int t = 3;
 		//Trans cost
 		for (int r : Routes)
@@ -855,6 +909,7 @@ void IRP::RouteProblem::initializeRouteVariables()
 			loadPickup[i][j] = new	XPRBvar[Instance.Periods.size()];
 
 			for(int t : Instance.Periods){
+	
 			if (Instance.map.inArcSet(i, j)) {
 					loadDelivery[i][j][t] = routeProblem.newVar(XPRBnewname("lD_%d%d%d", i, j, t), XPRB_PL, 0, Instance.Capacity);
 					loadPickup[i][j][t] = routeProblem.newVar(XPRBnewname("lP_%d%d%d", i, j, t), XPRB_PL, 0, Instance.Capacity);
@@ -1180,7 +1235,9 @@ void IRP::getSubset(vector<int> subset, int subsetSize, int nodePos, vector<int>
 			for (int t = t1; t <= t2; t++)
 				for (auto i : subset)
 					for (auto j : Difference)
-						p1 += x[i][j][t];
+						if (map.inArcSet(i, j)) {
+							p1 += x[i][j][t];
+						}
 
 			p2 = ceil(flow / Capacity);
 			prob.newCtr("MinFlow", p1 >= p2).print();
@@ -1427,6 +1484,7 @@ void IRP::generateMask(int ** mask)
 
 bool IRP::initializeVariables()
 {
+	bool arcIndicator;
 	x = new XPRBvar **[AllNodes.size()];
 	loadDelivery = new XPRBvar **[AllNodes.size()];
 	loadPickup = new XPRBvar **[AllNodes.size()];
@@ -1454,6 +1512,40 @@ bool IRP::initializeVariables()
 			}
 		}
 	} // end initializing of x and load
+
+	//Initialize action variables if simultanoues
+	if (ModelParameters::Simultaneous) {
+		actionDelivery = new XPRBvar *[DeliveryNodes.size() + 1];
+		actionPickup = new XPRBvar *[AllNodes.size() + 1];
+
+		for (int i : DeliveryNodes) {
+			actionDelivery[i] = new XPRBvar[Periods.size() + 1];
+			for (int t : Periods) {
+				actionDelivery[i][t] = prob.newVar(XPRBnewname("Action-d%d", i, t), XPRB_BV, 0, 1);
+			}
+		}
+
+		for (int i : PickupNodes) {
+			actionPickup[i] = new XPRBvar[Periods.size() + 1];
+			for (int t : Periods) {
+				actionPickup[i][t] = prob.newVar(XPRBnewname("Action-d%d", i, t), XPRB_BV, 0, 1);
+			}
+		}
+
+		simAction = new XPRBvar **[AllNodes.size() + 1];
+		for (int i : DeliveryNodes) {
+			simAction[i] = new XPRBvar *[AllNodes.size() + 1];
+			for (int j : PickupNodes) {
+				simAction[i][j] = new XPRBvar[Periods.size() + 1];
+				for (int t : Periods) {
+					if (map.isColocated(i, j)) {
+						simAction[i][j][t] = prob.newVar(XPRBnewname("Action-d%d", i, j, t), XPRB_BV, 0, 1);
+					}
+				}
+			}
+		}
+		
+	} //end simultaneous
 
 	//initialize y-variables and inventory
 	y = new XPRBvar *[AllNodes.size()];

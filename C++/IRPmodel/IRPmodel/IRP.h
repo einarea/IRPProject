@@ -55,6 +55,10 @@ private:
 	XPRBvar *** loadDelivery;
 	XPRBvar *** loadPickup;
 	XPRBvar ** time;
+	XPRBvar ** actionDelivery;
+	XPRBvar ** actionPickup;
+	XPRBvar *** simAction;
+	double epsilon = 0.001;
 
 	XPRBctr ** TabuMatrix;
 	double ** CountMatrix;
@@ -82,6 +86,7 @@ private:
 	bool initializeVariables();
 	bool initializeParameters();
 	bool formulateProblem();
+
 
 	void buildGraph(vector <Node*> &, int, bool includeDepot, double weight=0.01);
 

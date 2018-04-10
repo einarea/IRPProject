@@ -19,6 +19,9 @@ public:
 	Map(CustomerDB&);
 	int nodeToCustomer(int);
 	bool inArcSet(int, int);
+	bool inExtensiveArcSet(int, int);
+	bool inSimultaneousArcSet(int, int);
+	bool isColocated(int i, int j);
 	CustomerDB & database;
 	int getTransCost(int node1, int node2, int transCostMultiplier, int serviceCostMultipler);
 	int getTransCost(int node1, int node2);
