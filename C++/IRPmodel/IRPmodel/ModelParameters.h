@@ -51,7 +51,9 @@ public:
 	
 	static const int LBPick = 0;			
 
-	//Tabu length
+	//Tabu 
+	static const int ForceVisit = 33;
+	static const int ForceChanges = 34;
 
 
 	//Valid inequalitites

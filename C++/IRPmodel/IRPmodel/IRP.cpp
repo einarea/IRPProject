@@ -1312,32 +1312,60 @@ double IRP::Solution::getObjective()
 }
 
 
-void IRP::addVisitConstraint(double ** Visit)
+void IRP::addVisitConstraint(double ** Visit, int selection)
 {
-	XPRBexpr p1;
-	p1 = 0;
+
+	//Delete old constraint
+	XPRBexpr p1 = 0;
+	XPRBexpr p2 = 0;
+
 	cout << "\n";
 	if (VisitCtr.isValid()) {
 		prob.delCtr(VisitCtr);
 	}
 
-	int visits;
-	int t = 1;
-	//for (int t : Periods) {
-		
-		visits = 0;
-		for (int i : Nodes) {
-			if (Visit[i][t] == 0 && !TabuMatrix[i][t].isValid())
-			{
-				visits += 1;
-				p1 += y[i][t];
+	if (selection == ModelParameters::ForceVisit) {
+		int visits;
+		for (int t : Periods) {
+
+			visits = 0;
+			for (int i : Nodes) {
+				if (Visit[i][t] == 0 && !TabuMatrix[i][t].isValid())
+				{
+					visits += 1;
+					p1 += y[i][t];
+				}
+			}
+			//}
+			VisitCtr = prob.newCtr("MinVisits", p1 >= ceil(visits*0.1));
+			p1 = 0;
+			VisitCtr.print();
+			cout << "\n";
+		}
+	}
+
+
+	if (selection == ModelParameters::ForceChanges) {
+		for (int t : Periods) {
+			for (int i : Nodes) {
+				if (Visit[i][t] == 0 && !TabuMatrix[i][t].isValid()) {
+					p1 += y[i][t];
+				}
+				else if (Visit[i][t] == 1 && !TabuMatrix[i][t].isValid()) {
+					p2 += (1 - y[i][t]);
+				}
 			}
 		}
-	//}
-	VisitCtr = prob.newCtr("MinVisits", p1 >= ceil(visits*0.1));
-	VisitCtr.print();
-	cout << "\n";
-}
+
+		//add constraint
+		VisitCtr = prob.newCtr("MinVisits", p1 - p2 >= ceil(Nodes.size()*0.1));
+		p1 = 0;
+		VisitCtr.print();
+		cout << "\n";
+
+	} //End force changes
+
+} //End addvisitConstraint
 
 IRP::Route * IRP::getRoute(int id)
 {
@@ -1434,6 +1462,7 @@ void IRP::printRouteMatrix()
 	}
 }
 
+//Deletes the current tabu constraints and update the tabu matrix with locked visits
 void IRP::updateTabuMatrix(double ** changeMatrix)
 {
 	srand(std::time(0));
@@ -1467,31 +1496,20 @@ void IRP::updateTabuMatrix(double ** changeMatrix)
 			}
 				
 			cout << CountMatrix[i][t];
-			//If visit, lock that visit with 50% chance in period 1 or 25% chance in other periods
+			//If visit, lock that visit with 25% chance.
 			if (CountMatrix[i][t] >= 1) {
-				if (t == 1) {
-					if (rand() % 100 + 1 <= 50) {
-						counter += 1;
-						TabuMatrix[i][t] = prob.newCtr(y[i][t] >= 1);
-						cout << "*\t";
-					}
-					else
-						cout << "\t";
-
+				if (rand() % 100 + 1 <= 25) {
+					TabuMatrix[i][t] = prob.newCtr(y[i][t] >= 1);
+					cout << "*\t";
 				}
 				else
-					if (rand() % 100 + 1 <= 25) {
-						TabuMatrix[i][t] = prob.newCtr(y[i][t] >= 1);
-						cout << "*\t";
-					}
-					else
 						cout << "\t";
 			}
 			else if (CountMatrix[i][t] == 0) cout << "\t";
 
-			//Else if visit removed, lock that visit with 50% chance in period 1 or 25% in other periods
+			//Else if visit removed, lock that visit with 25% chance.
 			else if (CountMatrix[i][t] <= -1) {
-				if (t == 1) {
+				/*if (t == 1) {
 					if (rand() % 100 + 1 <= 50) {
 						TabuMatrix[i][t] = prob.newCtr(y[i][t] <= 0);
 						counter += 1;
@@ -1501,20 +1519,20 @@ void IRP::updateTabuMatrix(double ** changeMatrix)
 						cout << "\t";
 			
 				}
+				else*/
+				if (rand() % 100 + 1 <= 25) {
+					TabuMatrix[i][t] = prob.newCtr(y[i][t] <= 0);
+					cout << "*\t";
+				}
 				else
-					if (rand() % 100 + 1 <= 25) {
-						TabuMatrix[i][t] = prob.newCtr(y[i][t] <= 0);
-						cout << "*\t";
-					}
-					else
-						cout << "\t";
+					cout << "\t";
 
 			}
 		}
 	}
 
 	//If no locked continue.
-	while (counter < 1 && i <= 20) {
+	/*while (counter < 1 && i <= 20) {
 		for (auto i : Nodes) {
 			if (CountMatrix[i][1] >= 1)
 			{
@@ -1535,7 +1553,7 @@ void IRP::updateTabuMatrix(double ** changeMatrix)
 			}
 		}
 		i++;
-	} // end while
+	} // end while*/
 
 
 	for (auto i : Nodes) {
@@ -1547,7 +1565,7 @@ void IRP::updateTabuMatrix(double ** changeMatrix)
 			}
 		}
 	}
-}
+} // end update tabu matrix
 
 int IRP::getNumOfNodes()
 {
