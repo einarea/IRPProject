@@ -4,6 +4,7 @@
 #include <algorithm>
 #include "graphAlgorithm.h"
 #include "ModelParameters.h"
+#include <string.h>
 
 #include <boost/tuple/tuple.hpp>
 
@@ -2125,10 +2126,21 @@ void IRP::RouteProblem::printRouteMatrix()
 
 void IRP::updateTabuMatrix(double ** changeMatrix)
 {
-	cout << "\n\nCountMatrix: Times since last changed , >0 added visit, <0 removed visit. \n";
+	srand(std::time(0));
+	int counter = 0;
+	int i = 0;
+	cout << "\n\nCountMatrix: Times since last changed , >0 added visit, <0 removed visit. * locked variable\n";
 	for (auto i : Nodes) {
 		cout << "\n";
 		for (auto t : Periods) {
+
+			//Clear the tabu matrix
+			if (TabuMatrix[i][t].isValid()) {
+				prob.delCtr(TabuMatrix[i][t]);
+				TabuMatrix[i][t] = 0;
+			}
+
+			//Update count matrix
 			if (changeMatrix[i][t] != 0) {
 				CountMatrix[i][t] = changeMatrix[i][t];
 			}
@@ -2137,28 +2149,72 @@ void IRP::updateTabuMatrix(double ** changeMatrix)
 			else if (CountMatrix[i][t] <= -1)
 				CountMatrix[i][t] -= 1;
 
-			cout << CountMatrix[i][t] << "\t";
 
 			//Remove from tabu if Count is outside tabulength
 			if (CountMatrix[i][t] > ModelParameters::TabuLength || CountMatrix[i][t] < -ModelParameters::TabuLength) {
 				CountMatrix[i][t] = 0;
-				prob.delCtr(TabuMatrix[i][t]);
-				TabuMatrix[i][t] = 0;
 			}
 
-			//If new visit, lock that visit
-			if (CountMatrix[i][t] == 1) {
-				TabuMatrix[i][t] = prob.newCtr(y[i][t] >= 1);
-			
+			cout << CountMatrix[i][t];
+			//If visit, lock that visit with 25% chance.
+			if (CountMatrix[i][t] >= 1) {
+				if (rand() % 100 + 1 <= 25) {
+					TabuMatrix[i][t] = prob.newCtr(y[i][t] >= 1);
+					cout << "*\t";
+				}
+				else
+					cout << "\t";
 			}
+			else if (CountMatrix[i][t] == 0) cout << "\t";
 
-			//Else if visit removed, lock that to no visit
-			else if (CountMatrix[i][t] == -1) {
+			//Else if visit removed, lock that visit with 25% chance.
+			else if (CountMatrix[i][t] <= -1) {
+				/*if (t == 1) {
+				if (rand() % 100 + 1 <= 50) {
 				TabuMatrix[i][t] = prob.newCtr(y[i][t] <= 0);
-				
+				counter += 1;
+				cout << "*\t";
+				}
+				else
+				cout << "\t";
+
+				}
+				else*/
+				if (rand() % 100 + 1 <= 25) {
+					TabuMatrix[i][t] = prob.newCtr(y[i][t] <= 0);
+					cout << "*\t";
+				}
+				else
+					cout << "\t";
+
 			}
 		}
 	}
+
+	//If no locked continue.
+	/*while (counter < 1 && i <= 20) {
+	for (auto i : Nodes) {
+	if (CountMatrix[i][1] >= 1)
+	{
+	if (rand() % 100 + 1 <= 50) {
+	counter += 1;
+	TabuMatrix[i][1] = prob.newCtr(y[i][1] >= 1);
+	cout << "y" << i << 1 << "=" << 1;
+	break;
+	}
+	}
+	else if (CountMatrix[i][1] <= -1) {
+	if (rand() % 100 + 1 <= 50) {
+	TabuMatrix[i][1] = prob.newCtr(y[i][1] <= 0);
+	counter += 1;
+	cout << "y" << i << 1 << "=" << 0;
+	break;
+	}
+	}
+	}
+	i++;
+	} // end while*/
+
 
 	for (auto i : Nodes) {
 		cout << "\n";
@@ -2169,7 +2225,7 @@ void IRP::updateTabuMatrix(double ** changeMatrix)
 			}
 		}
 	}
-}
+} // end update tabu matrix
 
 int IRP::getNumOfNodes()
 {

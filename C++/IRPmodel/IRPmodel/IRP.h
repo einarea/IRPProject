@@ -6,7 +6,6 @@
 #include <vector>
 #include "CustomerDB.h"
 #include "xprs.h"
-#include <string.h>
 #include "Node.h"
 
 using namespace ::dashoptimization;
