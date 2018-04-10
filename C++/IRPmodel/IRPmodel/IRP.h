@@ -308,6 +308,7 @@ public:
 		void initializeRouteParameters();
 		void initializeRouteVariables();
 		void addInventoryCtr();
+		int getShiftPeriod();
 		void shiftQuantityCtr(int quantity);
 		void initializeRoutes();
 		void printRouteMatrix();

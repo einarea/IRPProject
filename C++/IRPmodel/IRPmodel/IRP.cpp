@@ -810,6 +810,12 @@ void IRP::RouteProblem::formulateRouteProblem(int minimizeSelection)
 		for (int i : Instance.PickupNodes)
 			obj += pickup[i][t];
 
+
+		//Add small holding cost to minimize inventory
+		for (int i : Instance.Nodes)
+			for (int t : Instance.Periods)
+				obj += inventory[i][t];
+
 		routeProblem.setObj(routeProblem.newCtr("OBJ", obj));  /* Set the objective function */
 	}
 
@@ -982,13 +988,17 @@ void IRP::RouteProblem::addInventoryCtr()
 
 }
 
-void IRP::RouteProblem::shiftQuantityCtr(int quantity, int period)
+int IRP::RouteProblem::getShiftPeriod()
+{
+	return ShiftPeriod;
+}
+
+/*void IRP::RouteProblem::shiftQuantityCtr(int quantityPic, int period)
 {
 	XPRBexpr p1;
 	//Add shift variables
-	for (auto node : Instance.Nodes) {
-		shift[i] = new XPRBvar[Instance.Nodes.size + 1]
-	}
+	shift= new XPRBvar
+	
 
 	//Balance shift
 	for (auto i : Instance.DeliveryNodes) {
@@ -996,18 +1006,18 @@ void IRP::RouteProblem::shiftQuantityCtr(int quantity, int period)
 	}
 
 	for (auto i : Instance.PickupNodes) {
-		p1 += pickup[i][period];
+		p2 += pickup[i][period];
 	}
 
 	for (auto i : Instance.DeliveryNodes) {
 		for (auto t : Instance.Periods) {
 			if (t != period)
-				p1 += delivery[i][t];
+				p2 += delivery[i][t];
 		}
 		
-	}
-	quantity - p1 
-}
+	}	
+	routeProblem.newCtr("Shift quantity", quantity - p1 = shift);
+}*/
 
 
 void IRP::RouteProblem::initializeRoutes()
