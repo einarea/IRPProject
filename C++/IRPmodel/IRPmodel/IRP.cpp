@@ -4,8 +4,10 @@
 #include <algorithm>
 #include "graphAlgorithm.h"
 #include "ModelParameters.h"
+#include <string.h>
 #include <boost/tuple/tuple.hpp>
 #include "gnuplot-iostream.h"
+#include <stdlib.h>
 
 
 using namespace ::dashoptimization;
@@ -148,7 +150,8 @@ void IRP::printBounds()
 	double *upd;
 	for (int i : Nodes) {
 		for (int t : Periods)
-			if(y[i][t].getUB()<=0.5)
+			if (y[i][t].getUB() <= 0.5)
+				cout << "DD";
 	}
 }
 
@@ -224,7 +227,6 @@ IRP::Solution * IRP::solveModel()
 	int d = prob.mipOptimise();
 	//prob.print();
 
-	cout << simAction[1][7][1].getSol();
 	int SolID = allocateIRPSolution();
 
 	return getSolution(SolID);
@@ -306,44 +308,31 @@ int IRP::allocateIRPSolution()
 	Solution * sol = new Solution(*this, false);
 	sol->SolID = SolutionCounter;
 
+	double value;
 
 	for (int i : AllNodes) {
 		for (int j : AllNodes) {
 			if (map.inArcSet(i, j)) {
 				for (int t : Periods) {
 					if (x[i][j][t].getSol() > 0) {
+						if (ModelParameters::Simultaneous) {
+							if (map.isColocated(i, j) && simAction[i][j][t].getSol() <= 0.01) {
+								value = 0;
+							}
+							else
+								value = x[i][j][t].getSol();
+						}
+						else
+							value = x[i][j][t].getSol();
+						
 						sol->NodeHolder[i]->Nodes[t]->addEdge(loadDelivery[i][j][t].getSol(), 
-							loadPickup[i][j][t].getSol(), sol->NodeHolder[j]->Nodes[t], x[i][j][t].getSol());		
+							loadPickup[i][j][t].getSol(), sol->NodeHolder[j]->Nodes[t], value);		
 					}
 				}
 			} //endif
 		} //end for j
 	} // end x and loading
 
-	//Reallocate empty arcs
-	if (ModelParameters::Simultaneous) {
-		for (int i : DeliveryNodes) {
-			for (int j : PickupNodes) {
-				if (map.isColocated(i, j)) {
-					for (int t : Periods) {
-
-						//If no simultaneous action, reorder edges
-						if (x[i][j][t].getSol() >= 0.01 && simAction[i][j][t] <= 0.01) {
-							auto edge = sol->NodeHolder[i]->Nodes[t]->getEdge();
-							//Delete two edges
-							auto endNode = sol->NodeHolder[i]->Nodes[t]->getEdge()->getEndNode()->getEdge()->getEndNode();
-							sol->NodeHolder[i]->Nodes[t]->getEdge()->getEndNode()->deleteEdges();
-							sol->NodeHolder[i]->Nodes[t]->deleteEdges();
-
-							sol->NodeHolder[i]->Nodes[t]->addEdge(edge->LoadDel, edge->LoadPick, endNode, 1);
-
-							//Add new edge
-						
-						}
-							
-					}
-				}
-	}
 
 	  //Fill inventory
 	for (int i : Nodes) {
@@ -378,6 +367,7 @@ int IRP::allocateIRPSolution()
 	//Return ID to solution
 	return getCounter();
 }
+
 
 IRP::Solution * IRP::allocateSolution()
 {
@@ -904,7 +894,7 @@ void IRP::RouteProblem::initializeRouteParameters()
 	RouteCost.resize(routes.size());
 	int nRoutes = 0;
 	for (auto r : routes) {
-		r->printRoute();
+		//r->printRoute();
 		Routes.push_back(nRoutes);
 		RouteCost[nRoutes] = r->getTransportationCost();
 		//Initialize the A holder
@@ -1451,7 +1441,7 @@ void IRP::RouteProblem::addRouteConstraints()
 				p1 += travelRoute[r][t];
 			}
 
-			routeProblem.newCtr("Vehicle limit", p1 <= ModelParameters::nVehicles).print();
+			routeProblem.newCtr("Vehicle limit", p1 <= ModelParameters::nVehicles);
 			p1 = 0;
 		}
 
@@ -2018,7 +2008,7 @@ void IRP::addVisitConstraint(double ** Visit, int selection)
 			}
 		}
 		//}
-		VisitCtr = prob.newCtr("MinVisits", p1 >= ceil(visits*0.1));
+		VisitCtr = prob.newCtr("MinVisits", p1 >= ceil(visits*0.2));
 		VisitCtr.print();
 		bool a = VisitCtr.isValid();
 		cout << "\n";
@@ -2037,7 +2027,7 @@ void IRP::addVisitConstraint(double ** Visit, int selection)
 		}
 
 		//add constraint
-		VisitCtr = prob.newCtr("MinVisits", p1 - p2 >= ceil(Nodes.size()*0.1));
+		VisitCtr = prob.newCtr("MinVisits", p1 + p2 >= ceil(Nodes.size()*Periods.size()*0.2));
 		p1 = 0;
 		VisitCtr.print();
 		cout << "\n";

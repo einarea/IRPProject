@@ -5,6 +5,10 @@ public:
 
 	static const int MAX_RUNNING_TIME = 7200; //seconds
 
+	//TabuList 
+	static const int TabuLength = 2;
+
+
 	ModelParameters();
 	static const int TRANSCOST_MULTIPLIER = 13;
 	static const int SERVICECOST_MULTIPLIER =100;
@@ -18,7 +22,7 @@ public:
 	static const int nVehicles = 4;
 
 	//Simultanous
-	static const bool Simultaneous = true;
+	static const bool Simultaneous = false;
 
 	//Heurestic
 	//static const double VisitRatio = 0.5;
@@ -53,7 +57,6 @@ public:
 	static const int LBPick = 0;		
 
 	//Tabu list size
-	static const int TabuLength = 2;
 	static const int ForceVisits = 33;
 	static const int ForceChanges = 34;
 
