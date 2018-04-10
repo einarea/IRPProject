@@ -224,7 +224,7 @@ IRP::Solution * IRP::solveModel()
 		//int b = prob.getLPStat();
 	}
 	int d = prob.mipOptimise();
-//	prob.print();
+	prob.print();
 
 	int SolID = allocateIRPSolution();
 
@@ -613,8 +613,6 @@ bool IRP::formulateProblem()
 {
 	bool arcIndicator;
 	/****OBJECTIVE****/
-	if (ModelParameters::Simultaneous)
-
 		//Transportation costs
 		for (int i : AllNodes)
 			for (int j : AllNodes) {
