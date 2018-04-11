@@ -50,7 +50,7 @@ private:
 	//Variables
 					//Arc variables
 				//Customer visits variables
-	XPRBvar ** inventory;		
+		
 	XPRBvar ** delivery;
 	XPRBvar ** pickup;
 	XPRBvar *** loadDelivery;
@@ -102,6 +102,7 @@ private:
 
 
 public:
+	XPRBvar ** inventory;
 	XPRBvar ** y;
 	XPRBvar *** x;
 

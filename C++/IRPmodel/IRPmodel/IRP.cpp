@@ -13,6 +13,8 @@
 using namespace ::dashoptimization;
 using namespace::std;
 
+
+
 void XPRS_CC acceptInt(XPRSprob oprob, void * vd, int soltype, int * ifreject, double *cutoff) {
 	IRP * modelInstance;
 	modelInstance = (IRP*)vd;
@@ -27,7 +29,23 @@ void XPRS_CC acceptInt(XPRSprob oprob, void * vd, int soltype, int * ifreject, d
 	modelInstance->getProblem()->endCB();
 }
 
+void XPRS_CC acceptIntQuantity(XPRSprob oprob, void * vd, int soltype, int * ifreject, double *cutoff) {
+	IRP * modelInstance;
+	modelInstance = (IRP*)vd;
+	vector<XPRBcut> subtourCut;
 
+	modelInstance->getProblem()->beginCB(oprob);
+	modelInstance->getProblem()->sync(XPRB_XPRS_SOL);
+	for (auto i : modelInstance->Nodes)
+		for (auto t : modelInstance->Periods)
+			if (modelInstance->inventory[i][t].getSol() - round(modelInstance->inventory[i][t].getSol()) > 0.01) {
+				cout << modelInstance->inventory[i][t].getSol() << "\t";
+				cout << round(modelInstance->inventory[i][t].getSol()) << "\n";
+				*ifreject = 1;
+				break;
+			}
+	modelInstance->getProblem()->endCB();
+}
 
 
 //Global callBack manager
