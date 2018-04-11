@@ -181,11 +181,11 @@ void graphAlgorithm::getRoutes(vector<Node*>& graph,  vector<vector<Node*>>& rou
 	for (Node::Edge* edge : edges) {
 		Node * start = new Node(0);
 		Node * v = edge->getEndNode();
-		start->addEdge(*v);
+		start->addEdge(edge);
 
 		route.push_back(start);
 		while (v->getId() != 0) {
-			Node * const u = new Node(*v);
+			Node * u = v;
 			route.push_back(u);
 			Node * temp = v->getEdge()->getEndNode();
 			v = temp;
