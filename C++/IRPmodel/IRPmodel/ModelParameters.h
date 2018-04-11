@@ -24,9 +24,6 @@ public:
 	//Simultanous
 	static const bool Simultaneous = false;
 
-	//Heurestic
-	static const int TabuLength = 2;
-
 	//static const double VisitRatio = 0.5;
 
 	//************For generating customers********************//
@@ -58,12 +55,8 @@ public:
 	
 	static const int LBPick = 0;		
 
-	//Tabu list size
-	static const int ForceVisits = 33;
-	static const int ForceChanges = 34;
-
 	//Tabu 
-	static const int ForceVisit = 33;
+	static const int ForceVisits = 33;
 	static const int ForceChanges = 34;
 
 

@@ -1791,7 +1791,7 @@ void IRP::Solution::print(string filename, int load)
 	vector<Node *> graph;
 	for (int t : Instance.Periods) {
 		Instance.buildGraph(graph, t, this);
-		graphAlgorithm::printGraph(graph, Instance, filename+to_string(t), load);
+		//graphAlgorithm::printGraph(graph, Instance, filename+to_string(t), load);
 		graph.clear();
 	}
 }
