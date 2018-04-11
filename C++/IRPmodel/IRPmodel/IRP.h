@@ -237,6 +237,10 @@ public:
 		vector<NodeIRPHolder *> NodeHolder;
 		int selectPeriod(int selection);
 		vector<NodeIRPHolder *> getNodes();
+
+		//Construct routes should only be called for integer solutions
+		void constructRoutes();
+
 		//The set of routes for each period
 		vector<vector <IRP::Route*>> Routes;
 
@@ -384,12 +388,12 @@ public:
 
 	void updateTabuMatrix(double ** changeMatrix);
 	int getNumOfNodes();
-
+	int solCounter;
 	void printMatrix();
 	int getCapacity();
 	Map * getMap();
 	void calculateExcess();
-	void IRP::buildGraph(vector<NodeIRP*> &graph, int t, Solution * solution);
+	void IRP::buildGraphSol(vector<Node*> &graph, int t, Solution * solution);
 	Solution * allocateSolution();
 	int allocateIRPSolution();
 	bool sepStrongComponents(vector<XPRBcut> &);

@@ -182,7 +182,7 @@ IRP::IRP(CustomerIRPDB& db, bool ArcRel, bool maskOn, int ** VisitMask)
 	SolutionCounter(0),
 	MaskOn(maskOn)
 {
-
+	IRP::solCounter = 1;
 	//Initialize sets
 	if(!initializeSets()) {
 		cout<<"Data Error: Could not initialize sets.";
@@ -332,7 +332,7 @@ int IRP::allocateIRPSolution()
 		for (int j : AllNodes) {
 			if (map.inArcSet(i, j)) {
 				for (int t : Periods) {
-					if (x[i][j][t].getSol() > 0) {
+					if (x[i][j][t].getSol() >= 0.01) {
 						if (ModelParameters::Simultaneous) {
 							if (map.isColocated(i, j) && simAction[i][j][t].getSol() <= 0.01) {
 								value = 0;
@@ -448,6 +448,14 @@ bool IRP::sepStrongComponents(vector<XPRBcut> & cut)
 	return newCut;
 }
 
+void IRP::buildGraphSol(vector<Node*> &graph, int t, IRP::Solution *solution)
+{
+	//Add nodes from particular period
+	for (NodeIRPHolder * n : solution->NodeHolder) {
+		NodeIRP * node = new NodeIRP(*n->Nodes[t]);
+		graph.push_back(node);
+	}
+}
 
 //Build graph from variables
 void IRP::buildGraph(vector<Node*> &graph, int t, bool Depot, double weight)
@@ -481,14 +489,7 @@ void IRP::buildGraph(vector<Node*> &graph, int t, bool Depot, double weight)
 	}
 }
 
-void IRP::buildGraph(vector<NodeIRP*> &graph, int t, IRP::Solution *solution)
-{
-	//Add nodes from particular period
-	for (NodeIRPHolder * n :solution->NodeHolder) {
-			NodeIRP * node = new NodeIRP(*n->Nodes[t]);
-			graph.push_back(node);
-		}
-}
+
 	
 
 
@@ -899,9 +900,19 @@ void IRP::RouteProblem::formulateRouteProblem(int minimizeSelection)
 		//Add small holding cost to minimize inventory
 		for (int i : Instance.Nodes)
 			for (int t : Instance.Periods)
+				obj += 0.01 * inventory[i][t];
+
+		routeProblem.setObj(routeProblem.newCtr("OBJ", obj));  /* Set the objective function */
+	}
+
+	if (minimizeSelection == ModelParameters::MinimumInventory) {
+		XPRBexpr obj = 0;
+		for (int i : Instance.Nodes)
+			for (int t : Instance.Periods)
 				obj += inventory[i][t];
 
 		routeProblem.setObj(routeProblem.newCtr("OBJ", obj));  /* Set the objective function */
+
 	}
 
 
@@ -1778,6 +1789,28 @@ int IRP::Solution::selectPeriod(int selection)
 	return period;
 }
 
+void IRP::Solution::constructRoutes()
+{
+	Routes.clear();
+	Routes.resize(Instance.Periods.size() + 1);
+	Routes.resize(Instance.Periods.size() + 1);
+	for (int t : Instance.Periods) {
+		vector<Node*> graph;
+		vector<vector<Node*>> routes;
+		for (IRP::NodeIRPHolder * n : NodeHolder) {
+			graph.push_back(n->Nodes[t]);
+		}
+
+
+		graphAlgorithm::getRoutes(graph, routes);
+
+		//Add all routes to the current solution	
+		for (vector <Node*> r : routes) {
+			newRoute(r, t);
+		}
+	}
+}
+
 
 
 
@@ -1788,10 +1821,11 @@ vector<vector<IRP::Route*>> IRP::Solution::getRoutes()
 
 void IRP::Solution::print(string filename, int load)
 {
+	Instance.solCounter++;
 	vector<Node *> graph;
 	for (int t : Instance.Periods) {
-		Instance.buildGraph(graph, t, this);
-		graphAlgorithm::printGraph(graph, Instance, filename+to_string(t), load);
+		Instance.buildGraphSol(graph, t, this);
+		graphAlgorithm::printGraph(graph, Instance, filename+ to_string(Instance.solCounter)+"t"+ to_string(t), load);
 		graph.clear();
 	}
 }
@@ -2045,7 +2079,7 @@ void IRP::addVisitConstraint(double ** Visit, int selection)
 		}
 
 		//add constraint
-		VisitCtr = prob.newCtr("MinVisits", p1 + p2 >= ceil(Nodes.size()*Periods.size()*0.2));
+		VisitCtr = prob.newCtr("MinVisits", p1 + p2 >= ceil(Nodes.size()*Periods.size()*0.1));
 		p1 = 0;
 		VisitCtr.print();
 		cout << "\n";
