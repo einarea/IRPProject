@@ -3,31 +3,35 @@ class ModelParameters
 {
 public:
 
-	static const int MAX_RUNNING_TIME = 7200; //seconds
+	//Running time
+	static const int MAX_RUNNING_TIME_IRP = 7200; //seconds
+	static const int MAX_RUNNING_TIME_VRP = 7200; //seconds
 
 	//TabuList 
 	static const int TabuLength = 2;
 
+	//Subtour
+	static const int EDGE_WEIGHT = 0.5;
+	static const int alpha = 0.5;
 
-	ModelParameters();
+	////Model parameters;
+	static const int nVehicles = 4;
 	static const int TRANSCOST_MULTIPLIER = 13;
 	static const int SERVICECOST_MULTIPLIER =100;
 	static const int TRAVELTIME_MULTIPLIER = 1;
 	static const int SERVICETIME = 20;
 	static const int maxTime = 480;
-	static const int Capacity;
-	//static const int CapacityPenalty = 10000;
 	static const int VehiclePenalty = 100000;
-	static const int overTime = 3;
-	static const int nVehicles = 4;
 
-	//Simultanous
+	//Simultanous model
 	static const bool Simultaneous = false;
 
 	//Heurestic
 	//static const double VisitRatio = 0.5;
 
+
 	//************For generating customers********************//
+	
 	//Ranges where values are randomly drawn from.
 
 	//Holding cost
@@ -56,6 +60,7 @@ public:
 	
 	static const int LBPick = 0;		
 
+	//**************Constant identifiers******************
 	//Tabu list size
 	static const int ForceVisits = 33;
 	static const int ForceChanges = 34;
@@ -86,6 +91,9 @@ public:
 
 	//Route selection
 	static const int MIN_SERVICE = 33;
+
+
+	ModelParameters();
 	~ModelParameters();
 };
 

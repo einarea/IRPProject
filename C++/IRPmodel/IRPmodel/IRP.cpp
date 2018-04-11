@@ -47,7 +47,17 @@ void XPRS_CC acceptIntQuantity(XPRSprob oprob, void * vd, int soltype, int * ifr
 	modelInstance->getProblem()->endCB();
 }
 
+//Time callback
+void XPRS_CC cbmngtimeIRP(XPRSprob oprob, void * vd,int parent, int newnode, int branch) {
 
+	IRP * modelInstance;
+	modelInstance = (IRP*)vd;
+
+	if ((XPRB::getTime() - modelInstance->startTime) / 1000 >= ModelParameters::MAX_RUNNING_TIME_IRP)
+	{
+		XPRSinterrupt(oprob, XPRS_STOP_TIMELIMIT);
+	}
+}
 //Global callBack manager
 int XPRS_CC cbmng(XPRSprob oprob, void * vd)
 {
@@ -65,11 +75,6 @@ int XPRS_CC cbmng(XPRSprob oprob, void * vd)
 
 	IRP * modelInstance;
 	modelInstance = (IRP*)vd;
-
-	if ((XPRB::getTime() - modelInstance->startTime) / 1000 >= ModelParameters::MAX_RUNNING_TIME)
-	{
-		XPRSinterrupt(oprob, XPRS_STOP_TIMELIMIT);
-	}
 
 	//Load LP relaxation currently held in the optimizer
 	modelInstance->getProblem()->beginCB(oprob);
@@ -229,19 +234,17 @@ IRP::IRP(CustomerIRPDB& db, bool ArcRel, bool maskOn, int ** VisitMask)
 
 IRP::Solution * IRP::solveModel()
 {
-	
 	oprob = prob.getXPRSprob();
 	startTime = XPRB::getTime();
 	
+	//Set time callback
+	XPRSsetcbnewnode(oprob, cbmngtimeIRP, &(*this));
+
 	if (ARC_RELAXED) {
-		//Enable subtour elimination
-		//int a = prob.setCutMode(1); // Enable the cut mode
-		//XPRSsetcbcutmgr(oprob, cbmng, &(*this));
-		//XPRSsetcbintsol(oprob, acceptInt, &(*this));
-		//XPRSsetcbpreintsol(oprob, acceptInt, &(*this));
-		//double b =prob.lpOptimize();
-		//int b = prob.getLPStat();
+		XPRSsetcbpreintsol(oprob, acceptIntQuantity, &(*this));
+	
 	}
+	//XPRSsetcbpreintsol(oprob, acceptInt, &(*this));
 	int d = prob.mipOptimise();
 	//prob.print();
 
@@ -437,7 +440,7 @@ bool IRP::sepStrongComponents(vector<XPRBcut> & cut)
 		buildGraph(graph, t, true, 0.01); //include depot
 		//graphAlgorithm::printGraph(graph, *this, "Subtour/LPrelax" + to_string(t), ModelParameters::X);
 		graph.clear();
-		buildGraph(graph, t, false, 0.5); //Do not include depot in graph
+		buildGraph(graph, t, false, ModelParameters::EDGE_WEIGHT); //Do not include depot in graph
 		//graphAlgorithm::printGraph(graph, *this, "Subtour/DepotGone" + to_string(t), ModelParameters::X);
 		graphAlgorithm::sepByStrongComp(graph, result);
 		//graphAlgorithm::printGraph(graph, *this, "Subtour/Separation" + to_string(t), ModelParameters::X);
@@ -580,7 +583,7 @@ void IRP::addSubtourCut(vector<vector<Node *>>& strongComp, int t, bool &newCut,
 
 			}
 
-			if (circleFlow >= visitSum - maxVisitSum + 0.4) {
+			if (circleFlow >= visitSum - maxVisitSum + ModelParameters::alpha) {
 				//print subtour
 				vector<vector<XPRBvar>> subtour;
 				subtour.resize(2);
@@ -2537,6 +2540,17 @@ void IRP::RouteProblem::fillLoad(IRP::Route * routeHolder, vector <NodeIRPHolder
 int IRP::getCapacity()
 {
 	return Capacity;
+}
+
+void IRP::useSubtourElimination()
+{
+	oprob = prob.getXPRSprob();
+	startTime = XPRB::getTime();
+
+	//Enable subtour elimination
+	prob.setCutMode(1); // Enable the cut mode
+	XPRSsetcbcutmgr(oprob, cbmng, &(*this));
+	XPRSsetcbpreintsol(oprob, acceptInt, &(*this));
 }
 
 

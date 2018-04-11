@@ -391,6 +391,7 @@ public:
 	int solCounter;
 	void printMatrix();
 	int getCapacity();
+	void useSubtourElimination();
 	Map * getMap();
 	void calculateExcess();
 	void IRP::buildGraphSol(vector<Node*> &graph, int t, Solution * solution);

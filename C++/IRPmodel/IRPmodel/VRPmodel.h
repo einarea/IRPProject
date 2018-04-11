@@ -50,6 +50,9 @@ private:
 	int ** TransCost;
 	int ** TravelTime;
 
+	int startTime;
+	XPRSprob oprob;
+
 	//Linear expreassions;
 	XPRBexpr objective;
 

@@ -3,6 +3,18 @@
 #include "ModelParameters.h"
 
 
+//Time callback
+void XPRS_CC cbmngtime(XPRSprob oprob, void * vd, int parent, int newnode, int branch) {
+
+	IRP * modelInstance;
+	modelInstance = (IRP*)vd;
+
+	if ((XPRB::getTime() - modelInstance->startTime) / 1000 >= ModelParameters::MAX_RUNNING_TIME_VRP)
+	{
+		XPRSinterrupt(oprob, XPRS_STOP_TIMELIMIT);
+	}
+}
+
 VRPmodel::VRPmodel(CustomerVRPDB &db, Map &map, int Cap)
 	:
 	database(db),
@@ -21,8 +33,11 @@ VRPmodel::VRPmodel(CustomerVRPDB &db, Map &map, int Cap)
 void VRPmodel::solveModel()
 {
 
-	//prob.lpOptimize();
-	//int b = prob.getLPStat();
+	oprob = prob.getXPRSprob();
+	startTime = XPRB::getTime();
+
+	//Set time callback
+	//XPRSsetcbnewnode(oprob, cbmngtime, &(*this));
 
 	//prob.print();
 	int d = prob.mipOptimise();
