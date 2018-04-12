@@ -79,83 +79,31 @@ int XPRS_CC cbmng(XPRSprob oprob, void * vd)
 	//Load LP relaxation currently held in the optimizer
 	modelInstance->getProblem()->beginCB(oprob);
 	modelInstance->getProblem()->sync(XPRB_XPRS_SOL);
-
-	//double a = modelInstance->getProblem()->getObjVal();
-	//Add subtourconstraints
-
+	
+	//Load model instance
 	XPRBprob *bprob = modelInstance->getProblem();
 
-	//XPRBcut vv = bprob->newCut(modelInstance->x[1][7][1] + modelInstance->x[7][10][1] + modelInstance->x[10][1][1] - modelInstance->y[7][1] - modelInstance->y[10][1] <= 0);
-	/*modelInstance->x[1][7][1].print();
-	cout << "\n";
-	modelInstance->x[7][10][1].print();
-	cout << "\n";
-	modelInstance->x[10][1][1].print();
-	cout << "\n";*/
-
-	//double aaa = bprob->addCuts(&vv, 1);
-
-	//vv.print();
 	bool addedCuts = modelInstance->sepStrongComponents(subtourCut);
 
 	if (addedCuts) {
 		int node;
-		/*double *lBound;
-		double *uBound;
-		int bb;
-		int *cutPtr = &bb;
-		XPRScut m[10];
-		modelInstance->printBounds();*/ 
+	
 		XPRSgetintattrib(oprob, XPRS_NODES, &node);
 		XPRSgetdblattrib(oprob, XPRS_LPOBJVAL, &objval);
-		//cout << "Added at node ";
-		//cout << node << "), obj. " << objval << endl;
 
-		//Store cut parameters
-		const int nCuts = 1;
-		const int mtype[] = { 1 };
-		const int mstart[] = { 1000, 0 };
-		const char qrtype[] = { "L"}; //<= constraint
-		const double drhs[] = { -1 };
-		XPRScut mindex[nCuts];
-		int i = 0;
 		for (XPRBcut cut : subtourCut)
 		{
-			/*int *mcols;
-			double *dmatval;
-			vector<XPRBvar> subtourX(modelInstance -> subtourIndices[i][0]);
-			vector<XPRBvar> subtourY(modelInstance->subtourIndices[i][1]);
-			mcols = new int(subtourX.size() + subtourY.size());
-			dmatval = new double(subtourX.size() + subtourY.size());
-			int a;
-			for (int i = 0; i < subtourX.size(); i++) {
-				mcols[i] = subtourX[i].getColNum();
-				dmatval[i] = 1;
-				cout<<mcols[i]<<"  ";
-			}
-			for (int i = 0;  i < subtourY.size(); i++) {
-				mcols[subtourX.size() + i] = subtourY[i].getColNum();
-				cout << mcols[i+subtourX.size()] << "  ";
-				dmatval[subtourX.size() + i] = -1;
-			}*/
-
 			
-			cut.print();
-			//modelInstance -> x[2][17][1].print();
+			//cut.print();
 			modelInstance->nSubtourCuts += 1;
 			cutId = modelInstance->nSubtourCuts;
-			//XPRSstorecuts(oprob, nCuts, 1, mtype, qrtype, drhs, mstart, mindex, mcols, dmatval);
-			//cut = bprob->newCut(aa<=-0.5);
-			int a = bprob->addCuts(&cut, 1);
-	
-			i++;
+			bprob->addCuts(&cut, 1);
 		}
-		//XPRSloadcuts(oprob, 1, -1, -1, NULL);
-
 	}
 	
-	modelInstance->getProblem()->endCB(); 
 	//Unload LP relaxation
+	modelInstance->getProblem()->endCB(); 
+
 	return 0;
 	
 }
@@ -185,7 +133,8 @@ IRP::IRP(CustomerIRPDB& db, bool ArcRel, bool maskOn, int ** VisitMask)
 	map(db),			//Set up map of all customers
 	ARC_RELAXED(ArcRel),
 	SolutionCounter(0),
-	MaskOn(maskOn)
+	MaskOn(maskOn),
+	LPSubtour(false)
 {
 	IRP::solCounter = 1;
 	//Initialize sets
@@ -253,6 +202,41 @@ IRP::Solution * IRP::solveModel()
 	return getSolution(SolID);
 }
 
+IRP::Solution * IRP::solveLPModel()
+{
+	if (LPSubtour) {
+		bool isSubtours = false;
+		bool temp = false;
+
+		do {
+			isSubtours = false;
+			prob.lpOptimise();
+			//Check graph for subtours in strong components
+			vector <vector<Node*>> result; //matrix to store strong components
+			vector <Node*> graph;		//Graph to store nodes
+
+			for (int t : Periods) {
+				graph.clear();
+				buildGraph(graph, t, false, EDGE_WEIGHT); //Do not include depot in graph			
+				
+				graphAlgorithm::sepByStrongComp(graph, result);
+				graphAlgorithm::printGraph(graph, *this, "graphSolutions/graph", ModelParameters::X);
+				temp = addSubtourCtr(result, t);
+				if (temp)
+					isSubtours = true;
+			}
+
+		} while (isSubtours);
+
+		int SolID = allocateIRPSolution();
+
+		return getSolution(SolID);
+	}
+
+	else
+		prob.lpOptimise();
+}
+
 Map * IRP::getMap()
 {
 	return &map;
@@ -282,7 +266,7 @@ void IRP::calculateExcess()
 						excess += Demand[i][t];
 					if (excess >= 1) ExcessConsumption[i][t1][t2] = excess;
 					else  ExcessConsumption[i][t1][t2] = 0;
-					//cout << "Node: " << i << "\tperiod: " << t1 << t2<< "\tExcessDelivery: " << ExcessConsumption[i][t1][t2] << "\n";
+					cout << "Node: " << i << "\tperiod: " << t1 << t2<< "\tExcessDelivery: " << ExcessConsumption[i][t1][t2] << "\n";
 				}
 
 
@@ -440,7 +424,7 @@ bool IRP::sepStrongComponents(vector<XPRBcut> & cut)
 		buildGraph(graph, t, true, 0.01); //include depot
 		//graphAlgorithm::printGraph(graph, *this, "Subtour/LPrelax" + to_string(t), ModelParameters::X);
 		graph.clear();
-		buildGraph(graph, t, false, ModelParameters::EDGE_WEIGHT); //Do not include depot in graph
+		buildGraph(graph, t, false, EDGE_WEIGHT); //Do not include depot in graph
 		//graphAlgorithm::printGraph(graph, *this, "Subtour/DepotGone" + to_string(t), ModelParameters::X);
 		graphAlgorithm::sepByStrongComp(graph, result);
 		//graphAlgorithm::printGraph(graph, *this, "Subtour/Separation" + to_string(t), ModelParameters::X);
@@ -583,7 +567,7 @@ void IRP::addSubtourCut(vector<vector<Node *>>& strongComp, int t, bool &newCut,
 
 			}
 
-			if (circleFlow >= visitSum - maxVisitSum + ModelParameters::alpha) {
+			if (circleFlow >= visitSum - maxVisitSum + alpha) {
 				//print subtour
 				vector<vector<XPRBvar>> subtour;
 				subtour.resize(2);
@@ -641,6 +625,96 @@ void IRP::addSubtourCut(vector<vector<Node *>>& strongComp, int t, bool &newCut,
 			}
 		}
 	}
+}
+
+
+bool IRP::addSubtourCtr(vector<vector<Node *>>& strongComp, int t)
+{
+	bool addedCut = false;
+	//Check if SEC is violated
+	for (int i = 0; i < strongComp.size(); i++) {
+		if (strongComp[i].size() >= 2) {// only cut for subsets of size 2 or greater
+			double circleFlow = 0;
+			double visitSum = 0;
+			double maxVisitSum = 0;
+			double tempNodeVisit = 0;
+			//double tempNodeFlow = 0;
+			int maxVisitID = -1;
+			for (Node *node : strongComp[i]) {
+
+				//Value for y variable in the strong component
+				tempNodeVisit = y[node->getId()][t].getSol();
+				//	printf("y%d%d: %.2f\t", node.getId(), t, y[node.getId()][t].getSol());
+				visitSum += tempNodeVisit;
+
+				for (Node::Edge *edge : node->getEdges()) {
+					if (edge->getValue() >= 0) //only inlude edges in strong component
+						circleFlow += edge->getValue();
+					int u = node->getId();
+					int v = edge->getEndNode()->getId();
+					//	printf("x_%d%d: %.2f\t + ", u, v, x[u][v][t].getSol());
+				}
+
+				if (tempNodeVisit >= maxVisitSum) {
+					maxVisitID = node->getId();
+					maxVisitSum = tempNodeVisit;
+				}
+
+			}
+
+			if (circleFlow >= visitSum - maxVisitSum + alpha) {
+				//print subtour
+				vector<vector<XPRBvar>> subtour;
+				subtour.resize(2);
+
+				//	graphAlgorithm::printGraph(strongComp[i], *this, "Subtour\subtour");
+				// save current basis
+				//SavedBasis.push_back(prob.saveBasis());
+				//addSubtour constraint
+				//printf("Circleflow: %d:		NodeFlow: %d\n", circleFlow, nodeFlow);
+				XPRBexpr rSide;
+				XPRBexpr lSide;
+
+				//cout << "LP relaxation before cut: " << prob.getObjVal() << "\n";
+				string rSideStr = "<=";
+				//printf("\nAdded subtour cut: ");
+
+				for (Node *node : strongComp[i]) {
+					rSide += y[node->getId()][t];
+					//y[node->getId()][t].print();
+					//cout << "\n";
+					rSideStr = rSideStr + " + " + "y_" + to_string(node->getId());
+					subtour[1].push_back(y[node->getId()][t]);
+					for (Node::Edge *edge : node->getEdges()) {
+						if (edge->getValue() >= 0) {
+							int u = node->getId();
+							int v = edge->getEndNode()->getId();
+							//printf("x_%d%d + ", u, v);
+							lSide += x[node->getId()][edge->getEndNode()->getId()][t];
+							//x[node->getId()][edge->getEndNode()->getId()][t].print();
+							//cout << "\n";
+
+							subtour[0].push_back(x[node->getId()][edge->getEndNode()->getId()][t]);
+
+						}
+					}
+				}
+				subtourIndices.push_back(subtour);
+				rSide -= y[maxVisitID][t];
+				rSideStr = rSideStr + " - " + "y_" + to_string(maxVisitID);
+				//cout << rSideStr << "\n";
+				nSubtourCuts += 1;
+
+				prob.newCtr(XPRBnewname("Subtour"), lSide <= rSide).print();
+				//vv.print();
+
+				addedCut = true;
+
+			}
+		}
+	}
+
+	return addedCut;
 }
 
 
@@ -1257,13 +1331,22 @@ void IRP::getSubset(vector<int> subset, int subsetSize, int nodePos, vector<int>
 		XPRBexpr p1;
 		XPRBexpr p2;
 		double flow;
-
+		double denominator;
 
 
 		for (auto i : subset)
-			flow = ExcessConsumption[i][t1][t2];
+			if(map.isDelivery(i))
+				flow = ExcessConsumption[i][t1][t2];
+			else
+				flow = ExcessProd[i][t1][t2];
 
-		if (ceil(flow / Capacity) - flow/Capacity> 0.3*subset.size()){
+		if (subset.size() == 1) {
+			denominator = min(Capacity, UpperLimit[subset[0]] - LowerLimit[subset[0]]);
+		}
+		else
+			denominator = Capacity;
+
+		if (ceil(flow / denominator) - flow/denominator> ExcessParameter){
 
 			cout << "\nPeriod" << t1 << t2 << "\n";
 			for (auto i : subset) {
@@ -1283,8 +1366,8 @@ void IRP::getSubset(vector<int> subset, int subsetSize, int nodePos, vector<int>
 							p1 += x[i][j][t];
 						}
 
-			p2 = ceil(flow / Capacity);
-			prob.newCtr("MinFlow", p1 >= p2).print();
+			p2 = ceil(flow / denominator);
+			prob.newCtr("MinFlow", p1 >= p2);
 		}
 	}	
 }
@@ -2110,6 +2193,8 @@ vector<IRP::Route const *> IRP::getRoutes()
 void IRP::addValidIneq(int ValidIneq)
 
 {
+	ExcessParameter = 0.3;
+
 	XPRBexpr p1 = 0;
 	XPRBexpr p2 = 0;
 	XPRBexpr p3 = 0;
@@ -2128,7 +2213,8 @@ void IRP::addValidIneq(int ValidIneq)
 							p1 += y[i][t];
 						}
 						minVisit = ExcessConsumption[i][t1][t2] / min(Capacity, UpperLimit[i] - LowerLimit[i]);
-						if (ceil(minVisit) - minVisit >= 0.3)
+						double b = ExcessConsumption[i][t1][t2];
+						if (ceil(minVisit) - minVisit >= ExcessParameter)
 						{
 							prob.newCtr("MinVisitDelivery", p1 >= ceil(minVisit)).print();
 						}
@@ -2149,7 +2235,7 @@ void IRP::addValidIneq(int ValidIneq)
 							p1 += y[i][t];
 						}
 						minVisit = ExcessProd[i][t1][t2] / min(Capacity, UpperLimit[i] - LowerLimit[i]);
-						if (ceil(minVisit) - minVisit >= 0.3)
+						if (ceil(minVisit) - minVisit >= ExcessParameter)
 						{
 							prob.newCtr("MinVisitPickup", p1 >= ceil(minVisit)).print();
 						}
@@ -2174,12 +2260,12 @@ void IRP::addValidIneq(int ValidIneq)
 						p3 = 1 - p3;
 						p1 = inventory[i][t1 - 1];
 
-						prob.newCtr("MinInventory", p1 >= p2*p3 + map.getLowerLimit(i)).print();
+						prob.newCtr("MinInventory", p1 >= p2*p3 + map.getLowerLimit(i));
 						p1 = 0;
 						p2 = 0;
 						p3 = 0;
 					}
-				}	
+				}
 			}
 		} // End delivery nodes
 
@@ -2196,7 +2282,7 @@ void IRP::addValidIneq(int ValidIneq)
 						p3 = 1 - p3;
 						p1 = inventory[i][t1 - 1];
 
-						prob.newCtr("MinInventory", p1 <= map.getUpperLimit(i) - p2*p3 ).print();
+						prob.newCtr("MinInventory", p1 <= map.getUpperLimit(i) - p2*p3);
 						p1 = 0;
 						p2 = 0;
 						p3 = 0;
@@ -2208,38 +2294,67 @@ void IRP::addValidIneq(int ValidIneq)
 	} // End minimum inventory
 
 	if (ValidIneq == ModelParameters::MinimumFlow) {
-		//Check all subsets with positive excess demand 
-		bool includeNode = true;
+		//Check all subsets with positive excess demand
 
-			vector<vector<vector<int>>> IncludedNodes;
-			IncludedNodes.resize(Periods.size()+1);
-	
-			for (auto t1 : Periods) {
-				IncludedNodes[t1].resize(Periods.size() + 1);
-				for (auto t2 : Periods) {
-					if (t1 <= t2)
-						includeNode = true;
-						for (auto i : DeliveryNodes) {
-							if (ExcessConsumption[i][t1][t2] >= 0.01)
-								IncludedNodes[t1][t2].push_back(i);
-						}
-				
-				}
+		vector<vector<vector<int>>> IncludedNodes;
+		IncludedNodes.resize(Periods.size() + 1);
+
+		//For all delivery nodes
+		for (auto t1 : Periods) {
+			IncludedNodes[t1].resize(Periods.size() + 1);
+			for (auto t2 : Periods) {
+				if (t1 <= t2)
+					for (auto i : DeliveryNodes) {
+						if (ExcessConsumption[i][t1][t2] >= 0.01)
+							IncludedNodes[t1][t2].push_back(i);
+					}
+
 			}
+		}
 		//Recursively check all possible subsets up to the subsetSize
-
 		for (auto t1 : Periods)
 			for (auto t2 : Periods) {
-				if (t1 <= t2){
+				if (t1 <= t2) {
+					vector<int> subset;
+					for (int subsetSize = 3; subsetSize <= ModelParameters::SubsetSizeMinFlow; subsetSize++)
+						for (auto nodePos = 0; nodePos < IncludedNodes[t1][t2].size(); nodePos++)
+							getSubset(subset, subsetSize, nodePos, IncludedNodes[t1][t2], t1, t2);
+				}
+			}
+
+		//Clear nodes
+		for (auto t1 : Periods)
+			for (auto t2 : Periods)
+				if (t1 <= t2)
+					IncludedNodes[t1][t2].clear();
+
+		//For all pickup nodes
+		for (auto t1 : Periods) {
+			for (auto t2 : Periods) {
+				if (t1 <= t2)
+					for (auto i : PickupNodes) {
+						if (ExcessProd[i][t1][t2] >= 0.01)
+							IncludedNodes[t1][t2].push_back(i);
+					}
+
+			}
+		}
+
+		//Recursively check all possible subsets up to the subsetSize
+		for (auto t1 : Periods)
+			for (auto t2 : Periods) {
+				if (t1 <= t2) {
 					vector<int> subset;
 					for (int subsetSize = 1; subsetSize <= ModelParameters::SubsetSizeMinFlow; subsetSize++)
 						for (auto nodePos = 0; nodePos < IncludedNodes[t1][t2].size(); nodePos++)
 							getSubset(subset, subsetSize, nodePos, IncludedNodes[t1][t2], t1, t2);
 				}
 			}
-	} //End minimumflow
 
-}
+	} //End minimumflow
+	
+}//End valid inequalitites
+
 
 //Returns the difference in visits from sol2 to sol1
 double ** IRP::getVisitDifference(Solution * sol1, Solution * sol2)
@@ -2542,15 +2657,22 @@ int IRP::getCapacity()
 	return Capacity;
 }
 
-void IRP::useSubtourElimination()
+void IRP::useIPSubtourElimination()
 {
+	EDGE_WEIGHT = 0.5;
+	alpha = 0.5;
+
 	oprob = prob.getXPRSprob();
-	startTime = XPRB::getTime();
 
 	//Enable subtour elimination
 	prob.setCutMode(1); // Enable the cut mode
 	XPRSsetcbcutmgr(oprob, cbmng, &(*this));
 	XPRSsetcbpreintsol(oprob, acceptInt, &(*this));
+}
+
+void IRP::useLPSubtourElimination()
+{
+	LPSubtour = true;
 }
 
 

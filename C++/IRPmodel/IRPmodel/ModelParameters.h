@@ -10,9 +10,7 @@ public:
 	//TabuList 
 	static const int TabuLength = 2;
 
-	//Subtour
-	static const int EDGE_WEIGHT = 0.5;
-	static const int alpha = 0.5;
+
 
 	////Model parameters;
 	static const int nVehicles = 4;

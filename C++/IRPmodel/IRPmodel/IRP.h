@@ -30,6 +30,10 @@ private:
 
 	void addInventoryAndLoadingCtr(XPRBprob & problem);
 
+	//Subtour
+	double EDGE_WEIGHT;
+	double alpha;
+	double ExcessParameter;
 
 	int NumOfCustomers;
 	int MaxTime;
@@ -391,7 +395,9 @@ public:
 	int solCounter;
 	void printMatrix();
 	int getCapacity();
-	void useSubtourElimination();
+	void useIPSubtourElimination();
+	void useLPSubtourElimination();
+	bool LPSubtour;
 	Map * getMap();
 	void calculateExcess();
 	void IRP::buildGraphSol(vector<Node*> &graph, int t, Solution * solution);
@@ -399,7 +405,9 @@ public:
 	int allocateIRPSolution();
 	bool sepStrongComponents(vector<XPRBcut> &);
 	void addSubtourCut(vector<vector <Node *>> &, int t, bool &, vector<XPRBcut> &);
+	bool addSubtourCtr(vector<vector <Node *>> &, int t);
 	IRP::Solution * solveModel();
+	IRP::Solution * solveLPModel();
 	XPRBprob * getProblem();
 	CustomerDB * getDB();
 	vector <XPRBbasis> SavedBasis;
