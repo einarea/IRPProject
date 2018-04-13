@@ -27,9 +27,9 @@ public:
 	//Returns the first edge
 	Edge * getEdge();
 	vector <Edge*> getEdges();
-	void addEdge(double value, Node & child);
+	void addEdge(double value, Node * child);
 	void addEdge(Edge *);
-	void addEdge(Node& child);
+	void addEdge(Node * child);
 	void removeEdge(Node &child);
 	void deleteEdges();
 	void removeEdges();

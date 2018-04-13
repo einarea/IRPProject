@@ -70,12 +70,12 @@ void Node::addEdge(Edge* edge)
 	this->Edges.push_back(edge);
 }
 
-void Node::addEdge(double value, Node &child)
+void Node::addEdge(double value, Node *child)
 {
-	this->Edges.push_back(new Edge(child, value));
+	this->Edges.push_back(new Edge(*child, value));
 }
 
-void Node::addEdge(Node & child)
+void Node::addEdge(Node * child)
 {
 	addEdge(1, child);
 }

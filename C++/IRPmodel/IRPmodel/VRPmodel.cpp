@@ -39,7 +39,7 @@ void VRPmodel::solveModel()
 	//Set time callback
 	//XPRSsetcbnewnode(oprob, cbmngtime, &(*this));
 
-	//prob.print();
+	prob.print();
 	int d = prob.mipOptimise();
 
 	/*for (int i : AllNodes)
