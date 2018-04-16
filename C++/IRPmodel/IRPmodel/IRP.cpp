@@ -1493,19 +1493,22 @@ void IRP::RouteProblem::addRouteConstraints()
 			for (int t : Instance.Periods) {
 				counter = 0;
 				ind = false;
-				for (int r : Routes) {
-					for (int j : Instance.Nodes)
-					{
-						
-						if (A[r][i][j] > 0.01) {
-							p1 += A[r][i][j] * travelRoute[r][t];
-							counter++;
-							ind = true;
+				for (int j : Instance.AllNodes) {
+					if (Instance.map.inArcSet(i, j)) {
+						for (int r : Routes) {
+
+							if (A[r][i][j] > 0.01) {
+								p1 += A[r][i][j] * travelRoute[r][t];
+								counter++;
+								ind = true;
+							}
 						}
 					}
 				}
-				if (ind && counter >= 2) {
+
+				if (ind) {
 					routeProblem.newCtr("Visit limit", p1 <= 1);
+					
 				}
 				p1 = 0;
 			}
@@ -1521,8 +1524,6 @@ void IRP::RouteProblem::addRouteConstraints()
 			routeProblem.newCtr("Vehicle limit", p1 <= ModelParameters::nVehicles);
 			p1 = 0;
 		}
-
-
 			
 }
 
@@ -2077,7 +2078,7 @@ void  IRP::Solution::solveInventoryProblem()
 {
 	IRP::RouteProblem routeProb(Instance, getAllRoutes());
 	routeProb.ShiftPeriod = 4;
-	routeProb.formulateRouteProblem(ModelParameters::MIN_SERVICE);
+	routeProb.formulateRouteProblem(ModelParameters::MinimumInventory);
 	routeProb.lockRoutes();
 	routeProb.solveProblem(this);
 }
@@ -2087,11 +2088,13 @@ void IRP::Solution::insertCustomer(int customerID, int period)
 	vector<NodeIRP *> nodes = getCustomer(customerID);
 	Route * subroute = getSubroute(nodes);
 			
+	cout << "Old routes in " << period << "\n";
 	for (auto route : getRoutes(period)) {
 		route->printRoute();
 	}
 	insertSubrouteInRoute(subroute, period);
 	
+	cout << "New routes in " << period <<"\n";
 	for (auto route : getRoutes(period)) {
 		route->printRoute();
 	}
@@ -2540,11 +2543,6 @@ void IRP::RouteProblem::updateSolution(IRP::Solution * sol)
 
 	auto &nodeHolder = sol->getNodes();
 	//Fill inventory and quantity at the nodes
-	for(auto r: Routes)
-		for(auto t:Instance.Periods) {
-			cout << r<< t <<": " <<travelRoute[r][t].getSol()<<"\n";
-		}
-
 	fillNodes(nodeHolder);
 
 	//Fill load
@@ -2677,9 +2675,12 @@ void IRP::RouteProblem::fillLoad(vector <NodeIRPHolder*> &nodeHolder) {
 			{
 				auto route = routes[r]->route;
 				int n = 0;
-				for (auto node : route) {
-					i = node->getId();
-					j = node->getEdge()->getEndNode()->getId();
+				for (int n = 0; n < route.size(); n++) {
+					i = route[n]->getId();
+					if (n == route.size() - 1)
+						j = 0;
+					else
+						j = route[n + 1]->getId();
 
 					//Fill load
 					loadDel = loadDelivery[i][j][t].getSol();
@@ -2987,7 +2988,6 @@ void IRP::Route::insertSubRoute(vector<NodeIRP *> subroute, NodeIRP *u, NodeIRP 
 //Uses cheapest insertion heurestic for all routes in the period
 void IRP::Solution::insertSubrouteInRoute(IRP::Route * subroute, int period)
 {
-
 	double minCost = 100000;
 	double tempCost = 0;
 	IRP::Route * path = 0;
@@ -3010,32 +3010,30 @@ void IRP::Solution::insertSubrouteInRoute(IRP::Route * subroute, int period)
 	IRP::Route * route = 0;
 	vector<NodeIRP * > Nodes;
 	//Go through all edges, Cheapest insertion
-	u = getDepot(period);
-	for (auto edge : u->getEdges()) {
-		do {
-			v = edge->getEndNode();
-		
-			if (!(u == k && v == l)) {
 
+
+	u = getDepot(period);
+	for (auto R : getRoutes(period)) {
+		if (!R->coincide(subroute)) {
+			for (auto u : R->route) {
+				v = u->getEdge()->getEndNode();
 				C_uk = Instance.getMap()->getTransCost(u->getId(), k->getId(), ModelParameters::TRANSCOST_MULTIPLIER, ModelParameters::SERVICECOST_MULTIPLIER);
 				C_lv = Instance.getMap()->getTransCost(l->getId(), v->getId(), ModelParameters::TRANSCOST_MULTIPLIER, ModelParameters::SERVICECOST_MULTIPLIER);
 				C_uv = Instance.getMap()->getTransCost(u->getId(), v->getId(), ModelParameters::TRANSCOST_MULTIPLIER, ModelParameters::SERVICECOST_MULTIPLIER);
 
 				tempCost = C_uk + C_lv - C_uv;
-	
+
 				if (tempCost < minCost) {
+
 					minCost = tempCost;
-					start = u;
-					end = v;
+					start = NodeHolder[u->getId()]->Nodes[period];
+					end = NodeHolder[v->getId()]->Nodes[period];
 				}
-			}
 			u = v;
-			edge = u->getEdge();	
+			}
+
 		}
-		while (u->getId() != 0);
 	}
-
-
 	//Insert edges
 	start->Node::deleteEdge(end);
 	start->Node::addEdge(k);
@@ -3087,6 +3085,16 @@ int IRP::Route::getPeriod()
 void IRP::Route::setPeriod(int period)
 {
 	Period = period;
+}
+
+bool IRP::Route::coincide(Route * r)
+{
+	for (auto node : r->route) {
+		for (auto thisNode : route)
+			if (node->getId() == thisNode->getId())
+				return true;
+	}
+	return false;
 }
 
 int IRP::Route::getTotalDelivery()

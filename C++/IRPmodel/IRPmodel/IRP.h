@@ -160,6 +160,7 @@ public:
 		double getTransportationCost();
 		int getPeriod();
 		void setPeriod(int period);
+		bool coincide(Route * r);
 		//int removeNode(NodeIRP*, IRP::Route *);
 		//void insertSubRoute(vector<NodeIRP *>, NodeIRP * start, NodeIRP * end);
 	
