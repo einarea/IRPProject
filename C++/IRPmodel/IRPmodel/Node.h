@@ -16,7 +16,6 @@ public:
 	private:
 		double Value;
 		Node &EndNode;
-
 	};
 
 
@@ -32,6 +31,7 @@ public:
 	void addEdge(Node * child);
 	void removeEdge(Node &child);
 	void deleteEdges();
+	void deleteEdge(Node *);
 	void removeEdges();
 	int getId() const;
 	~Node();
@@ -42,13 +42,8 @@ public:
 		return !(*this == node); // invokes Array::operator==
 	}
 
-
-
-	
-
 private:
 	int NodeID;
 	vector <Edge*> Edges;
-
 };
 

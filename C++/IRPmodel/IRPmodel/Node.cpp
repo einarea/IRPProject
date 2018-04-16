@@ -84,7 +84,6 @@ void Node::removeEdge(Node & child)
 {
 	for (int i = 0; i < Edges.size(); i++) {
 		if (child.getId() == Edges[i]->getEndNode()->getId()) {
-			delete Edges[i];
 			Edges.erase(Edges.begin() + i);
 		}
 	}
@@ -102,8 +101,15 @@ void Node::deleteEdges()
 {
 	int size = Edges.size();
 	for (int i = size - 1; i >= 0; i--) {
-		delete Edges[i];
 		Edges.erase(Edges.begin() + i);
+	}
+}
+
+void Node::deleteEdge(Node * node)
+{
+	for (int i = 0; i < Edges.size(); i++) {
+		if(Edges[i]->getEndNode() == node)
+			Edges.erase(Edges.begin() + i);
 	}
 }
 

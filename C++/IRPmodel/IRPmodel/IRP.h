@@ -155,9 +155,11 @@ public:
 	class Route {
 		static int counter;
 		public:
+		void setId(int id);
 		IRP & Instance;
 		double getTransportationCost();
-		int id;
+		int getPeriod();
+		void setPeriod(int period);
 		//int removeNode(NodeIRP*, IRP::Route *);
 		//void insertSubRoute(vector<NodeIRP *>, NodeIRP * start, NodeIRP * end);
 	
@@ -170,8 +172,12 @@ public:
 		void printRoute();
 		double getResidualCapacity();
 		Route(vector <NodeIRP*> & path, IRP &instance);
+	
 		//Graph 
 		vector <NodeIRP*> route;
+		private:
+			int Id;
+			int Period;
 	}; //end class Route
 
 
@@ -220,6 +226,7 @@ public:
 		double getMinQuantity();
 		double getExcessQuantity();
 		void removeMinQuantity();
+	
 
 		//Changes
 		void addEdge(double loadDel, double loadPic, NodeIRPHolder * child, int period, double value);
@@ -248,20 +255,15 @@ public:
 		Solution(IRP &model, bool integer);
 		Solution(IRP &instance, vector<NodeIRPHolder*> nodes);
 		int SolID;
-		void updateDepot(int period);
+		IRP::NodeIRP * getDepot(int period);
+		
 		double **pCapacity;
 		int *** getRouteMatrix();
 		vector<NodeIRPHolder *> NodeHolder;
 		int selectPeriod(int selection);
 		vector<NodeIRPHolder *>& getNodes();
 
-		//Construct routes should only be called for integer solutions
-		void constructRoutes();
-
 		//The set of routes for each period
-		vector<vector <IRP::Route*>> Routes;
-
-		vector<vector <IRP::Route*>>& getRoutes();
 
 		//void buildGraph(vector<Node*> &graph, int t);
 		void print(string filname,int weight);
@@ -347,7 +349,7 @@ public:
 		void printRouteMatrix();
 		void addRoutesToVector();
 		void updateSolution(IRP::Solution * sol);
-		void lockRoutes(vector<vector<IRP::Route*>> RouteHolder);
+		void lockRoutes();
 
 		int ShiftPeriod;
 	
@@ -363,12 +365,12 @@ public:
 		XPRBvar *** loadPickup;
 		XPRBvar ** travelRoute;
 
-		void lockRoute(int period, int routeId);
+		void lockRoute(IRP::Route * );
 		int getRoutePosition(int routeId);
 
 		void fillRoutes(vector<vector<IRP::Route* >>& routes);
 		void fillNodes(vector<NodeIRPHolder*> &nodeHolder);
-		void fillLoad(IRP::Route *, vector<NodeIRPHolder*> &nodeHolder, int period);
+		void fillLoad(vector<NodeIRPHolder*> &nodeHolder);
 		//Holder of all routes
 		vector <Route *> routes;
 		IRP & Instance;
@@ -409,6 +411,7 @@ public:
 
 
 	//Route functions
+
 	void updateTabuMatrix(double ** changeMatrix);
 	int getNumOfNodes();
 	int solCounter;

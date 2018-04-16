@@ -447,7 +447,7 @@ void IRP::printGraph(vector<Node> &graph)
 		int id = node.getId();
 		vector<Node::Edge*> edges = (node.getEdges());
 
-		for (Node::Edge* edge : (node.getEdges())) {
+		for (Node::Edge * edge : (node.getEdges())) {
 			Node * endNode = edge->getEndNode();
 			/*printf("Node: %d with edges to ", id);
 			printf("%d with flow %f" , (*endNode).getId(), edge.getValue());
@@ -956,6 +956,7 @@ void IRP::RouteProblem::initializeRouteParameters()
 	int nRoutes = 0;
 	for (auto r : routes) {
 		//r->printRoute();
+		r->setId(nRoutes);
 		Routes.push_back(nRoutes);
 		RouteCost[nRoutes] = r->getTransportationCost();
 		//Initialize the A holder
@@ -1487,23 +1488,29 @@ void IRP::RouteProblem::addRouteConstraints()
 		}//end service limit
 
 		//Visit constraint
+		int counter = 0;
 		for (int i : Instance.Nodes) {
 			for (int t : Instance.Periods) {
+				counter = 0;
 				ind = false;
 				for (int r : Routes) {
 					for (int j : Instance.Nodes)
 					{
-						p1 += A[r][i][j] * travelRoute[r][t];
-						if(A[r][i][j] > 0.01)
+						
+						if (A[r][i][j] > 0.01) {
+							p1 += A[r][i][j] * travelRoute[r][t];
+							counter++;
 							ind = true;
+						}
 					}
 				}
-				if (ind) {
+				if (ind && counter >= 2) {
 					routeProblem.newCtr("Visit limit", p1 <= 1);
 				}
 				p1 = 0;
 			}
 		} //end visit constraint
+
 
 		//Vehicle constraint
 		for (int t : Instance.Periods) {
@@ -1757,7 +1764,6 @@ IRP::Solution::Solution(IRP & model, bool integer = false)
 	//Initializa node hold
 	//Create a route holder for each period
 	NodeHolder.resize(Instance.AllNodes.size());
-	Routes.resize(Instance.getNumOfPeriods()+1);
 	//Create a nodes for all customers and depot, same id as in model
 	for (int i : Instance.AllNodes) {
 		NodeHolder[i] = new NodeIRPHolder(i, Instance);		
@@ -1772,17 +1778,19 @@ IRP::Solution::Solution(IRP &model, vector<NodeIRPHolder*> nodes)
 	Instance(model),
 	NodeHolder(nodes)
 {
-	Routes.resize(Instance.getNumOfPeriods() + 1);
+
 }
 
-void IRP::Solution::updateDepot(int period)
+IRP::NodeIRP * IRP::Solution::getDepot(int period)
 {
-	NodeHolder[0]->Nodes[period]->deleteEdges();
-	for (auto r : Routes[period]) {
-		auto node = r->route[1];
-		NodeHolder[0]->Nodes[period]->Node::addEdge(node);
+	for (auto node : NodeHolder) {
+		if (node->getId() == 0) {
+			return node->Nodes[period];
+		}
 	}
 }
+
+
 //Returns Aijt vector where 1 if arc ij is traversed in period t
 int *** IRP::Solution::getRouteMatrix()
 {
@@ -1839,35 +1847,32 @@ int IRP::Solution::selectPeriod(int selection)
 	return period;
 }
 
-void IRP::Solution::constructRoutes()
-{
-	Routes.clear();
-	Routes.resize(Instance.Periods.size() + 1);
-	Routes.resize(Instance.Periods.size() + 1);
-	for (int t : Instance.Periods) {
-		vector<Node*> graph;
-		vector<vector<Node*>> routes;
-		for (IRP::NodeIRPHolder * n : NodeHolder) {
-			graph.push_back(n->Nodes[t]);
-		}
-	
-		graphAlgorithm::getRoutes(graph, routes);
 
-		//Add all routes to the current solution	
-		for (vector <Node*> r : routes) {
-			newRoute(r, t);
-			for (auto node : r)
-				NodeIRP::getNode(node)->Quantity = 2000;
-		}
+vector<IRP::Route*> IRP::Solution::getRoutes(int period)
+{
+	NodeIRP* v;
+	vector<Route*> routes;
+	vector <NodeIRP*> path;
+	for (auto edge : getDepot(period)->getEdges()) {
+		auto u = new NodeIRP(0);
+		u->Node::addEdge(edge);
+		//Depth first search 
+		path.clear();
+		path.push_back(u);
+		u = new NodeIRP(*edge->getEndNode());
+		do {
+			path.push_back(u);
+			v = u->getEdge()->getEndNode();
+			u = v;
+
+		} while (u->getId() != 0); //while not depot
+
+		Route * route = new Route(path, Instance);
+		route->setPeriod(period);
+		routes.push_back(route);
 	}
-}
-
-
-
-
-vector<vector<IRP::Route*>>& IRP::Solution::getRoutes()
-{
-	return Routes;
+	
+	return routes;
 }
 
 void IRP::Solution::print(string filename, int load)
@@ -1906,20 +1911,13 @@ bool IRP::Solution::isFeasible()
 
 	//Check if each route is feasible
 	for(int t : Instance.Periods)
-	for (IRP::Route* r : Routes[t]) {
+	for (IRP::Route* r : getRoutes(t)) {
 		if (!isRouteFeasible(r))
 			return false;
 	}
 	return true;
 }
 
-void IRP::Solution::clearRoutes()
-{
-	for (auto &r : Routes)
-	{
-		r.clear();
-	}
-}
 
 void IRP::Solution::clearEdges(int period)
 {
@@ -2059,10 +2057,6 @@ double IRP::Solution::getPickup(int period)
 		return 0;
 }
 
-vector<IRP::Route*> IRP::Solution::getRoutes(int period)
-{
-	return Routes[period];
-}
 
 IRP::NodeIRPHolder * IRP::Solution::getNode(int id)
 {
@@ -2077,35 +2071,31 @@ vector<IRP::NodeIRPHolder*>& IRP::Solution::getNodes()
 	return NodeHolder;
 }
 
-int IRP::Solution::newRoute(vector<Node*>& route, int t)
-{
-	vector<IRP::NodeIRP *> ptrHolder;
-	for (Node* n : route) {
-		IRP::NodeIRP * nodeptr = static_cast<IRP::NodeIRP*> (n);
-		ptrHolder.push_back(nodeptr);
-	}
-	Routes[t].push_back(new Route(ptrHolder, Instance));
-	return Routes[t].size() - 1;
-}
+
 
 void  IRP::Solution::solveInventoryProblem()
 {
 	IRP::RouteProblem routeProb(Instance, getAllRoutes());
 	routeProb.ShiftPeriod = 4;
 	routeProb.formulateRouteProblem(ModelParameters::MIN_SERVICE);
-	routeProb.lockRoutes(getRoutes());
+	routeProb.lockRoutes();
 	routeProb.solveProblem(this);
-	printSolution();
 }
 
 void IRP::Solution::insertCustomer(int customerID, int period)
 {
 	vector<NodeIRP *> nodes = getCustomer(customerID);
 	Route * subroute = getSubroute(nodes);
-				
+			
+	for (auto route : getRoutes(period)) {
+		route->printRoute();
+	}
 	insertSubrouteInRoute(subroute, period);
-	updateDepot(period);
 	
+	for (auto route : getRoutes(period)) {
+		route->printRoute();
+	}
+
 	//Reoptimize inventory
 	solveInventoryProblem();
 }
@@ -2124,10 +2114,6 @@ vector<IRP::NodeIRP*> IRP::Solution::getCustomer(int id)
 	return customer;
 }
 
-int IRP::Solution::getnPeriods()
-{
-	return Routes.size();
-}
 
 vector<IRP::Route*> IRP::Solution::getAllRoutes()
 {
@@ -2429,6 +2415,8 @@ void IRP::RouteProblem::printRouteMatrix()
 
 
 
+
+
 void IRP::updateTabuMatrix(double ** changeMatrix)
 {
 	srand(std::time(0));
@@ -2550,47 +2538,53 @@ void IRP::RouteProblem::addRoutesToVector()
 void IRP::RouteProblem::updateSolution(IRP::Solution * sol)
 {
 
-
 	auto &nodeHolder = sol->getNodes();
 	//Fill inventory and quantity at the nodes
+	for(auto r: Routes)
+		for(auto t:Instance.Periods) {
+			cout << r<< t <<": " <<travelRoute[r][t].getSol()<<"\n";
+		}
+
 	fillNodes(nodeHolder);
 
-	//Fill routes
-	sol->constructRoutes();
-	//fillRoutes(sol->getRoutes());
-
 	//Fill load
-	for (auto t : Instance.Periods)
-		for (auto r : sol->getRoutes(t)) {
-			r->printRoute();
-			fillLoad(r, nodeHolder, t);
-		}
+	fillLoad(nodeHolder);
+		
 
 }
 
-void IRP::RouteProblem::lockRoutes(vector<vector<IRP::Route*>> RouteHolder)
+void IRP::RouteProblem::lockRoutes()
 {
-	int counter = 0;
+	
 	//Select what routes to lock
-	for (auto t : Instance.Periods)
-		for (auto route : RouteHolder[t]) {
-			lockRoute(t, route->getId());
-			counter++;
-		}
-	//Lock the number of routes
-	XPRBexpr p1 = 0;
-	for (auto r : Routes) {
-		for (auto t : Instance.Periods)
-			p1 += travelRoute[r][t];
+	vector<int> counter;
+	counter.resize(Instance.Periods.size() + 1);
 
-		routeProblem.newCtr("Number of routes", p1 <= counter);
+	for (auto t : Instance.Periods)
+		counter[t] = 0;
+
+	for (auto route: routes){
+		lockRoute(route);
+		counter[route->getPeriod()]++;
+	}
+	//Lock the number of routes in a period
+	XPRBexpr p1 = 0;
+
+	for (auto t : Instance.Periods) {
+		for (auto r : Routes) {
+			p1 += travelRoute[r][t];
+		}
+		routeProblem.newCtr("Number of routes", p1 <= counter[t]);
+		p1 = 0;
 	}
 }
 
-void IRP::RouteProblem::lockRoute(int period, int routeID)
+
+void IRP::RouteProblem::lockRoute(IRP::Route * route)
 {
-	int route = getRoutePosition(routeID);
-	routeProblem.newCtr("RouteLock", travelRoute[route][period] == 1).print();
+	int routeId = route->getId();
+	int period = route->getPeriod();
+	routeProblem.newCtr("RouteLock", travelRoute[routeId][period] == 1).print();
 }
 
 IRP::Solution * IRP::RouteProblem::solveProblem(IRP::Solution * sol)
@@ -2598,10 +2592,12 @@ IRP::Solution * IRP::RouteProblem::solveProblem(IRP::Solution * sol)
 	routeProblem.print();
 	routeProblem.mipOptimise();
 	//If no solution, allocate a new solution
-	if (sol == 0)
-		Solution * sol = Instance.allocateSolution(Instance);
-	else
-		updateSolution(sol);
+	if (sol == 0) {
+		sol = Instance.allocateSolution(Instance);
+		int a = 5;
+	}
+	
+	updateSolution(sol);
 	return sol;
 }
 
@@ -2645,20 +2641,19 @@ void IRP::RouteProblem::fillNodes(vector <NodeIRPHolder*> &nodeHolder)
 	for (auto node: nodeHolder) {
 
 		for (auto t : Instance.Periods) {
-
-			//Clear edges
 			node->Nodes[t]->deleteEdges();
-
 			int i = node->getId();
 			//Fill inventory
 			if (node->getId() != 0)
 				node->Nodes[t]->Inventory = inventory[i][t].getSol();
 
-			cout << delivery[5][2].getSol();
 			//Fill quantity
 			if (node->getId() != 0) {
-				if (node->isDelivery())
+				if (node->isDelivery()) {
 					node->Nodes[t]->Quantity = delivery[i][t].getSol();
+					double a = delivery[i][t].getSol();
+					int b = 0;
+				}
 				else
 					node->Nodes[t]->Quantity = pickup[i][t].getSol();
 			}
@@ -2667,29 +2662,37 @@ void IRP::RouteProblem::fillNodes(vector <NodeIRPHolder*> &nodeHolder)
 	}
 }
 
-void IRP::RouteProblem::fillLoad(IRP::Route * routeHolder, vector <NodeIRPHolder*> &nodeHolder, int t){
+void IRP::RouteProblem::fillLoad(vector <NodeIRPHolder*> &nodeHolder) {
+
 	int i;
 	int j;
-
-	double LoadDel;
-	double LoadPick;
+	double loadDel;
+	double loadPick;
 	IRP::NodeIRP::EdgeIRP * edge;
-	for (auto node : routeHolder->route) {
-			i = node->getId();
-			edge = node->getEdge();
-			j = edge->getEndNode()->getId();
 
-			//Fill load
-			LoadDel = loadDelivery[i][j][t].getSol();
-			LoadPick = loadPickup[i][j][t].getSol();
+	for (auto r : Routes)
+		for (int t : Instance.Periods) {
+			//Fill load for entire route
+			if (travelRoute[r][t].getSol() >= 0.01)
+			{
+				auto route = routes[r]->route;
+				int n = 0;
+				for (auto node : route) {
+					i = node->getId();
+					j = node->getEdge()->getEndNode()->getId();
 
-			nodeHolder[i]->Nodes[t]->addEdge(LoadDel, LoadPick, edge->getEndNode(), 1);
-			nodeHolder[i]->Nodes[t]->TimeServed = node->TimeServed;
-	}
+					//Fill load
+					loadDel = loadDelivery[i][j][t].getSol();
+					loadPick = loadPickup[i][j][t].getSol();
+					nodeHolder[i]->Nodes[t]->addEdge(loadDel, loadPick, nodeHolder[j]->Nodes[t], 1);
+				}
 
-	//Fill time serving
-	
+			}
+
+		}
 }
+
+	
 	
 
 
@@ -2962,7 +2965,6 @@ vector<IRP::NodeIRP*> IRP::Solution::selectPair(IRP::Route * r, int Selection)
 void IRP::Route::insertSubRoute(vector<NodeIRP *> subroute, NodeIRP *u, NodeIRP *v)
 {
 	printRoute();
-	u->Quantity = 200;
 	NodeIRP * start = subroute.front();
 	NodeIRP * end = subroute.back();
 	//remove edges between u and v
@@ -3005,9 +3007,14 @@ void IRP::Solution::insertSubrouteInRoute(IRP::Route * subroute, int period)
 	k = subroute->route[0];
 	l = subroute->route.back();
 
-	for (IRP::Route *r : Routes[period]) {
-		for (NodeIRP *u : r->route) {
-			NodeIRP * v = u->getEdge()->getEndNode();
+	IRP::Route * route = 0;
+	vector<NodeIRP * > Nodes;
+	//Go through all edges, Cheapest insertion
+	u = getDepot(period);
+	for (auto edge : u->getEdges()) {
+		do {
+			v = edge->getEndNode();
+		
 			if (!(u == k && v == l)) {
 
 				C_uk = Instance.getMap()->getTransCost(u->getId(), k->getId(), ModelParameters::TRANSCOST_MULTIPLIER, ModelParameters::SERVICECOST_MULTIPLIER);
@@ -3015,19 +3022,25 @@ void IRP::Solution::insertSubrouteInRoute(IRP::Route * subroute, int period)
 				C_uv = Instance.getMap()->getTransCost(u->getId(), v->getId(), ModelParameters::TRANSCOST_MULTIPLIER, ModelParameters::SERVICECOST_MULTIPLIER);
 
 				tempCost = C_uk + C_lv - C_uv;
+	
+				if (tempCost < minCost) {
+					minCost = tempCost;
+					start = u;
+					end = v;
 				}
-
-			if (tempCost < minCost) {
-				minCost = tempCost;
-				start = u;
-				end = v;
-				path = r;
 			}
+			u = v;
+			edge = u->getEdge();	
 		}
-
+		while (u->getId() != 0);
 	}
-	//Insert route
-	path->insertSubRoute(subroute->route, start, end);
+
+
+	//Insert edges
+	start->Node::deleteEdge(end);
+	start->Node::addEdge(k);
+	l->Node::addEdge(end);
+
 }
 
 IRP::Route * IRP::Solution::getSubroute(vector<NodeIRP*> nodes)
@@ -3042,6 +3055,11 @@ IRP::Route * IRP::Solution::getSubroute(vector<NodeIRP*> nodes)
 	return route;
 }
 
+void IRP::Route::setId(int id)
+{
+	Id = id;
+}
+
 double IRP::Route::getTransportationCost()
 {
 	double transCost = 0;
@@ -3051,10 +3069,24 @@ double IRP::Route::getTransportationCost()
 	for (auto node : route)
 	{
 		i = node->getId();
-		j = node->getEdge()->getEndNode()->getId();
+		if (i == 0)
+			j = route[1]->getId();
+		else
+			j = node->getEdge()->getEndNode()->getId();
+
 		transCost += Instance.map.getTransCost(i, j);
 	}
 	return transCost;
+}
+
+int IRP::Route::getPeriod()
+{
+	return Period;
+}
+
+void IRP::Route::setPeriod(int period)
+{
+	Period = period;
 }
 
 int IRP::Route::getTotalDelivery()
@@ -3087,27 +3119,42 @@ int IRP::Route::getPosition(Node * node)
 
 int IRP::Route::getId()
 {
-	return id;
+	return Id;
 }
 
 //Returns a Aij matrix, 1 if arc ij is traversed, 0 otherwise
 int ** IRP::Route::getRouteMatrix()
 {
 
-	int ** route = new int*[Instance.AllNodes.size()];
+	int ** routeMat = new int*[Instance.AllNodes.size()];
 	for (int i = 0; i < Instance.AllNodes.size(); i++) {
-		route[i] = new int[Instance.AllNodes.size()];
+		routeMat[i] = new int[Instance.AllNodes.size()];
 		for (int j = 0; j < Instance.AllNodes.size(); j++) {
-			route[i][j] = 0;
+			routeMat[i][j] = 0;
 		}
 	}
 
 	for (Node *node : this->route) {
 		int i = node->getId();
-		int j = node->getEdge()->getEndNode()->getId();
-		route[i][j] = 1;
+		int j;
+		if (i == 0)
+			j = this -> route[1]->getId();
+		else
+			j = node->getEdge()->getEndNode()->getId();
+
+		routeMat[i][j] = 1;
 	}
-	return route;
+
+	//print
+	/*for (int i = 0; i < Instance.AllNodes.size(); i++) {
+		cout << "\n";
+		for (int j = 0; j < Instance.AllNodes.size(); j++) {
+			cout << routeMat[i][j] << "\t";
+		}
+	}
+	cout << "\n\n";*/
+
+	return routeMat;
 }
 
 void IRP::Route::printRoute()
@@ -3140,7 +3187,7 @@ IRP::Route::Route(vector<NodeIRP*>& path, IRP & Instance)
 	:
 	Instance(Instance),
 	route(path),
-	id(counter++)
+	Id(counter++)
 {
 }
 
@@ -3320,6 +3367,8 @@ void IRP::NodeIRPHolder::removeMinQuantity()
 			return;
 	}
 }
+
+
 
 void IRP::NodeIRPHolder::addEdge(double loadDel, double loadPick, NodeIRPHolder * NodeHolder, int period, double value)
 {
