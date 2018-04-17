@@ -195,7 +195,7 @@ IRP::Solution * IRP::solveModel()
 	}
 	//XPRSsetcbpreintsol(oprob, acceptInt, &(*this));
 	int d = prob.mipOptimise();
-	//prob.print();
+	prob.print();
 
 	return allocateIRPSolution();
 }
@@ -710,6 +710,7 @@ bool IRP::formulateProblem()
 		for (int t : Periods)
 			objective += HoldCost[i] * inventory[i][t];
 
+	
 	prob.setObj(prob.newCtr("OBJ", objective));  /* Set the objective function */
 	//end objective
 
@@ -1887,6 +1888,58 @@ void IRP::Solution::print(string filename, int load)
 	}
 }
 
+void IRP::Solution::generateRoutes(int period)
+{
+	vector <IRP::Route*> routes = getRoutes(period);
+
+	vector<IRP::Route*> routeHolder;
+	vector<IRP::Route*> generation;
+	if (routes.size() >= 2);
+
+	for (int i = 1; i <= 5; i++) {
+		generation.clear();
+		for (auto oldRoute : routes) {
+			//copy old route to new route
+			for (auto a : routes)
+				a->printPlot("Routes/test" + to_string(a->getId()));
+
+			auto route = new Route(*oldRoute);
+			
+			int r;
+			do
+				r = rand() & (routes.size() - 1);
+			while (routes[r]->getId() != route->getId());
+
+			route->mergeRoute(routes[rand() % (routes.size() - 1) + 1]);
+
+			//Remove parts of the long route
+			int size = 2;
+			route->removeSubroute(size);
+
+			//Ensure route is time feasible
+			while (!route->isFeasible())
+				route->removeSubroute(1);
+
+			generation.push_back(route);
+			route->printPlot("Routes/test" + to_string(route->getId()));
+			routeHolder.push_back(route);
+		}
+	}
+
+	//print all routes
+	int i = 1;
+	for (auto route : routeHolder) {
+		route->printPlot("Routes/route" + to_string(i));
+		i++;
+	}
+
+	//Solve route problem
+	IRP::RouteProblem routeProb(Instance, routeHolder);
+	routeProb.formulateRouteProblem(ModelParameters::HIGHEST_TOTALCOST);
+	routeProb.lockRoutes();
+	routeProb.solveProblem(this);
+}
+
 //Returns the visited nodes in a period
 vector<IRP::NodeIRP*> IRP::Solution::getVisitedNodes(int period)
 {
@@ -2086,22 +2139,25 @@ void  IRP::Solution::solveInventoryProblem()
 void IRP::Solution::insertCustomer(int customerID, int period)
 {
 	vector<NodeIRP *> nodes = getCustomer(customerID);
-	Route * subroute = getSubroute(nodes);
+	createSubroute(nodes);
 			
 	cout << "Old routes in " << period << "\n";
 	for (auto route : getRoutes(period)) {
 		route->printRoute();
 	}
-	insertSubrouteInRoute(subroute, period);
+	insertSubrouteInRoute(nodes, period);
 	
 	cout << "New routes in " << period <<"\n";
 	for (auto route : getRoutes(period)) {
 		route->printRoute();
+		
 	}
 
 	//Reoptimize inventory
 	solveInventoryProblem();
 }
+
+
 
 vector<IRP::NodeIRP*> IRP::Solution::getCustomer(int id)
 {
@@ -2593,7 +2649,6 @@ IRP::Solution * IRP::RouteProblem::solveProblem(IRP::Solution * sol)
 	//If no solution, allocate a new solution
 	if (sol == 0) {
 		sol = Instance.allocateSolution(Instance);
-		int a = 5;
 	}
 	
 	updateSolution(sol);
@@ -2964,77 +3019,151 @@ vector<IRP::NodeIRP*> IRP::Solution::selectPair(IRP::Route * r, int Selection)
 	return position;
 }*/
 
-void IRP::Route::insertSubRoute(vector<NodeIRP *> subroute, NodeIRP *u, NodeIRP *v)
+void IRP::Route::insertSubroute(vector<NodeIRP *> subroute)
 {
 	printRoute();
+	double minCost = 100000;
+	auto nodes = cheapestInsertion(subroute, minCost);
 	NodeIRP * start = subroute.front();
 	NodeIRP * end = subroute.back();
 	//remove edges between u and v
-	u->deleteEdges();
+	auto u = nodes.front();
+	auto v = nodes.back();
+    u->deleteEdges();
 
 	//Add edges
 	u->Node::addEdge(start);
 	end->Node::addEdge(v);
 
-	int position = getPosition(start);
+	//fix route
+	route.resize(route.size() + subroute.size());
 
 	//Update the vector containing the route
-	for (int i = 0; i < subroute.size(); i++) {
-		route.insert(route.begin() + position + i, subroute[i]);
+	u = route.front();
+	int position = 1;
+	while(u->getId() != 0) {
+		u = u->getEdge()->getEndNode();
+		route[position] = u;
 	}
 	printRoute();
 }
 
-
-//Uses cheapest insertion heurestic for all routes in the period
-void IRP::Solution::insertSubrouteInRoute(IRP::Route * subroute, int period)
+//Returns nodes to be connected for cheapest removal
+vector<IRP::NodeIRP*> IRP::Route::cheapestRemoval(int subroutesize, double &minCost)
 {
-	double minCost = 100000;
+	vector<NodeIRP * > Nodes;
+	Nodes.resize(2);
+	//Nodes to store best insertion
+	//First and last node in route to insert
+	NodeIRP * k;
+	NodeIRP * l;
+	
+
 	double tempCost = 0;
-	IRP::Route * path = 0;
+	NodeIRP *u;
+	NodeIRP * v = 0;
 	double C_uk;
 	double C_lv;
 	double C_uv;
+
+	for (int i = 0; i < route.size() - subroutesize; i++) {
+		u = route[i];
+		k = u->getEdge()->getEndNode();
+		l = route[i + subroutesize];
+		v = l->getEdge()->getEndNode();
+		C_uk = Instance.getMap()->getTransCost(u->getId(), k->getId(), ModelParameters::TRANSCOST_MULTIPLIER, ModelParameters::SERVICECOST_MULTIPLIER);
+		C_lv = Instance.getMap()->getTransCost(l->getId(), v->getId(), ModelParameters::TRANSCOST_MULTIPLIER, ModelParameters::SERVICECOST_MULTIPLIER);
+		C_uv = Instance.getMap()->getTransCost(u->getId(), v->getId(), ModelParameters::TRANSCOST_MULTIPLIER, ModelParameters::SERVICECOST_MULTIPLIER);
+
+		tempCost = C_uv - C_uk - C_lv;
+
+		if (tempCost < minCost) {
+			minCost = tempCost;
+			Nodes[0] = u;
+			Nodes[1] = v;
+		}
+		u = v;
+	}
+
+	return Nodes;
+}
+
+//Returns empty vector if it doesn't beat the minCost
+vector<IRP::NodeIRP*> IRP::Route::cheapestInsertion(vector<NodeIRP*> subroute, double &minCost)
+{
+	vector<NodeIRP * > Nodes;
+	Nodes.resize(2);
+	//Nodes to store best insertion
+	//First and last node in route to insert
+	NodeIRP * k;
+	NodeIRP * l;
+	k = subroute.front();
+	l = subroute.back();
+
+	double tempCost = 0;
+	NodeIRP * v = 0;
+	double C_uk;
+	double C_lv;
+	double C_uv;
+
+	for (auto u : route) {
+		v = u->getEdge()->getEndNode();
+		C_uk = Instance.getMap()->getTransCost(u->getId(), k->getId(), ModelParameters::TRANSCOST_MULTIPLIER, ModelParameters::SERVICECOST_MULTIPLIER);
+		C_lv = Instance.getMap()->getTransCost(l->getId(), v->getId(), ModelParameters::TRANSCOST_MULTIPLIER, ModelParameters::SERVICECOST_MULTIPLIER);
+		C_uv = Instance.getMap()->getTransCost(u->getId(), v->getId(), ModelParameters::TRANSCOST_MULTIPLIER, ModelParameters::SERVICECOST_MULTIPLIER);
+
+		tempCost = C_uk + C_lv - C_uv;
+
+		if (tempCost < minCost) {
+
+			minCost = tempCost;
+			Nodes[0] = u;
+			Nodes[1] = v;
+		}
+		u = v;
+	}
+
+	return Nodes;
+}
+
+
+//Uses cheapest insertion heurestic for all routes in the period
+void IRP::Solution::insertSubrouteInRoute(vector<NodeIRP*> subroute, int period)
+{
+	IRP::Route * path = 0;
+	double minCost = 100000;
+	double tempCost;
 	//Nodes to store best insertion
 	NodeIRP *start = 0;
 	NodeIRP *end= 0;
 
 	NodeIRP * u = 0;
 	NodeIRP * v = 0;
-	
-	//First and last node in route to insert
-	NodeIRP * k;
-	NodeIRP * l;
-	k = subroute->route[0];
-	l = subroute->route.back();
+	NodeIRP * k = subroute.front();
+	NodeIRP * l = subroute.back();
 
 	IRP::Route * route = 0;
 	vector<NodeIRP * > Nodes;
-	//Go through all edges, Cheapest insertion
+	//Go through all routes. Cheapest insertion
 
-
-	u = getDepot(period);
 	for (auto R : getRoutes(period)) {
 		if (!R->coincide(subroute)) {
-			for (auto u : R->route) {
-				v = u->getEdge()->getEndNode();
-				C_uk = Instance.getMap()->getTransCost(u->getId(), k->getId(), ModelParameters::TRANSCOST_MULTIPLIER, ModelParameters::SERVICECOST_MULTIPLIER);
-				C_lv = Instance.getMap()->getTransCost(l->getId(), v->getId(), ModelParameters::TRANSCOST_MULTIPLIER, ModelParameters::SERVICECOST_MULTIPLIER);
-				C_uv = Instance.getMap()->getTransCost(u->getId(), v->getId(), ModelParameters::TRANSCOST_MULTIPLIER, ModelParameters::SERVICECOST_MULTIPLIER);
+			tempCost = minCost;
+			Nodes = R->cheapestInsertion(subroute, tempCost);
 
-				tempCost = C_uk + C_lv - C_uv;
-
+			//If new cheapest insertion
 				if (tempCost < minCost) {
-
+					u = Nodes.front();
+					v = Nodes.back();
 					minCost = tempCost;
 					start = NodeHolder[u->getId()]->Nodes[period];
 					end = NodeHolder[v->getId()]->Nodes[period];
 				}
-			u = v;
-			}
-
+		
 		}
+
 	}
+
 	//Insert edges
 	start->Node::deleteEdge(end);
 	start->Node::addEdge(k);
@@ -3042,17 +3171,16 @@ void IRP::Solution::insertSubrouteInRoute(IRP::Route * subroute, int period)
 
 }
 
-IRP::Route * IRP::Solution::getSubroute(vector<NodeIRP*> nodes)
+void IRP::Solution::createSubroute(vector<NodeIRP*> nodes)
 {
 	//Create route
 	for (int u = 0; u < nodes.size() - 1; u++) {
 		nodes[u]->deleteEdges();
 		nodes[u]->Node::addEdge(nodes[u + 1]);
 	}
-
-	Route * route = new Route(nodes, Instance);
-	return route;
 }
+
+
 
 void IRP::Route::setId(int id)
 {
@@ -3083,14 +3211,29 @@ int IRP::Route::getPeriod()
 	return Period;
 }
 
+bool IRP::Route::isFeasible()
+{
+	double totalTime = 0;
+	int u;
+	int v;
+
+	for (auto node : route) {
+		u = node->getId();
+		v = node->getEdge()->getEndNode()->getId();
+		totalTime += Instance.map.getTravelTime(u, v, ModelParameters::TRAVELTIME_MULTIPLIER, ModelParameters::SERVICETIME);
+	}
+	
+	return totalTime <= ModelParameters::maxTime;
+}
+
 void IRP::Route::setPeriod(int period)
 {
 	Period = period;
 }
 
-bool IRP::Route::coincide(Route * r)
+bool IRP::Route::coincide(vector<NodeIRP*> r)
 {
-	for (auto node : r->route) {
+	for (auto node : r) {
 		for (auto thisNode : route)
 			if (node->getId() == thisNode->getId())
 				return true;
@@ -3112,6 +3255,37 @@ int IRP::Route::getTotalPickup()
 {
 	return 0;
 }
+
+void IRP::Route::mergeRoute(IRP::Route * mergeIn)
+{
+	//Remove depot
+	vector<NodeIRP*>nodes;
+	for (auto node : mergeIn->route) {
+		if(node->getId()!= 0)
+			nodes.push_back(node);
+	}
+
+	double minCost = 100000;
+	vector<NodeIRP*> holder = cheapestInsertion(nodes, minCost);
+
+	insert(holder.front(), holder.back(), nodes);
+}
+
+void IRP::Route::insert(NodeIRP * start, NodeIRP * end, vector<NodeIRP*> subroute)
+{
+	auto k = subroute.front();
+	auto l = subroute.back();
+	//Insert edges
+	start->Node::deleteEdge(end);
+	start->Node::addEdge(k);
+	l->Node::deleteEdges();
+	l->Node::addEdge(end);
+
+	updateRoute();
+	//Update route positions
+}
+
+
 
 int IRP::Route::getPosition(Node * node)
 {
@@ -3166,6 +3340,26 @@ int ** IRP::Route::getRouteMatrix()
 	return routeMat;
 }
 
+void IRP::Route::printPlot(string filename)
+{
+	/*auto customer =  Instance.map.getCustomer(6);
+	auto delnode = new Node(customer->getId());
+	auto pickNode = new Node(Instance.map.getPickupNode(customer));
+	delnode->addEdge(pickNode);
+	
+	*/vector<Node*> graph;
+
+	//graph.push_back(delnode);
+	//graph.push_back(pickNode);*/
+
+	for (Node* node : route)
+	{
+		graph.push_back(node);
+	}
+
+	graphAlgorithm::printGraph(graph, Instance, filename, ModelParameters::X);
+}
+
 void IRP::Route::printRoute()
 {
 	cout << "\n";
@@ -3189,6 +3383,47 @@ double IRP::Route::getResidualCapacity()
 	}
 	return  Instance.Capacity - maxLoad;
 }
+
+void IRP::Route::removeSubroute(int selection)
+{
+	vector<NodeIRP*> Nodes = getSubroute(selection);
+
+	if (route.size() - Nodes.size() >= 2) {
+
+		//Delete edges and add edges
+			
+	Nodes.front()->deleteEdges();
+	Nodes.front()->Node::addEdge(Nodes.back());
+
+	updateRoute();
+		
+	}
+}
+
+void IRP::Route::updateRoute()
+{
+	route.resize(1);
+	auto u = route.front()->getEdge()->getEndNode();
+	int position = 1;
+	while (u->getId() != 0) {
+		route.push_back(u);
+		position++;
+		u = u->getEdge()->getEndNode();
+	}
+
+}
+
+
+
+vector<IRP::NodeIRP*> IRP::Route::getSubroute(int selection)
+{
+	double minCost = 10000;
+	vector<IRP::NodeIRP*> nodes = cheapestRemoval(2, minCost);
+	return nodes;
+}
+
+
+
 
 int IRP::Route::counter = 1;
 

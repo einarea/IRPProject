@@ -159,19 +159,28 @@ public:
 		IRP & Instance;
 		double getTransportationCost();
 		int getPeriod();
+		bool isFeasible();
 		void setPeriod(int period);
-		bool coincide(Route * r);
+		bool coincide(vector<NodeIRP*> r);
 		//int removeNode(NodeIRP*, IRP::Route *);
 		//void insertSubRoute(vector<NodeIRP *>, NodeIRP * start, NodeIRP * end);
 	
-		void insertSubRoute(vector<NodeIRP *> subroute, NodeIRP *u, NodeIRP *v);
+		void insertSubroute(vector<NodeIRP *> subroute);
+		vector<IRP::NodeIRP*> cheapestInsertion(vector<NodeIRP*> subroute, double &minCost);
+		vector<IRP::NodeIRP*> cheapestRemoval(int subroutesize, double &maxCost);
 		int getTotalDelivery();
 		int getTotalPickup();
+		void mergeRoute(IRP::Route * mergeIn);
+		void insert(NodeIRP * start, NodeIRP * end, vector<NodeIRP *> subroute);
 		int getPosition(Node * node);
 		int getId();
 		int ** getRouteMatrix();
+		void printPlot(string filename);
 		void printRoute();
 		double getResidualCapacity();
+		void removeSubroute(int selection);
+		void updateRoute();
+		vector<NodeIRP*> getSubroute(int selection);
 		Route(vector <NodeIRP*> & path, IRP &instance);
 	
 		//Graph 
@@ -269,6 +278,7 @@ public:
 		//void buildGraph(vector<Node*> &graph, int t);
 		void print(string filname,int weight);
 
+		void generateRoutes(int period);
 		vector <NodeIRP *> getVisitedNodes(int period);
 		void sort(vector <NodeIRP>*);
 		bool IntegerSolution;
@@ -308,9 +318,10 @@ public:
 		void removeVisit(IRP::Route * route, int selection = 1);
 		void solveInventoryProblem();
 		void insertCustomer(int customerID, int period);
+		void removeCustomer(int customerID, int period);
 		vector<NodeIRP*> getCustomer(int id);
-		void insertSubrouteInRoute(IRP::Route * subroute, int period);
-		IRP::Route * getSubroute(vector<NodeIRP*> nodes);
+		void insertSubrouteInRoute(vector<NodeIRP*> subroute, int period);
+		void createSubroute(vector<NodeIRP*> nodes);
 
 		private:
 		//Integer solutions
