@@ -1857,14 +1857,17 @@ vector<IRP::Route*> IRP::Solution::getRoutes(int period)
 	vector <NodeIRP*> path;
 	for (auto edge : getDepot(period)->getEdges()) {
 		auto u = new NodeIRP(0);
-		u->Node::addEdge(edge);
+		v = new NodeIRP(edge->getEndNode()->getId());
+		u->Node::addEdge(v);
 		//Depth first search 
 		path.clear();
 		path.push_back(u);
-		u = new NodeIRP(*edge->getEndNode());
+		u = v;
 		do {
 			path.push_back(u);
-			v = u->getEdge()->getEndNode();
+			edge = NodeHolder[u->getId()]->Nodes[period]->getEdge();
+			v = new NodeIRP(edge->getEndNode()->getId());
+			u->Node::addEdge(v);
 			u = v;
 
 		} while (u->getId() != 0); //while not depot
@@ -1903,15 +1906,15 @@ void IRP::Solution::generateRoutes(int period)
 			for (auto a : routes)
 				a->printPlot("Routes/test" + to_string(a->getId()));
 
-			auto route = new Route(*oldRoute);
+			auto route = oldRoute->copyRoute();
 			
 			int r;
-			do
+			/*do
 				r = rand() & (routes.size() - 1);
-			while (routes[r]->getId() != route->getId());
+			while (routes[r]->getId() != route->getId());*/
 
 			route->mergeRoute(routes[rand() % (routes.size() - 1) + 1]);
-
+			route->printPlot("Routes/test2" + to_string(route->getId()));
 			//Remove parts of the long route
 			int size = 2;
 			route->removeSubroute(size);
@@ -3019,6 +3022,20 @@ vector<IRP::NodeIRP*> IRP::Solution::selectPair(IRP::Route * r, int Selection)
 	return position;
 }*/
 
+IRP::Route * IRP::Route::copyRoute()
+{
+	vector<NodeIRP*> path;
+	path.resize(route.size());
+	for (int i = 0; i < route.size(); i++) {
+			auto u = new NodeIRP(route[i]->getId());
+			path[i] = u;
+			auto id = route[i]->getEdge()->getEndNode()->getId();
+			auto v = new NodeIRP(id);
+			u->Node::addEdge(v);
+		}
+	return new Route(path, Instance);
+}
+
 void IRP::Route::insertSubroute(vector<NodeIRP *> subroute)
 {
 	printRoute();
@@ -3267,7 +3284,7 @@ void IRP::Route::mergeRoute(IRP::Route * mergeIn)
 
 	double minCost = 100000;
 	vector<NodeIRP*> holder = cheapestInsertion(nodes, minCost);
-
+	holder[0]->Quantity = 23;
 	insert(holder.front(), holder.back(), nodes);
 }
 
@@ -3281,6 +3298,7 @@ void IRP::Route::insert(NodeIRP * start, NodeIRP * end, vector<NodeIRP*> subrout
 	l->Node::deleteEdges();
 	l->Node::addEdge(end);
 
+	//route[0]->deleteEdges();
 	updateRoute();
 	//Update route positions
 }
@@ -3404,6 +3422,7 @@ void IRP::Route::updateRoute()
 {
 	route.resize(1);
 	auto u = route.front()->getEdge()->getEndNode();
+	auto t = route.back();
 	int position = 1;
 	while (u->getId() != 0) {
 		route.push_back(u);

@@ -165,6 +165,7 @@ public:
 		//int removeNode(NodeIRP*, IRP::Route *);
 		//void insertSubRoute(vector<NodeIRP *>, NodeIRP * start, NodeIRP * end);
 	
+		Route * copyRoute();
 		void insertSubroute(vector<NodeIRP *> subroute);
 		vector<IRP::NodeIRP*> cheapestInsertion(vector<NodeIRP*> subroute, double &minCost);
 		vector<IRP::NodeIRP*> cheapestRemoval(int subroutesize, double &maxCost);
