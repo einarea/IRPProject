@@ -134,7 +134,7 @@ void graphAlgorithm::printGraph(vector<Node*>& graph, IRP &instance, string file
 					str = str + "'-' with vectors notitle lw 2 lt rgb '" + color[i] + "' filled, ";
 
 			if (!nodePoints.empty())
-				str = str + "'-' with points lt rgb '#16a085' pointtype 7 pointsize 3.3 notitle \n";
+				str = str + "'-' with points lt rgb '#e74c3c' pointtype 7 pointsize 2.5 notitle \n";
 
 			gp << str;
 

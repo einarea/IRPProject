@@ -162,6 +162,9 @@ public:
 		bool isFeasible();
 		void setPeriod(int period);
 		bool coincide(vector<NodeIRP*> r);
+		void createSeperateRoute(Route *);
+		bool inRoute(Node *);
+		bool isDuplicate(Route * r);
 		//int removeNode(NodeIRP*, IRP::Route *);
 		//void insertSubRoute(vector<NodeIRP *>, NodeIRP * start, NodeIRP * end);
 	
@@ -279,7 +282,8 @@ public:
 		//void buildGraph(vector<Node*> &graph, int t);
 		void print(string filname,int weight);
 
-		void generateRoutes(int period);
+		void mergeRoutes(int position, Route * route, vector<Route*> &Routes, vector<Route*> &newRoutes);
+		void generateRoutes(vector<IRP::Route* >&routeHolder);
 		vector <NodeIRP *> getVisitedNodes(int period);
 		void sort(vector <NodeIRP>*);
 		bool IntegerSolution;
@@ -363,6 +367,7 @@ public:
 		void addRoutesToVector();
 		void updateSolution(IRP::Solution * sol);
 		void lockRoutes();
+		
 
 		int ShiftPeriod;
 	

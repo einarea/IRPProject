@@ -1891,44 +1891,111 @@ void IRP::Solution::print(string filename, int load)
 	}
 }
 
-void IRP::Solution::generateRoutes(int period)
+void IRP::Solution::mergeRoutes(int position, Route * route, vector<Route*>& Routes, vector<Route*> &newRoutes)
 {
-	vector <IRP::Route*> routes = getRoutes(period);
+	
+	if (position < Routes.size()-1){
+		mergeRoutes(position + 1, route, Routes, newRoutes);
+	}
+	auto newroute = route->copyRoute();
+	newroute->mergeRoute(Routes[position]);
 
-	vector<IRP::Route*> routeHolder;
-	vector<IRP::Route*> generation;
-	if (routes.size() >= 2);
+	//newroute->printPlot("Routes/afterMerge" + to_string(rand()%100));
 
-	for (int i = 1; i <= 5; i++) {
-		generation.clear();
-		for (auto oldRoute : routes) {
-			//copy old route to new route
-			for (auto a : routes)
-				a->printPlot("Routes/test" + to_string(a->getId()));
+	//Remove random size of the new route
+	int averge = (int)round((route->route.size() + Routes[position]->route.size())/ 2);
+	int averageDifference = newroute->route.size() - (int)round((route->route.size() + Routes[position]->route.size()) / 2);;
 
-			auto route = oldRoute->copyRoute();
-			
-			int r;
-			/*do
-				r = rand() & (routes.size() - 1);
-			while (routes[r]->getId() != route->getId());*/
+	int max = min(averageDifference+2, newroute->route.size()-2);
+	int min = max(averageDifference - 2, 0);
 
-			route->mergeRoute(routes[rand() % (routes.size() - 1) + 1]);
-			route->printPlot("Routes/test2" + to_string(route->getId()));
-			//Remove parts of the long route
-			int size = 2;
-			route->removeSubroute(size);
+	int remove = rand() % (max-min + 1) + min;
+	newroute->removeSubroute(remove);
 
-			//Ensure route is time feasible
-			while (!route->isFeasible())
-				route->removeSubroute(1);
+	//Ensure route is time feasible
+	while (!newroute->isFeasible())
+		newroute->removeSubroute(1);
 
-			generation.push_back(route);
-			route->printPlot("Routes/test" + to_string(route->getId()));
-			routeHolder.push_back(route);
+	//Remove duplicates
+
+	bool duplicate = false;
+	//Check old routes
+	for (auto r : Routes) {
+		if (newroute->isDuplicate(r)) {
+			duplicate = true;
 		}
 	}
 
+	//Check new routes
+	for (auto r: newRoutes) {
+		if (newroute->isDuplicate(r)) {
+			duplicate = true;
+		}
+	}
+	//newroute->printPlot("Routes/afterRemoval" + to_string(rand() % 100));
+	if(!duplicate)
+		newRoutes.push_back(newroute);
+}
+
+void IRP::Solution::generateRoutes(vector<IRP::Route* >&routeHolder)
+{
+	vector <IRP::Route*> routes = getAllRoutes();
+
+	int count = 0;
+	//push back exisiting routes
+	for (auto r : routes) {
+		routeHolder.push_back(r);
+		r->setId(count);
+		count++;
+	}
+
+	//Plot initial routes
+	/*for (auto a : routes) {
+		a->printPlot("Routes/initial" + to_string(a->getId()));
+	}*/
+	vector<IRP::Route*> generation;
+	int jj = 1;
+	if (routes.size() >= 2) {
+
+		for (int i = 1; i <= 2; i++) {
+			generation.clear();
+
+			vector<IRP::Route*> newRoutes;
+			//Recursively merge
+			for (int position = 0; position < routes.size() - 1; position++) {
+				mergeRoutes(position + 1, routes[position], routes, newRoutes);
+			}
+
+			//Plot merged routes
+		/*	for (auto a : newRoutes) {
+				a->printPlot("Routes/newroute" + to_string(jj) + to_string(i));
+				jj++;
+			}*/
+
+			//Remove duplicates
+			bool duplicate = false;
+			//Check old routes
+			
+			for(auto newr : newRoutes){
+				for (auto r : routeHolder) {
+					if (newr->isDuplicate(r))
+						duplicate = true;
+				}
+					
+				if (!duplicate) {
+					newr->setId(count);
+					count++;
+					routeHolder.push_back(newr);
+				}
+
+			}
+
+			int nn = 0;
+	
+			routes = newRoutes;
+		}
+
+	}
 	//print all routes
 	int i = 1;
 	for (auto route : routeHolder) {
@@ -1936,11 +2003,7 @@ void IRP::Solution::generateRoutes(int period)
 		i++;
 	}
 
-	//Solve route problem
-	IRP::RouteProblem routeProb(Instance, routeHolder);
-	routeProb.formulateRouteProblem(ModelParameters::HIGHEST_TOTALCOST);
-	routeProb.lockRoutes();
-	routeProb.solveProblem(this);
+
 }
 
 //Returns the visited nodes in a period
@@ -2636,6 +2699,24 @@ void IRP::RouteProblem::lockRoutes()
 	}
 }
 
+bool IRP::Route::isDuplicate(Route * r)
+{
+	if (r->route.size() != route.size())
+		return false;
+
+	int i = 0;
+	while (r->route[i]->getId() == route[i]->getId()) {
+		if (route[i]->getEdge()->getEndNode()->getId() == 0)
+				return true;
+		i++;
+	};
+
+	return false;
+}
+
+
+
+
 
 
 void IRP::RouteProblem::lockRoute(IRP::Route * route)
@@ -3026,12 +3107,13 @@ IRP::Route * IRP::Route::copyRoute()
 {
 	vector<NodeIRP*> path;
 	path.resize(route.size());
+	auto u = new NodeIRP(route[0]->getId());
 	for (int i = 0; i < route.size(); i++) {
-			auto u = new NodeIRP(route[i]->getId());
 			path[i] = u;
 			auto id = route[i]->getEdge()->getEndNode()->getId();
 			auto v = new NodeIRP(id);
 			u->Node::addEdge(v);
+			u = v;
 		}
 	return new Route(path, Instance);
 }
@@ -3258,6 +3340,35 @@ bool IRP::Route::coincide(vector<NodeIRP*> r)
 	return false;
 }
 
+void IRP::Route::createSeperateRoute(Route * r)
+{
+	auto prev = r->route[0];
+	for (auto node : r->route) {
+		if (node->getId() != 0) {
+
+			if (inRoute(node)) {
+				//Remove edges
+				prev->deleteEdges();
+				prev->Node::addEdge(node->getEdge()->getEndNode());
+			}
+			else
+				prev = node;
+		}
+		
+	}
+
+	r->updateRoute();
+}
+
+bool IRP::Route::inRoute(Node * n)
+{
+	for (auto node : route)
+		if (node->getId() == n->getId())
+			return true;
+
+	return false;
+}
+
 int IRP::Route::getTotalDelivery()
 {
 	double totalDelivery = 0;
@@ -3275,17 +3386,22 @@ int IRP::Route::getTotalPickup()
 
 void IRP::Route::mergeRoute(IRP::Route * mergeIn)
 {
-	//Remove depot
-	vector<NodeIRP*>nodes;
-	for (auto node : mergeIn->route) {
-		if(node->getId()!= 0)
-			nodes.push_back(node);
-	}
+	IRP::Route * copy = mergeIn->copyRoute();
+	createSeperateRoute(copy);
 
-	double minCost = 100000;
-	vector<NodeIRP*> holder = cheapestInsertion(nodes, minCost);
-	holder[0]->Quantity = 23;
-	insert(holder.front(), holder.back(), nodes);
+	if (copy->route.size() >= 2) {
+		//Remove depot
+		vector<NodeIRP*>nodes;
+		for (auto node : copy->route) {
+			if (node->getId() != 0)
+				nodes.push_back(node);
+		}
+
+		double minCost = 100000;
+		vector<NodeIRP*> holder = cheapestInsertion(nodes, minCost);
+		holder[0]->Quantity = 23;
+		insert(holder.front(), holder.back(), nodes);
+	}
 }
 
 void IRP::Route::insert(NodeIRP * start, NodeIRP * end, vector<NodeIRP*> subroute)
@@ -3402,9 +3518,9 @@ double IRP::Route::getResidualCapacity()
 	return  Instance.Capacity - maxLoad;
 }
 
-void IRP::Route::removeSubroute(int selection)
+void IRP::Route::removeSubroute(int size)
 {
-	vector<NodeIRP*> Nodes = getSubroute(selection);
+	vector<NodeIRP*> Nodes = getSubroute(size);
 
 	if (route.size() - Nodes.size() >= 2) {
 
@@ -3434,10 +3550,10 @@ void IRP::Route::updateRoute()
 
 
 
-vector<IRP::NodeIRP*> IRP::Route::getSubroute(int selection)
+vector<IRP::NodeIRP*> IRP::Route::getSubroute(int size)
 {
 	double minCost = 10000;
-	vector<IRP::NodeIRP*> nodes = cheapestRemoval(2, minCost);
+	vector<IRP::NodeIRP*> nodes = cheapestRemoval(size, minCost);
 	return nodes;
 }
 
