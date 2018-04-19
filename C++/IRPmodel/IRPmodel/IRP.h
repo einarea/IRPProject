@@ -93,7 +93,7 @@ private:
 	bool formulateProblem();
 
 
-	void buildGraph(vector <Node*> &, int, bool includeDepot, double weight=0.01);
+	
 
 	void printGraph(vector <Node> &);
 
@@ -112,6 +112,7 @@ public:
 	class NodeIRPHolder;
 	class Route;
 
+	void buildGraph(vector <Node*> &, int, bool includeDepot, double weight = 0.01);
 	vector <IRP::Solution *> solutions;
 
 	XPRBvar ** inventory;
@@ -160,6 +161,7 @@ public:
 		double getTransportationCost();
 		int getPeriod();
 		bool isFeasible();
+		Route * generateRoute(Route * );
 		void setPeriod(int period);
 		bool coincide(vector<NodeIRP*> r);
 		void createSeperateRoute(Route *);
@@ -432,6 +434,7 @@ public:
 
 	void updateTabuMatrix(double ** changeMatrix);
 	int getNumOfNodes();
+	void addHoldingCostCtr(double holdingCost);
 	int solCounter;
 	void printMatrix();
 	int getCapacity();

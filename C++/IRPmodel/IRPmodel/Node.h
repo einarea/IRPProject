@@ -28,6 +28,7 @@ public:
 	vector <Edge*> getEdges();
 	void addEdge(double value, Node * child);
 	void addEdge(Edge *);
+	bool hasEdge(Edge *);
 	void addEdge(Node * child);
 	void removeEdge(Node &child);
 	void deleteEdges();

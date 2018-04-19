@@ -70,6 +70,16 @@ void Node::addEdge(Edge* edge)
 	this->Edges.push_back(edge);
 }
 
+bool Node::hasEdge(Edge * checkEdge)
+{
+	for (auto edge : getEdges()) {
+		if (edge->getEndNode()->getId() == checkEdge->getEndNode()->getId())
+			return true;
+	}
+
+	return false;
+}
+
 void Node::addEdge(double value, Node *child)
 {
 	this->Edges.push_back(new Edge(*child, value));

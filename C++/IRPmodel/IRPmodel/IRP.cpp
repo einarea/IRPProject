@@ -98,6 +98,7 @@ int XPRS_CC cbmng(XPRSprob oprob, void * vd)
 			modelInstance->nSubtourCuts += 1;
 			cutId = modelInstance->nSubtourCuts;
 			bprob->addCuts(&cut, 1);
+			cut.print();
 		}
 	}
 	
@@ -183,6 +184,37 @@ IRP::IRP(CustomerIRPDB& db, bool ArcRel, bool maskOn, int ** VisitMask)
 
 IRP::Solution * IRP::solveModel()
 {
+	if (ARC_RELAXED && LPSubtour)
+	{
+		bool isSubtours = false;
+		bool temp = false;
+
+		do {
+			isSubtours = false;
+			prob.mipOptimise();
+			//Check graph for subtours in strong components
+			vector <vector<Node*>> result; //matrix to store strong components
+			vector <Node*> graph;		//Graph to store nodes
+
+			for (int t : Periods) {
+				graph.clear();
+				result.clear();
+				buildGraph(graph, t, false, EDGE_WEIGHT); //Do not include depot in graph			
+				graphAlgorithm::printGraph(graph, *this, "graphSolutions/graph", ModelParameters::X);
+				graphAlgorithm::sepByStrongComp(graph, result);
+				graphAlgorithm::printGraph(graph, *this, "graphSolutions/graph", ModelParameters::X);
+				temp = addSubtourCtr(result, t);
+				if (temp)
+					isSubtours = true;
+			}
+
+		} while (isSubtours);
+
+		return allocateIRPSolution();
+	}
+
+	else
+
 	oprob = prob.getXPRSprob();
 	startTime = XPRB::getTime();
 	
@@ -190,12 +222,13 @@ IRP::Solution * IRP::solveModel()
 	XPRSsetcbnewnode(oprob, cbmngtimeIRP, &(*this));
 
 	if (ARC_RELAXED) {
+
 		XPRSsetcbpreintsol(oprob, acceptIntQuantity, &(*this));
 	
 	}
 	//XPRSsetcbpreintsol(oprob, acceptInt, &(*this));
 	int d = prob.mipOptimise();
-	prob.print();
+//	prob.print();
 
 	return allocateIRPSolution();
 }
@@ -215,8 +248,8 @@ IRP::Solution * IRP::solveLPModel()
 
 			for (int t : Periods) {
 				graph.clear();
-				buildGraph(graph, t, false, EDGE_WEIGHT); //Do not include depot in graph			
-				
+				buildGraph(graph, t, true, EDGE_WEIGHT); //Do not include depot in graph			
+				graphAlgorithm::printGraph(graph, *this, "graphSolutions/graph", ModelParameters::X);
 				graphAlgorithm::sepByStrongComp(graph, result);
 				graphAlgorithm::printGraph(graph, *this, "graphSolutions/graph", ModelParameters::X);
 				temp = addSubtourCtr(result, t);
@@ -352,7 +385,7 @@ void IRP::fillSolution(IRP::Solution * sol)
 		for (int j : AllNodes) {
 			if (map.inArcSet(i, j)) {
 				for (int t : Periods) {
-					if (x[i][j][t].getSol() >= 0.01) {
+					if (x[i][j][t].getSol() >= 0.0001) {
 						if (ModelParameters::Simultaneous) {
 							if (map.isColocated(i, j) && simAction[i][j][t].getSol() <= 0.01) {
 								value = 0;
@@ -1891,50 +1924,51 @@ void IRP::Solution::print(string filename, int load)
 	}
 }
 
-void IRP::Solution::mergeRoutes(int position, Route * route, vector<Route*>& Routes, vector<Route*> &newRoutes)
+void IRP::Solution::mergeRoutes(int position, Route * route, vector<Route*> &Routes, vector<Route*> &newRoutes)
 {
-	
-	if (position < Routes.size()-1){
+	if (position < Routes.size() - 1) {
 		mergeRoutes(position + 1, route, Routes, newRoutes);
 	}
-	auto newroute = route->copyRoute();
-	newroute->mergeRoute(Routes[position]);
 
-	//newroute->printPlot("Routes/afterMerge" + to_string(rand()%100));
-
-	//Remove random size of the new route
-	int averge = (int)round((route->route.size() + Routes[position]->route.size())/ 2);
-	int averageDifference = newroute->route.size() - (int)round((route->route.size() + Routes[position]->route.size()) / 2);;
-
-	int max = min(averageDifference+2, newroute->route.size()-2);
-	int min = max(averageDifference - 2, 0);
-
-	int remove = rand() % (max-min + 1) + min;
-	newroute->removeSubroute(remove);
-
-	//Ensure route is time feasible
-	while (!newroute->isFeasible())
-		newroute->removeSubroute(1);
-
+	auto newroute = route->generateRoute(Routes[position]);
+	
 	//Remove duplicates
-
 	bool duplicate = false;
-	//Check old routes
-	for (auto r : Routes) {
-		if (newroute->isDuplicate(r)) {
-			duplicate = true;
+	//Try to make it uniqe or delete it
+	for (int i = 1; i <= 5; i++){
+		for (auto r : Routes) {
+			if (newroute->isDuplicate(r)) {
+				if(i == 5)
+					duplicate = true;
+				else {
+					int a = rand() % (Routes.size() - 1);
+					newroute = newroute->generateRoute(Routes[a]);
+				}
+				break;
+			}	
 		}
 	}
 
-	//Check new routes
-	for (auto r: newRoutes) {
-		if (newroute->isDuplicate(r)) {
-			duplicate = true;
+	for (int i = 1; i <= 5; i++) {
+		for (auto r : newRoutes) {
+			if (newroute->isDuplicate(r)) {
+				if (i == 5)
+					duplicate = true;
+				else {
+
+					int a = rand() % (Routes.size() - 1);
+					newroute = newroute->generateRoute(Routes[a]);
+				}
+				break;
+			}
 		}
 	}
+
+
 	//newroute->printPlot("Routes/afterRemoval" + to_string(rand() % 100));
-	if(!duplicate)
+	if (!duplicate) {
 		newRoutes.push_back(newroute);
+	}
 }
 
 void IRP::Solution::generateRoutes(vector<IRP::Route* >&routeHolder)
@@ -1967,10 +2001,28 @@ void IRP::Solution::generateRoutes(vector<IRP::Route* >&routeHolder)
 			}
 
 			//Plot merged routes
-		/*	for (auto a : newRoutes) {
+			for (auto a : newRoutes) {
 				a->printPlot("Routes/newroute" + to_string(jj) + to_string(i));
 				jj++;
-			}*/
+			}
+
+			//Plot graph
+			vector<Node*> graph;
+			for (int id : Instance.AllNodes)
+				graph.push_back(new Node(id));
+
+			for (auto r : routes) {
+				for (Node* node : r->route) {
+					for (Node::Edge *edge : node->getEdges()) {
+						if (!graph[node->getId()]->hasEdge(edge))
+							graph[node->getId()]->addEdge(edge->getEndNode());
+					}
+				}
+			}
+
+			//Delete 
+
+			graphAlgorithm::printGraph(graph, Instance, "graphSolutions/routegraph", ModelParameters::X);
 
 			//Remove duplicates
 			bool duplicate = false;
@@ -2650,6 +2702,32 @@ int IRP::getNumOfNodes()
 	return Nodes.size();
 }
 
+void IRP::addHoldingCostCtr(double holdingCost)
+{
+	XPRBexpr p1 = 0;
+
+	for (int i : Nodes)
+		for(int t : Periods)
+			p1 += inventory[i][t];
+
+	prob.newCtr(XPRBnewname("HoldingCost"), p1 <= holdingCost * 1.1);
+	p1 = 0;
+
+	//Delete current objective
+	prob.delCtr(prob.getCtrByName("OBJ"));
+
+	//Set transportation costs as objective
+	for (int i : AllNodes)
+		for (int j : AllNodes)
+			if (map.inArcSet(i, j)) {
+				for (int t : Periods)
+					p1 += map.getTransCost(i, j) * x[i][j][t];
+			}
+
+	prob.setObj(prob.newCtr("OBJ", p1));
+	prob.print();
+}
+
 void IRP::RouteProblem::addRoutesToVector()
 {	
 	//Update set of routes
@@ -2845,18 +2923,20 @@ int IRP::getCapacity()
 void IRP::useIPSubtourElimination()
 {
 	EDGE_WEIGHT = 0.5;
-	alpha = 0.5;
+	alpha = 0.3;
 
 	oprob = prob.getXPRSprob();
 
 	//Enable subtour elimination
 	prob.setCutMode(1); // Enable the cut mode
-	XPRSsetcbcutmgr(oprob, cbmng, &(*this));
-	XPRSsetcbpreintsol(oprob, acceptInt, &(*this));
+	//XPRSsetcbcutmgr(oprob, cbmng, &(*this));
+	//XPRSsetcbpreintsol(oprob, acceptInt, &(*this));
 }
 
 void IRP::useLPSubtourElimination()
 {
+	EDGE_WEIGHT = 0.5;
+	alpha = 0.3;
 	LPSubtour = true;
 }
 
@@ -2946,16 +3026,26 @@ double IRP::Solution::getHoldingCost(int period)
 double IRP::Solution::getTransportationCost(int t)
 {
 	double TravelCost = 0;
+	double TravelCost2 = 0;
 	for (NodeIRPHolder * n : NodeHolder) {
 		for (Node::Edge * edge : n->getEdges(t)) {
 			int i = n->getId();
 			int j = edge->getEndNode()->getId();
 			double value = edge->getValue();
 			TravelCost = TravelCost + Instance.map.getTransCost(i, j)*value;
+
+		
 		}
 	}
 
+	for(int i : Instance.AllNodes)
+		for(int j : Instance.AllNodes)
+			if (Instance.map.inArcSet(i, j)) {
+				TravelCost2 = TravelCost2 + Instance.x[i][j][t].getSol()* Instance.map.getTransCost(i, j);
+			}
+
 	return TravelCost;
+
 }
 
 /*void IRP::Solution::removeVisit(IRP::Route * route, int selection)
@@ -3325,6 +3415,30 @@ bool IRP::Route::isFeasible()
 	return totalTime <= ModelParameters::maxTime;
 }
 
+IRP::Route * IRP::Route::generateRoute(Route * r)
+{
+	auto newroute = copyRoute();
+	newroute->mergeRoute(r);
+
+	//newroute->printPlot("Routes/afterMerge" + to_string(rand()%100));
+
+	//Remove random size of the new route
+	int averge = (int)round((route.size() + r->route.size()) / 2);
+	int averageDifference = newroute->route.size() - (int)round((route.size() + r->route.size()) / 2);
+
+	int max = min(averageDifference + 2, newroute->route.size() - 2);
+	int min = max(averageDifference - 2, 0);
+
+	int remove = rand() % (max - min + 1) + min;
+	newroute->removeSubroute(remove);
+
+	//Ensure route is time feasible
+	while (!newroute->isFeasible())
+		newroute->removeSubroute(1);
+
+	return newroute;
+}
+
 void IRP::Route::setPeriod(int period)
 {
 	Period = period;
@@ -3399,7 +3513,6 @@ void IRP::Route::mergeRoute(IRP::Route * mergeIn)
 
 		double minCost = 100000;
 		vector<NodeIRP*> holder = cheapestInsertion(nodes, minCost);
-		holder[0]->Quantity = 23;
 		insert(holder.front(), holder.back(), nodes);
 	}
 }
