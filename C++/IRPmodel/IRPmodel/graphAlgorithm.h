@@ -16,6 +16,8 @@ public:
 	static void getRoutes(vector<Node*> &graph, vector<vector<Node*>> &routes);
 	void printToLatex(string * Columns, string * Rows, double ** data, string filename);
 	static int getColor(double value);
+	static double getSimiliarity(vector <Node*> & graph1, vector <Node*> & graph2);
+	void depthFirst(Node::Edge * edge, int &total, int & equal, vector <Node*> & graph1, vector <Node*> & graph2);
 
 private:
 	static void strongConnect(NodeStrong&, int&, stack <NodeStrong*> &, vector<vector<Node*>> &result);

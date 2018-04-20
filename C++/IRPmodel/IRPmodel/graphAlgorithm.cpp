@@ -209,6 +209,59 @@ int graphAlgorithm::getColor(double value)
 	return i;
 }
 
+//Returns the proportion of equal arcs in the two graphs
+double graphAlgorithm::getSimiliarity(vector<Node*>& graph1, vector<Node*>& graph2)
+{
+	double equalEdges = 0;
+	double totalEdges = 0;
+
+	//Count total edges
+	for (auto node1 : graph1)
+		totalEdges += node1->getEdges().size();
+
+	for (auto node2 : graph2)
+		totalEdges += node2->getEdges().size();
+
+	//Count equal edges
+	for (auto node1 : graph1) {
+		for (auto edge : node1->getEdges()) {
+			//Check if represented in both graph
+			for (Node * node2 : graph2) {
+				if (node2->getId() == node1->getId())
+					if (node2->hasEdge(edge))
+						equalEdges += 1;
+			}
+		}
+	}
+
+	return (double) (2 * equalEdges / totalEdges);
+}
+
+
+
+void graphAlgorithm::depthFirst(Node::Edge * edge, int &total, int & equal, vector <Node*> & graph1, vector <Node*> & graph2)
+{
+	//Stop if node is already discovered
+	if (edge->getEndNode()->getState() != 2) {
+		//Count edge
+		Node * node1 = edge->getEndNode();
+		total += 1;
+
+		//Check if represented in both graph
+		for (Node * node2 : graph2) {
+			if (node2->getId() == node1->getId())
+				if (node2->hasEdge(edge))
+					equal += 1;
+		}
+
+		//Set node to discovered
+		node1->setState(2);
+
+		for (Node::Edge * edge : node1->getEdges())
+			depthFirst(edge, total, equal, graph1, graph2);
+	}
+}
+
 //Tarjans strongly connected components algorithm, sets value of edges not in strong components to -1.
 void graphAlgorithm::sepByStrongComp(vector<Node*>& graph, vector<vector<Node*>> & result)
 {	

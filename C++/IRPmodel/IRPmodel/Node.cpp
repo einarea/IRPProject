@@ -16,6 +16,16 @@ Node::Node(int id, vector<Edge*> edges)
 {
 }
 
+void Node::setId(int id)
+{
+	NodeID = id;
+}
+
+int Node::getState()
+{
+	return State;
+}
+
 int Node::getId() const {
 	return NodeID;
 }
@@ -105,6 +115,11 @@ void Node::removeEdges()
 	for (int i = size-1; i >= 0; i--) {
 		Edges.erase(Edges.begin() + i);
 		}
+}
+
+void Node::setState(int s)
+{
+	State = s;
 }
 
 void Node::deleteEdges()

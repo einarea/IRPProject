@@ -21,6 +21,7 @@ public:
 
 	Node(int id);
 	Node(int id, vector<Edge*> edges);
+	void setId(int id);
 	Edge * getEdge(Node & n);
 	int getnEdges();
 	//Returns the first edge
@@ -34,6 +35,8 @@ public:
 	void deleteEdges();
 	void deleteEdge(Node *);
 	void removeEdges();
+	void setState(int s);
+	int getState();
 	int getId() const;
 	~Node();
 
@@ -45,6 +48,7 @@ public:
 
 private:
 	int NodeID;
+	int State;
 	vector <Edge*> Edges;
 };
 

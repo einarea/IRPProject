@@ -273,6 +273,10 @@ public:
 		int SolID;
 		IRP::NodeIRP * getDepot(int period);
 		
+		void buildGraph(vector<Node*> &graph);
+
+		void routeSearch();
+		void routeOptimize();
 		double **pCapacity;
 		int *** getRouteMatrix();
 		vector<NodeIRPHolder *> NodeHolder;

@@ -1825,6 +1825,54 @@ IRP::NodeIRP * IRP::Solution::getDepot(int period)
 	}
 }
 
+void IRP::Solution::buildGraph(vector<Node*> &graph)
+{
+	for (int id : Instance.AllNodes)
+		graph.push_back(new Node(id));
+
+	for (auto r : getAllRoutes()) {
+		for (Node* node : r->route) {
+			for (Node::Edge *edge : node->getEdges()) {
+				if (!graph[node->getId()]->hasEdge(edge))
+					graph[node->getId()]->addEdge(edge->getEndNode());
+			}
+		}
+	}
+}
+
+void IRP::Solution::routeSearch()
+{
+	vector<IRP::Route*> RouteHolder;
+	for (int i = 0; i < 5; i++) {
+		RouteHolder.clear();
+		generateRoutes(RouteHolder);
+		//RouteHolder = sol->getAllRoutes();
+		//RouteHolder = sol->getAllRoutes();
+		//Solve route problem
+
+		IRP::RouteProblem routeProb2(Instance, RouteHolder);
+		routeProb2.formulateRouteProblem(ModelParameters::HIGHEST_TOTALCOST);
+		//routeProb.lockRoutes();
+		auto routeSol2 = routeProb2.solveProblem();
+		routeSol2->printSolution();
+
+		//routeSol2->print("Solution/Heurestic" + to_string(i), ModelParameters::X);
+		for (auto route : routeSol2->getAllRoutes()) {
+			//route->printPlot("Solution/Sol2route" + to_string(route->getId()) + "Num" + to_string(i));
+		}
+		this->NodeHolder = routeSol2->NodeHolder;
+	}
+}
+
+void IRP::Solution::routeOptimize()
+{
+	IRP::RouteProblem routeProb1(Instance, getAllRoutes());
+	routeProb1.formulateRouteProblem(ModelParameters::HIGHEST_TOTALCOST);
+	auto routeSol1 = routeProb1.solveProblem();
+	this->NodeHolder = routeSol1->NodeHolder;
+}
+
+
 
 //Returns Aijt vector where 1 if arc ij is traversed in period t
 int *** IRP::Solution::getRouteMatrix()
@@ -1991,7 +2039,7 @@ void IRP::Solution::generateRoutes(vector<IRP::Route* >&routeHolder)
 	int jj = 1;
 	if (routes.size() >= 2) {
 
-		for (int i = 1; i <= 2; i++) {
+		for (int i = 1; i <= 1; i++) {
 			generation.clear();
 
 			vector<IRP::Route*> newRoutes;
@@ -2007,22 +2055,11 @@ void IRP::Solution::generateRoutes(vector<IRP::Route* >&routeHolder)
 			}
 
 			//Plot graph
-			vector<Node*> graph;
-			for (int id : Instance.AllNodes)
-				graph.push_back(new Node(id));
-
-			for (auto r : routes) {
-				for (Node* node : r->route) {
-					for (Node::Edge *edge : node->getEdges()) {
-						if (!graph[node->getId()]->hasEdge(edge))
-							graph[node->getId()]->addEdge(edge->getEndNode());
-					}
-				}
-			}
+		
 
 			//Delete 
 
-			graphAlgorithm::printGraph(graph, Instance, "graphSolutions/routegraph", ModelParameters::X);
+			//graphAlgorithm::printGraph(graph, Instance, "graphSolutions/routegraph", ModelParameters::X);
 
 			//Remove duplicates
 			bool duplicate = false;
@@ -2326,21 +2363,19 @@ void IRP::addVisitConstraint(double ** Visit, int selection)
 
 	if (selection == ModelParameters::ForceVisits) {
 		int visits;
-		int t = 1;
-		//for (int t : Periods) {
 
+		for (int t : Periods) {
 		visits = 0;
-		for (int i : Nodes) {
-			if (Visit[i][t] == 0 && !TabuMatrix[i][t].isValid())
-			{
-				visits += 1;
-				p1 += y[i][t];
+			for (int i : Nodes) {
+				if (Visit[i][t] == 0 && !TabuMatrix[i][t].isValid())
+				{
+					visits += 1;
+					p1 += y[i][t];
+				}
 			}
 		}
-		//}
 		VisitCtr = prob.newCtr("MinVisits", p1 >= ceil(visits*0.2));
 		VisitCtr.print();
-		bool a = VisitCtr.isValid();
 		cout << "\n";
 	}
 
@@ -2626,39 +2661,45 @@ void IRP::updateTabuMatrix(double ** changeMatrix)
 			}
 
 			cout << CountMatrix[i][t];
-			//If visit, lock that visit with 25% chance.
-			if (CountMatrix[i][t] >= 1) {
-				if (rand() % 100 + 1 <= 25) {
-					TabuMatrix[i][t] = prob.newCtr(y[i][t] >= 1);
-					cout << "*\t";
-				}
-				else
-					cout << "\t";
-			}
-			else if (CountMatrix[i][t] == 0) cout << "\t";
 
-			//Else if visit removed, lock that visit with 25% chance.
-			else if (CountMatrix[i][t] <= -1) {
-				/*if (t == 1) {
-				if (rand() % 100 + 1 <= 50) {
-				TabuMatrix[i][t] = prob.newCtr(y[i][t] <= 0);
-				counter += 1;
-				cout << "*\t";
+			//Do while no change tabued
+	
+				//If visit, lock that visit with 25% chance.
+				if (CountMatrix[i][t] >= 1) {
+					if (rand() % 100 + 1 <= 25) {
+						TabuMatrix[i][t] = prob.newCtr(y[i][t] >= 1);
+						counter += 1;
+						cout << "*\t";
+					}
+					else
+						cout << "\t";
 				}
-				else
-				cout << "\t";
+				else if (CountMatrix[i][t] == 0) cout << "\t";
 
-				}
-				else*/
-				if (rand() % 100 + 1 <= 25) {
+				//Else if visit removed, lock that visit with 25% chance.
+				else if (CountMatrix[i][t] <= -1) {
+					/*if (t == 1) {
+					if (rand() % 100 + 1 <= 50) {
 					TabuMatrix[i][t] = prob.newCtr(y[i][t] <= 0);
+					counter += 1;
 					cout << "*\t";
-				}
-				else
+					}
+					else
 					cout << "\t";
 
+					}
+					else*/
+					if (rand() % 100 + 1 <= 25) {
+						TabuMatrix[i][t] = prob.newCtr(y[i][t] <= 0);
+						counter += 1;
+						cout << "*\t";
+					}
+					else
+						cout << "\t";
+
+				}
 			}
-		}
+		
 	}
 
 	//If no locked continue.
@@ -2710,7 +2751,7 @@ void IRP::addHoldingCostCtr(double holdingCost)
 		for(int t : Periods)
 			p1 += inventory[i][t];
 
-	prob.newCtr(XPRBnewname("HoldingCost"), p1 <= holdingCost * 1.1);
+	prob.newCtr(XPRBnewname("HoldingCost"), p1 <= holdingCost * 1.05);
 	p1 = 0;
 
 	//Delete current objective
@@ -2801,12 +2842,12 @@ void IRP::RouteProblem::lockRoute(IRP::Route * route)
 {
 	int routeId = route->getId();
 	int period = route->getPeriod();
-	routeProblem.newCtr("RouteLock", travelRoute[routeId][period] == 1).print();
+	routeProblem.newCtr("RouteLock", travelRoute[routeId][period] == 1);
 }
 
 IRP::Solution * IRP::RouteProblem::solveProblem(IRP::Solution * sol)
 {
-	routeProblem.print();
+	//routeProblem.print();
 	routeProblem.mipOptimise();
 	//If no solution, allocate a new solution
 	if (sol == 0) {
