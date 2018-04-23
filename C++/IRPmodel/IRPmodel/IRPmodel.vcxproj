@@ -23,7 +23,7 @@
     <ProjectGuid>{84C64C56-0A87-4EBB-BD27-4F8D819D2082}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>IRPmodel</RootNamespace>
-    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -151,8 +151,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Calculations.h" />
-    <ClInclude Include="Customer.h" />
-    <ClInclude Include="CustomerDB.h" />
+    <ClInclude Include="NodeInstance.h" />
+    <ClInclude Include="NodeInstanceDB.h" />
     <ClInclude Include="CustomerIRP.h" />
     <ClInclude Include="CustomerIRPDB.h" />
     <ClInclude Include="CustomerVRP.h" />
@@ -167,6 +167,7 @@
     <ClInclude Include="ModelParameters.h" />
     <ClInclude Include="Node.h" />
     <ClInclude Include="NodeIRP.h" />
+    <ClInclude Include="NodeIRPHolder.h" />
     <ClInclude Include="NodeStrong.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
@@ -175,8 +176,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Calculations.cpp" />
-    <ClCompile Include="Customer.cpp" />
-    <ClCompile Include="CustomerDB.cpp" />
+    <ClCompile Include="NodeInstance.cpp" />
+    <ClCompile Include="NodeInstanceDB.cpp" />
     <ClCompile Include="CustomerIRP.cpp" />
     <ClCompile Include="CustomerIRPDB.cpp" />
     <ClCompile Include="CustomerVRP.cpp" />
@@ -190,6 +191,7 @@
     <ClCompile Include="ModelParameters.cpp" />
     <ClCompile Include="Node.cpp" />
     <ClCompile Include="NodeIRP.cpp" />
+    <ClCompile Include="NodeIRPHolder.cpp" />
     <ClCompile Include="NodeStrong.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

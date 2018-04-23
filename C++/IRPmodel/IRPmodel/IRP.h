@@ -201,71 +201,9 @@ public:
 	//Class to store solutions to the instance
 
 	//Class that define a IRP node in a particular period
-	class NodeIRP :
-		public Node
-	{
-	public:
-		class EdgeIRP : public Edge {
-		public:
-			EdgeIRP(Node *child, double loadDel, double loadPick, double value);
-			NodeIRP * getEndNode();
-			double LoadDel;
-			double LoadPick;
-		};
-
-		NodeIRP(int id);
-		~NodeIRP();
-		//Override
-		void addEdge(double loadDel, double loadPick, NodeIRP * child,  double value);
-		EdgeIRP * getEdge();
-		static NodeIRP * getNode(Node *);
-		double Quantity;
-		double Inventory;
-		double TimeServed;
-		vector <EdgeIRP*> getEdges();
-		double getOutflow();
-		double getHoldCost();
-	};
-
-	//Class to store nodes over all periods
-	class NodeIRPHolder {
-	public:
-		int Id;
-		int getId();
-		NodeIRPHolder(int id, IRP &instance);
-		IRP & Instance;
-		vector<NodeIRP*> Nodes;
-		//
-		int isInventoryFeasible();
-		int isInventoryFeasible(int period);
-		double moveQuantity(int from, int to, double quantity);
-		double getMinQuantity();
-		double getExcessQuantity();
-		void removeMinQuantity();
 	
 
-		//Changes
-		void addEdge(double loadDel, double loadPic, NodeIRPHolder * child, int period, double value);
-
-		//Information
-		void propInvForw(int period, double quantity);
-		double getOutflow(int period);
-		double quantity(int period);
-		double inventory(int period);
-		double timeServed(int period);
-
-		vector <NodeIRP::EdgeIRP*> getEdges(int period);
-		NodeIRP::EdgeIRP * getEdge(int period);
-		double getHoldCost(int period);
-		void changeQuantity(int period, double quantity);
-		bool isDelivery();
-
-	private:
-		double getFeasibleServiceIncrease(int period);
-		double getFeasibleServiceDecrease(int period);
-		double getFeasibleServiceMove(int from, int to);
-	};
-
+	
 	class Solution {
 	public:
 		Solution(IRP &model, bool integer);
