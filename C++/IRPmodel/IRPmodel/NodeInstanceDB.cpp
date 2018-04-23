@@ -23,10 +23,44 @@ int NodeInstanceDB::getDistance(const NodeInstance& node1, const NodeInstance& n
 	return distance;
 }
 
+int NodeInstanceDB::getDistance(int i, int j)
+{
+	auto node1 = getNode(i);
+	auto node2 = getNode(j);
+	int x1 = node1->PosX;
+	int y1 = node1->PosY;
+	int x2 = node2->PosX;
+	int y2 = node2->PosY;
+
+	int distance = (int)floor(sqrt(pow(x2 - x1, 2) + pow(y2 - y1, 2)));
+
+	return distance;
+}
+
+bool NodeInstanceDB::isColocated(int i, int j)
+{
+}
+
 int NodeInstanceDB::getTransCost(const NodeInstance &node1, const NodeInstance &node2)
 {
 	int distance = getDistance(node1, node2);
 	return distance * ModelParameters::TRANSCOST_MULTIPLIER + ModelParameters::SERVICECOST_MULTIPLIER;
+}
+
+int NodeInstanceDB::getTravelTime(int i, int j)
+{
+	return getDistance(i, j) * ModelParameters::TRAVELTIME_MULTIPLIER + ModelParameters::SERVICETIME;
+}
+
+int NodeInstanceDB::getTransCost(int i, int j)
+{
+	int distance = getDistance(i, j);
+	return distance * ModelParameters::TRANSCOST_MULTIPLIER + ModelParameters::SERVICECOST_MULTIPLIER;
+}
+
+int NodeInstanceDB::getDemand(const NodeInstance & node1, int period)
+{
+	return node1.Demand[period];
 }
 
 
@@ -45,6 +79,15 @@ int NodeInstanceDB::getNumNodes()
 {
 	//Do not count depot
 	return Nodes.size() - 1;
+}
+
+bool NodeInstanceDB::isDelivery(int id)
+{
+	NodeInstance * node = getNode(id);
+	if (node->isDelivery())
+		return true;
+	else
+		return false;
 }
 
 int NodeInstanceDB::getnPeriods() const
@@ -66,7 +109,7 @@ void NodeInstanceDB::writeInstanceToFile(ofstream &instanceFile, string Filename
 
 	instanceFile << "I01\tX\tY\n";
 
-	for (auto n : Nodes) {
+	for (auto n : NodeData) {
 		if (n->getId() != 0) {
 			NodeInstance * node = getNode(n->getId());
 
@@ -89,15 +132,20 @@ void NodeInstanceDB::writeInstanceToFile(ofstream &instanceFile, string Filename
 
 void NodeInstanceDB::initializeSets()
 {
+	for (auto node : NodeData) {
+		if (node->getId != 0) {
+			Nodes.push_back(node);
+			if (node->isDelivery())
+				DeliveryNodes.push_back(node);
+			else
+				PickupNodes.push_back(node);
+		}
+	}
 	int NumOfCustomers = getNumNodes();				//Number of customers
 	int NumOfPeriods = getnPeriods();
 	ModelBase::createRangeSet(1, NumOfPeriods, Periods);
 	ModelBase::createRangeSet(0, NumOfPeriods, AllPeriods);
-	ModelBase::createRangeSet(1, NumOfCustomers, DeliveryNodes);
-	ModelBase::createRangeSet(NumOfCustomers + 1, 2 * NumOfCustomers, PickupNodes);
-	ModelBase::createUnion(DeliveryNodes, PickupNodes, Nodes);
 	ModelBase::createRangeSet(0, 0, Depot);
-	ModelBase::createUnion(Depot, Nodes, AllNodes);
 }
 
 
@@ -131,7 +179,7 @@ NodeInstanceDB::NodeInstanceDB(string fileName)
 
 
 	//Push back depot
-	Nodes.push_back(new NodeInstance(0, 0, 0));
+	NodeData.push_back(new NodeInstance(0, 0, 0));
 	//check file for errors
 	getline(nodeRecords, line);
 
@@ -167,10 +215,23 @@ NodeInstanceDB::NodeInstanceDB(string fileName)
 		int x = stoi(getNextToken(line, delimiter));
 		int y = stoi(getNextToken(line, delimiter));
 		NodeInstance * node = new NodeInstance(nodeID, x, y, nPeriods, InitInventory, HoldingCost, Demand);
-		Nodes.push_back(node);
+		NodeData.push_back(node);
 		nodeID++;
+
+		initializeSets();
 	
 	}
+
+	//Initialize capacity
+	int TotalDemand = 0;
+	for (int t : Periods) {
+		for (auto node : NodeData) {
+			TotalDemand += node->Demand[t];
+		}
+	}
+
+	Capacity = 2 * floor(TotalDemand / (ModelParameters::nVehicles*getnPeriods()));
+
 
 	initializeSets();
 }
@@ -179,14 +240,59 @@ NodeInstanceDB::~NodeInstanceDB()
 {
 }
 
+bool NodeInstanceDB::inArcSet(int i, int j)
+{
+	if (ModelParameters::Simultaneous)
+		return inSimultaneousArcSet(i, j);
+	else
+		return inExtensiveArcSet(i, j);
+}
+
+bool NodeInstanceDB::inArcSet(NodeInstance * node1, NodeInstance * node2)
+{
+	if (node1->getId() == node2->getId())
+		return false;
+
+	if (node1->hasArc(node2));
+		return true;
+	
+	return false;
+}
+
+
+bool NodeInstanceDB::inExtensiveArcSet(int i, int j)
+{
+	bool a = (i == j || (i == getNumNodes() + j && j != 0));
+	return !a;
+}
+
+bool NodeInstanceDB::inSimultaneousArcSet(int i, int j)
+{
+	//Check if incident from delivery node and not to co-located pickup node
+	if (i == 0)
+		if (j <= getNumNodes())
+			return true;
+		else
+			return false;
+
+	if (isDelivery(i) && !isColocated(i, j))
+		return false;
+
+	//Check if incident to pickup node and not from co-located delivery node
+	if (!isDelivery(j) && !isColocated(i, j) && j != 0)
+		return false;
+
+	return inExtensiveArcSet(i, j);
+}
+
 vector<NodeInstance*>* NodeInstanceDB::getNodes()
 {
-	return &Nodes;
+	return &NodeData;
 }
 
 NodeInstance * NodeInstanceDB::getNode(int id)
 {
-	for (NodeInstance *n: Nodes) {
+	for (NodeInstance *n: NodeData) {
 		if (n->getId()==id)
 			return n;
 	}

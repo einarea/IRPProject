@@ -110,13 +110,13 @@ int XPRS_CC cbmng(XPRSprob oprob, void * vd)
 }
 
 
-IRP::Solution * IRP::getSolution(int id)
+Solution * IRP::getSolution(int id)
 {
 	Solution * sol = solutions[id - 1];
 	return solutions[id - 1];
 }
 
-void IRP::printBounds()
+/*void IRP::printBounds()
 {
 	double *lbd;
 	double *upd;
@@ -125,19 +125,17 @@ void IRP::printBounds()
 			if (y[i][t].getUB() <= 0.5)
 				cout << "DD";
 	}
-}
+}*/
 
-IRP::IRP(CustomerIRPDB& db, bool ArcRel, bool maskOn, int ** VisitMask)
+IRP::IRP(NodeInstanceDB& db, bool ArcRel, bool maskOn, int ** VisitMask)
 	:
-	database(db),
-	prob("IRP"),			//Initialize problem in BCL	
-	map(db),			//Set up map of all customers
+	Database(db),
+	prob("IRP"),			//Initialize problem in BCL		
 	ARC_RELAXED(ArcRel),
 	SolutionCounter(0),
 	MaskOn(maskOn),
 	LPSubtour(false)
 {
-	IRP::solCounter = 1;
 	//Initialize sets
 	if(!initializeSets()) {
 		cout<<"Data Error: Could not initialize sets.";
@@ -182,7 +180,7 @@ IRP::IRP(CustomerIRPDB& db, bool ArcRel, bool maskOn, int ** VisitMask)
 
 
 
-IRP::Solution * IRP::solveModel()
+Solution * IRP::solveModel()
 {
 	if (ARC_RELAXED && LPSubtour)
 	{
@@ -200,9 +198,9 @@ IRP::Solution * IRP::solveModel()
 				graph.clear();
 				result.clear();
 				buildGraph(graph, t, false, EDGE_WEIGHT); //Do not include depot in graph			
-				graphAlgorithm::printGraph(graph, *this, "graphSolutions/graph", ModelParameters::X);
+				graphAlgorithm::printGraph(graph, Database, "graphSolutions/graph", ModelParameters::X);
 				graphAlgorithm::sepByStrongComp(graph, result);
-				graphAlgorithm::printGraph(graph, *this, "graphSolutions/graph", ModelParameters::X);
+				graphAlgorithm::printGraph(graph, Database, "graphSolutions/graph", ModelParameters::X);
 				temp = addSubtourCtr(result, t);
 				if (temp)
 					isSubtours = true;
@@ -233,7 +231,7 @@ IRP::Solution * IRP::solveModel()
 	return allocateIRPSolution();
 }
 
-IRP::Solution * IRP::solveLPModel()
+Solution * IRP::solveLPModel()
 {
 	if (LPSubtour) {
 		bool isSubtours = false;
@@ -249,9 +247,9 @@ IRP::Solution * IRP::solveLPModel()
 			for (int t : Periods) {
 				graph.clear();
 				buildGraph(graph, t, true, EDGE_WEIGHT); //Do not include depot in graph			
-				graphAlgorithm::printGraph(graph, *this, "graphSolutions/graph", ModelParameters::X);
+				graphAlgorithm::printGraph(graph, Database, "graphSolutions/graph", ModelParameters::X);
 				graphAlgorithm::sepByStrongComp(graph, result);
-				graphAlgorithm::printGraph(graph, *this, "graphSolutions/graph", ModelParameters::X);
+				graphAlgorithm::printGraph(graph, Database, "graphSolutions/graph", ModelParameters::X);
 				temp = addSubtourCtr(result, t);
 				if (temp)
 					isSubtours = true;
@@ -266,10 +264,7 @@ IRP::Solution * IRP::solveLPModel()
 		prob.lpOptimise();
 }
 
-Map * IRP::getMap()
-{
-	return &map;
-}
+
 
 void IRP::calculateExcess()
 {
@@ -335,59 +330,64 @@ void IRP::calculateExcess()
 	}
 }
 
-IRP::Solution * IRP::allocateIRPSolution()
+Solution * IRP::allocateIRPSolution()
 {
 
 	//Allocate x and loading solutions
-	IRP *Instance =  this;
-	IRP::Solution *sol = allocateSolution(*Instance);
+	Solution *sol = allocateSolution(Database);
 
 	fillSolution(sol);
 	return sol;
 }
 
 //Fills a solution based on problem solution values
-void IRP::fillSolution(IRP::Solution * sol)
+void IRP::fillSolution(Solution * sol)
 {
 	//Fill Inventory
-	for (int i : Nodes) {
+	for (auto node : Database.NodeData) {
+		int i = node->getId();
 		for (int t : Periods) {
-			sol->NodeHolder[i]->Nodes[t]->Inventory = inventory[i][t].getSol();
+			sol->Nodes[i]->NodePeriods[t]->Inventory = inventory[i][t].getSol();
 		}
 	}
 
 	//Fill Quantity and allocate time
-	for (int i : Nodes){ 
+	for (auto node: Database.NodeData){ 
 		for (int t : Periods) {
-			if (map.isDelivery(i)) {
+			int i = node->getId();
+			if (node->isDelivery()) {
 				if (delivery[i][t].getSol() > 0) {
-					sol->NodeHolder[i]->Nodes[t]->Quantity = delivery[i][t].getSol();
-					sol->NodeHolder[i]->Nodes[t]->TimeServed = time[i][t].getSol();
+					sol->Nodes[i]->NodePeriods[t]->Quantity = delivery[i][t].getSol();
+					sol->Nodes[i]->NodePeriods[t]->TimeServed = time[i][t].getSol();
 				}
 				else
-					sol->NodeHolder[i]->Nodes[t]->Quantity = 0;
+					sol->Nodes[i]->NodePeriods[t]->Quantity = 0;
 			}
 			else {
 				if (pickup[i][t].getSol() > 0) {
-					sol->NodeHolder[i]->Nodes[t]->Quantity = pickup[i][t].getSol();
-					sol->NodeHolder[i]->Nodes[t]->TimeServed = time[i][t].getSol();
+					sol->Nodes[i]->NodePeriods[t]->Quantity = pickup[i][t].getSol();
+					sol->Nodes[i]->NodePeriods[t]->TimeServed = time[i][t].getSol();
 				}
 				else
-					sol->NodeHolder[i]->Nodes[t]->Quantity = 0;
+					sol->Nodes[i]->NodePeriods[t]->Quantity = 0;
 			}
 		}
 	}
 
 	//Fill load
 	double value;
+	int i;
+	int j;
 
-	for (int i : AllNodes) {
-		for (int j : AllNodes) {
-			if (map.inArcSet(i, j)) {
+	for (auto node1 : Database.NodeData) {
+		for (auto node2 : Database.NodeData) {
+			if (Database.inArcSet(node1, node1)) {
+				i = node1->getId();
+				j = node2->getId();
 				for (int t : Periods) {
 					if (x[i][j][t].getSol() >= 0.0001) {
 						if (ModelParameters::Simultaneous) {
-							if (map.isColocated(i, j) && simAction[i][j][t].getSol() <= 0.01) {
+							if (Database.isColocated(i, j) && simAction[i][j][t].getSol() <= 0.01) {
 								value = 0;
 							}
 							else
@@ -396,8 +396,8 @@ void IRP::fillSolution(IRP::Solution * sol)
 						else
 							value = x[i][j][t].getSol();
 
-						sol->NodeHolder[i]->Nodes[t]->addEdge(loadDelivery[i][j][t].getSol(),
-							loadPickup[i][j][t].getSol(), sol->NodeHolder[j]->Nodes[t], value);
+						sol->Nodes[i]->NodePeriods[t]->addEdge(loadDelivery[i][j][t].getSol(),
+							loadPickup[i][j][t].getSol(), sol->Nodes[j]->NodePeriods[t], value);
 					}
 				}
 			} //endif
@@ -429,14 +429,7 @@ bool IRP::sepStrongComponents(vector<XPRBcut> & cut)
 	return newCut;
 }
 
-void IRP::buildGraphSol(vector<Node*> &graph, int t, IRP::Solution *solution)
-{
-	//Add nodes from particular period
-	for (NodeIRPHolder * n : solution->NodeHolder) {
-		NodeIRP * node = new NodeIRP(*n->Nodes[t]);
-		graph.push_back(node);
-	}
-}
+
 
 //Build graph from variables
 void IRP::buildGraph(vector<Node*> &graph, int t, bool Depot, double weight)
@@ -460,7 +453,7 @@ void IRP::buildGraph(vector<Node*> &graph, int t, bool Depot, double weight)
 	for (Node *node : graph) {
 		s = node->getId();
 		for (Node *endingNode : graph) {
-			if (map.inArcSet(s, endingNode->getId())) {
+			if (Database.inArcSet(s, endingNode->getId())) {
 				edgeValue = x[s][endingNode->getId()][t].getSol();
 				if (edgeValue > weight) {
 					node->addEdge(edgeValue, endingNode);
@@ -721,9 +714,9 @@ bool IRP::formulateProblem()
 		for (int i : AllNodes)
 			for (int j : AllNodes) {
 				if (ModelParameters::Simultaneous)
-					arcIndicator = (map.inSimultaneousArcSet(i, j) && !map.isColocated(i, j));
+					arcIndicator = (Database.inSimultaneousArcSet(i, j) && !Database.isColocated(i, j));
 				else
-					arcIndicator = map.inExtensiveArcSet(i, j);
+					arcIndicator = Database.inExtensiveArcSet(i, j);
 
 				for (int t : Periods) {
 					if (arcIndicator)
@@ -734,7 +727,7 @@ bool IRP::formulateProblem()
 	if (ModelParameters::Simultaneous) {
 		for (int i : DeliveryNodes)
 			for (int j : PickupNodes)
-				if (map.isColocated(i, j))
+				if (Database.isColocated(i, j))
 					for(int t: Periods)
 						objective += simAction[i][j][t] * TransCost[i][j];
 	}
@@ -752,7 +745,7 @@ bool IRP::formulateProblem()
 	if (ModelParameters::Simultaneous) {
 		for(int i: DeliveryNodes)
 			for (int j : PickupNodes) {
-				if(map.isColocated(i, j)) {
+				if(Database.isColocated(i, j)) {
 					for (int t : Periods) {
 						p1 = actionDelivery[i][t] + actionPickup[j][t] - epsilon* simAction[i][j][t];
 						prob.newCtr("SimAction", p1 <= 2 - epsilon);
@@ -804,11 +797,11 @@ bool IRP::formulateProblem()
 		for (int t : Periods) {
 			for (int j : AllNodes) {
 
-				if (map.inArcSet(i, j)) {
+				if (Database.inArcSet(i, j)) {
 					p1 += x[i][j][t];
 				}
 
-				if (map.inArcSet(j, i)){
+				if (Database.inArcSet(j, i)){
 					p2 += x[j][i][t];
 				}
 			}
@@ -822,7 +815,7 @@ bool IRP::formulateProblem()
 	for (int i : AllNodes){
 		for (int t : Periods) {
 			for (int j : AllNodes) {
-				if (map.inArcSet(i, j)) {
+				if (Database.inArcSet(i, j)) {
 					p1 += x[i][j][t];
 				}
 			}
@@ -861,7 +854,7 @@ bool IRP::formulateProblem()
 	for (int i : AllNodes) {
 		for (int t : Periods) {
 			for (int j : Nodes){
-				if (map.inArcSet(i, j)) {
+				if (Database.inArcSet(i, j)) {
 					p1 = time[i][t] - time[j][t] + TravelTime[i][j]
 						+ (ModelParameters::maxTime + TravelTime[i][j]) * x[i][j][t];
 
@@ -877,7 +870,7 @@ bool IRP::formulateProblem()
 	
 				}
 
-			if (map.inArcSet(i, 0)) {
+			if (Database.inArcSet(i, 0)) {
 				p1 = time[i][t] + TravelTime[i][0] * x[i][0][t];
 				prob.newCtr("Final time", p1 <= ModelParameters::maxTime);
 				p1 = 0;
@@ -892,7 +885,7 @@ bool IRP::formulateProblem()
 	//Arc capacity
 	for (int i : AllNodes) {
 		for (int j : AllNodes) {
-			if (map.inArcSet(i, j)) {
+			if (Database.inArcSet(i, j)) {
 				for (int t : Periods) {
 					p1 = loadDelivery[i][j][t] + loadPickup[i][j][t] - Capacity * x[i][j][t];
 					prob.newCtr("ArcCapacity", p1 <= 0);
@@ -929,9 +922,9 @@ XPRBprob * IRP::getProblem() {
 	return &prob;
 }
 
-CustomerDB * IRP::getDB()
+NodeInstanceDB * IRP::getDB()
 {
-	return &database;
+	return &Database;
 }
 
 
@@ -944,9 +937,9 @@ bool IRP::initializeParameters() {
 		TransCost[i] = new  int[AllNodes.size()];
 		TravelTime[i] = new  int[AllNodes.size()];
 		for (int j : AllNodes) {
-			if (map.inArcSet(i, j)) {
-				TravelTime[i][j] = map.getTravelTime(i, j, ModelParameters:: TRAVELTIME_MULTIPLIER, ModelParameters::SERVICETIME);
-				TransCost[i][j] = map.getTransCost(i, j, ModelParameters::TRANSCOST_MULTIPLIER, ModelParameters::SERVICECOST_MULTIPLIER);
+			if (Database.inArcSet(i, j)) {
+				TravelTime[i][j] = Database.getTravelTime(i, j);
+				TransCost[i][j] = Database.getTransCost(i, j);
 				//printf("%-5d", TransCost[i][j]);
 			}
 			else {
@@ -959,24 +952,26 @@ bool IRP::initializeParameters() {
 	} // end initialization TransCost
 	
 	HoldCost = new int [Nodes.size()];
-	for (int i : Nodes) {
-		HoldCost[i] = map.getHoldCost(i);
+	int i;
+	for (auto node : Database.NodeData) {
+		i = node->getId();
+		HoldCost[i] = node->HoldingCost;
 		
 	} //end initialization HoldCost
 
 	InitInventory = new int[Nodes.size()];
 
-	for (int i : Nodes) {
-		InitInventory[i] = map.getInitInventory(i);
+	for (auto node : Database.NodeData) {
+		InitInventory[node->getId()] = node->InitInventory;
 		//printf("%-5d", InitInventory[i]);
 	} //end initialization initial inventory
 
 
 	UpperLimit = new int[Nodes.size()];
 	LowerLimit = new int[Nodes.size()];
-	for (int i : Nodes) {	
-		UpperLimit[i] = map.getUpperLimit(i);
-		LowerLimit[i] = map.getLowerLimit(i);
+	for (auto node : Database.NodeData) {	
+		UpperLimit[i] = node->UpperLimit;
+		LowerLimit[i] = node->LowerLimit;
 	} //end limit initialization
 
 	//printf("\n");
@@ -985,12 +980,12 @@ bool IRP::initializeParameters() {
 	Demand = new int * [Nodes.size()+1];
 	int customer;
 
-	for (int i : DeliveryNodes) {
+	for (auto node : Database.DeliveryNodes) {
 		//printf("\n");
-		Demand[i] = new int [Periods.size()+1];
+		Demand[node->getId()] = new int [Periods.size()+1];
 		for (int t : Periods) {
 			if (t > 0) {
-				Demand[i][t] = map.getDemand(i, t, Customer::DELIVERY);
+				Demand[i][t] = node->Demand[t];
 				//printf("%-10d", Demand[i][t]);
 			}
 		}
@@ -999,12 +994,12 @@ bool IRP::initializeParameters() {
 	//printf("\n");
 	//printf("Pickup Delivery");
 
-	for (int i : PickupNodes) {
+	for (auto node : Database.PickupNodes) {
 		//printf("\n");
-		Demand[i] = new int[Periods.size()];
+		Demand[node->getId()] = new int[Periods.size()];
 		for (int t : Periods) {
 			if (t > 0) {
-				Demand[i][t] = map.getDemand(i, t, Customer::PICKUP);
+				Demand[i][t] = node->Demand[t];
 				//printf("%-10d", Demand[i][t]);
 			}
 		}
@@ -1017,7 +1012,7 @@ bool IRP::initializeParameters() {
 			TotalDemand += Demand[i][t];
 		}
 	}
-	IRP::Capacity = 2 * floor(TotalDemand / (ModelParameters::nVehicles*getNumOfPeriods()));
+	Capacity = 2 * floor(TotalDemand / (ModelParameters::nVehicles*getNumOfPeriods()));
 
 	//Initialize max time
 	MaxTime = 480;
@@ -1052,7 +1047,7 @@ void IRP::getSubset(vector<int> subset, int subsetSize, int nodePos, vector<int>
 
 
 		for (auto i : subset)
-			if(map.isDelivery(i))
+			if(Database.isDelivery(i))
 				flow = ExcessConsumption[i][t1][t2];
 			else
 				flow = ExcessProd[i][t1][t2];
@@ -1079,7 +1074,7 @@ void IRP::getSubset(vector<int> subset, int subsetSize, int nodePos, vector<int>
 			for (int t = t1; t <= t2; t++)
 				for (auto i : subset)
 					for (auto j : Difference)
-						if (map.inArcSet(i, j)) {
+						if (Database.inArcSet(i, j)) {
 							p1 += x[i][j][t];
 						}
 
@@ -1141,11 +1136,11 @@ void IRP::addInventoryAndLoadingCtr(XPRBprob & problem)
 	for (int i : DeliveryNodes) {
 		for (int t : Periods) {
 			for (int j : AllNodes) {
-				if (map.inArcSet(j, i)) {
+				if (Database.inArcSet(j, i)) {
 					p1 += loadDelivery[j][i][t];
 					p2 -= loadPickup[j][i][t];
 				}
-				if (map.inArcSet(i, j)) {
+				if (Database.inArcSet(i, j)) {
 					p1 -= loadDelivery[i][j][t];
 					p2 += loadPickup[i][j][t];
 				}
@@ -1163,11 +1158,11 @@ void IRP::addInventoryAndLoadingCtr(XPRBprob & problem)
 	for (int i : PickupNodes) {
 		for (int t : Periods) {
 			for (int j : AllNodes) {
-				if (map.inArcSet(j, i)) {
+				if (Database.inArcSet(j, i)) {
 					p1 += loadPickup[j][i][t];
 					p2 += loadDelivery[j][i][t];
 				}
-				if (map.inArcSet(i, j)) {
+				if (Database.inArcSet(i, j)) {
 					p1 -= loadPickup[i][j][t];
 					p2 -= loadDelivery[i][j][t];
 				}
@@ -1190,16 +1185,10 @@ void IRP::addInventoryAndLoadingCtr(XPRBprob & problem)
 
 bool IRP::initializeSets()
 {
-	NumOfCustomers = database.getnCustomers();					//Number of customers
-	NumOfPeriods = database.getnPeriods();
+	NumOfCustomers = Database.Nodes.size();				//Number of customers
+	NumOfPeriods = Database.getnPeriods();
 
-	ModelBase::createRangeSet(1, NumOfPeriods, Periods);
-	ModelBase::createRangeSet(0, NumOfPeriods, AllPeriods);
-	ModelBase::createRangeSet(1, NumOfCustomers, DeliveryNodes);
-	ModelBase::createRangeSet(NumOfCustomers+1, 2*NumOfCustomers, PickupNodes);
-	ModelBase::createUnion(DeliveryNodes, PickupNodes, Nodes);
-	ModelBase::createRangeSet(0, 0, Depot);
-	ModelBase::createUnion(Depot, Nodes, AllNodes);
+	
 
 	//for (int i = 0; i < AllNodes.size(); i++) printf("%d", AllNodes[i]);
 	return true;
@@ -1250,7 +1239,7 @@ bool IRP::initializeVariables()
 			loadDelivery[i][j] = new	XPRBvar[Periods.size()];
 			loadPickup[i][j] = new	XPRBvar[Periods.size()];
 
-			if (map.inArcSet(i, j)) {
+			if (Database.inArcSet(i, j)) {
 			for (int t : Periods) {
 				if (ARC_RELAXED)
 					x[i][j][t] = prob.newVar(XPRBnewname("x%d-%d%d", i, j, t), XPRB_PL, 0, 1);
@@ -1289,7 +1278,7 @@ bool IRP::initializeVariables()
 			for (int j : PickupNodes) {
 				simAction[i][j] = new XPRBvar[Periods.size() + 1];
 				for (int t : Periods) {
-					if (map.isColocated(i, j)) {
+					if (Database.isColocated(i, j)) {
 						simAction[i][j][t] = prob.newVar(XPRBnewname("Sim_%d%d%d", i, j, t), XPRB_BV, 0, 1);
 					}
 				}
@@ -1380,12 +1369,12 @@ int IRP::getNumOfCustomers()
 
 
 //Construct vector of visited nodes
-void IRP::getVisitedCustomers(int period, vector<Customer *> &custVisit)
+/*void IRP::getVisitedCustomers(int period, vector<Customer *> &custVisit)
 {
 	if (ARC_RELAXED == true) {
 		for (int i : DeliveryNodes) {
 			if (y[i][period].getSol() > 0.01 || y[i+getNumOfCustomers()][period].getSol() > 0.01)
-				custVisit.push_back(map.getCustomer(i));
+				custVisit.push_back(Database.getCustomer(i));
 		}
 	}
 	else
@@ -1399,10 +1388,10 @@ void IRP::getDemand(int t, vector<vector<double>>& demand, vector<Customer *> &c
 	demand[Customer::PICKUP].resize(getNumOfCustomers()+1);
 	int node;
 	for (Customer* c : customers) {
-			demand[Customer::DELIVERY][c->getId()] = round(delivery[map.getDeliveryNode(c)][t].getSol());
+			demand[Customer::DELIVERY][c->getId()] = round(delivery[Database.getDeliveryNode(c)][t].getSol());
 			demand[Customer::PICKUP][c->getId()] = round(pickup[map.getPickupNode(c)][t].getSol());
 	}
-}
+}*/
 
 
 
@@ -1543,8 +1532,9 @@ void IRP::addValidIneq(int ValidIneq)
 	} // End minimum visits
 
 	if (ValidIneq == ModelParameters::MinimumInventory) {
-
-		for (int i : DeliveryNodes) {
+		int i;
+		for (auto node: Database.DeliveryNodes) {
+			i = node->getId();
 			for (int t2 : Periods) {
 				for (int t1 : Periods) {
 					if (t1 <= t2) {
@@ -1557,7 +1547,7 @@ void IRP::addValidIneq(int ValidIneq)
 						p3 = 1 - p3;
 						p1 = inventory[i][t1 - 1];
 
-						prob.newCtr("MinInventory", p1 >= p2*p3 + map.getLowerLimit(i));
+						prob.newCtr("MinInventory", p1 >= p2*p3 + node->LowerLimit);
 						p1 = 0;
 						p2 = 0;
 						p3 = 0;
@@ -1565,8 +1555,9 @@ void IRP::addValidIneq(int ValidIneq)
 				}
 			}
 		} // End delivery nodes
-
-		for (int i : PickupNodes) {
+		int j;
+		for (auto node : Database.PickupNodes) {
+			j = node->getId();
 			for (int t2 : Periods) {
 				for (int t1 : Periods) {
 					if (t1 <= t2) {
@@ -1579,7 +1570,7 @@ void IRP::addValidIneq(int ValidIneq)
 						p3 = 1 - p3;
 						p1 = inventory[i][t1 - 1];
 
-						prob.newCtr("MinInventory", p1 <= map.getUpperLimit(i) - p2*p3);
+						prob.newCtr("MinInventory", p1 <= node->UpperLimit - p2*p3);
 						p1 = 0;
 						p2 = 0;
 						p3 = 0;
@@ -1816,11 +1807,11 @@ void IRP::addHoldingCostCtr(double holdingCost)
 	prob.delCtr(prob.getCtrByName("OBJ"));
 
 	//Set transportation costs as objective
-	for (int i : AllNodes)
-		for (int j : AllNodes)
-			if (map.inArcSet(i, j)) {
+	for (auto node1 : Database.NodeData)
+		for (auto node2 : Database.NodeData)
+			if (Database.inArcSet(node1, node2)) {
 				for (int t : Periods)
-					p1 += map.getTransCost(i, j) * x[i][j][t];
+					p1 += Database.getTransCost(*node1, *node2) * x[node1->getId()][node2->getId()][t];
 			}
 
 	prob.setObj(prob.newCtr("OBJ", p1));
@@ -1836,10 +1827,10 @@ void IRP::addHoldingCostCtr(double holdingCost)
 
 
 
-IRP::Solution * IRP ::allocateSolution(IRP &Instance)
+Solution * IRP ::allocateSolution(NodeInstanceDB &Instance)
 {
 	SolutionCounter++;
-	IRP::Solution * sol = new IRP::Solution(Instance);
+	Solution * sol = new Solution(Instance, true);
 	sol->SolID = SolutionCounter;
 	return sol;
 }
@@ -1876,7 +1867,7 @@ void IRP::useLPSubtourElimination()
 
 
 
-/*void IRP::Solution::buildGraph(vector<Node*>& graph, int t)
+/*void Solution::buildGraph(vector<Node*>& graph, int t)
 {
 	int s;
 	double edgeValue;
@@ -1923,14 +1914,14 @@ void IRP::useLPSubtourElimination()
 
 
 
-IRP::LocalSearch::LocalSearch(IRP & model, IRP::Solution * origSol)
+IRP::LocalSearch::LocalSearch(IRP & model, Solution * origSol)
 	:
 	Instance(model),
 	OrigSol(origSol)
 {
 }
 
-void IRP::LocalSearch::ShiftQuantity(IRP::Solution * sol)
+void IRP::LocalSearch::ShiftQuantity(Solution * sol)
 {
 	
 	double shiftDel;
@@ -1941,7 +1932,7 @@ void IRP::LocalSearch::ShiftQuantity(IRP::Solution * sol)
 
 	//Shift from period with the greatest transportation costs
 	//initialize with the current solution
-	IRP::Solution * newSol = sol;
+	Solution * newSol = sol;
 	//Clear all nodes edges from the nodes.
 
 	int period = ChoosePeriod(ModelParameters::HIGHEST_TRANSPORTATIONCOST);
@@ -1951,7 +1942,7 @@ void IRP::LocalSearch::ShiftQuantity(IRP::Solution * sol)
 	shiftDel = max(OrigSol->getTotalDelivery(period) - Instance.Capacity*(OrigSol->getNumberOfRoutes(period) - 1), 0) + floor(0.1*OrigSol->getTotalDelivery(period));
 	shiftPick = max(OrigSol->getTotalPickup(period) - Instance.Capacity*(OrigSol->getNumberOfRoutes(period) - 1), 0) + floor(0.1*OrigSol->getTotalDelivery(period));
 
-	for (auto node : newSol->NodeHolder) {
+	for (auto node : newSol->Nodes) {
 		//Move quantity for visited nodes
 		if (node->quantity(period) > 0.01)
 

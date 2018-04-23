@@ -23,8 +23,10 @@ public:
 		double LoadPick;
 	};
 
-	NodeIRP(int id, NodeInstance& data);
+	NodeIRP();
+	NodeIRP(NodeInstance& data);
 	~NodeIRP();
+	bool isDelivery();
 	//Override
 	void addEdge(double loadDel, double loadPick, NodeIRP * child, double value);
 	EdgeIRP * getEdge();
@@ -37,6 +39,8 @@ public:
 	double getPosX();
 	double getPosY();
 	double getHoldCost();
+	NodeInstance& getData() const;
 private:
+	bool DELIVERY;
 	NodeInstance &nodeData;
 };

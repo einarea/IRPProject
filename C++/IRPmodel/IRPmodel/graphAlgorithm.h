@@ -12,7 +12,7 @@ public:
 	graphAlgorithm();
 	static void sepByStrongComp(vector<Node*> &graph, vector<vector<Node*>> &result);
 	~graphAlgorithm();
-	static void graphAlgorithm::printGraph(vector<Node *>& graph, IRP &, string filename, int weight=0);
+	static void graphAlgorithm::printGraph(vector<Node *>& graph, NodeInstanceDB &, string filename, int weight=0);
 	static void getRoutes(vector<Node*> &graph, vector<vector<Node*>> &routes);
 	void printToLatex(string * Columns, string * Rows, double ** data, string filename);
 	static int getColor(double value);

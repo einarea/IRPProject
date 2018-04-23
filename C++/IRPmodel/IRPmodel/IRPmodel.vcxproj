@@ -154,15 +154,12 @@
     <ClInclude Include="NodeInstance.h" />
     <ClInclude Include="NodeInstanceDB.h" />
     <ClInclude Include="CustomerIRP.h" />
-    <ClInclude Include="CustomerIRPDB.h" />
     <ClInclude Include="CustomerVRP.h" />
     <ClInclude Include="CustomerVRPDB.h" />
     <ClInclude Include="DataSets.h" />
     <ClInclude Include="graphAlgorithm.h" />
     <ClInclude Include="IRP.h" />
     <ClInclude Include="IRPmodel.h" />
-    <ClInclude Include="Map.h" />
-    <ClInclude Include="MapIRP.h" />
     <ClInclude Include="ModelBase.h" />
     <ClInclude Include="ModelParameters.h" />
     <ClInclude Include="Node.h" />

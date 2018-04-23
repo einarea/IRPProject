@@ -117,27 +117,12 @@ int Map::getY(int id)
 
 bool Map::inExtensiveArcSet(int i , int j)
 {
-	bool a = (i == j || (i == database.getnCustomers() + j && j != 0));
-	return !a;
+	
 }
 
 bool Map::inSimultaneousArcSet(int i, int j)
 {
-	//Check if incident from delivery node and not to co-located pickup node
-	if (i == 0)
-		if (j <= getNumCustomers())
-			return true;
-		else
-			return false;
 
-	if (isDelivery(i) && !isColocated(i, j))
-		return false;
-
-	//Check if incident to pickup node and not from co-located delivery node
-	if (!isDelivery(j) && !isColocated(i, j) && j != 0)
-		return false;
-
-	return inExtensiveArcSet(i, j);
 }
 
 bool Map::isColocated(int delivery, int pickup)
@@ -160,10 +145,7 @@ int Map::nodeToCustomer(int node)
 
 bool Map::inArcSet(int i, int j)
 {
-	if (ModelParameters::Simultaneous)
-		return inSimultaneousArcSet(i, j);
-	else
-		return inExtensiveArcSet(i, j);
+
 }
 
 Map::~Map()

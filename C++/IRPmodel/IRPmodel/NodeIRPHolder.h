@@ -1,14 +1,21 @@
 #pragma once
 #include "NodeIRP.h"
-#include "NodeInstance.h"
+#include <algorithm>
+#include <stdlib.h>
+#include "stdafx.h"
+
+using namespace std;
+
 //Class to store nodes over all periods
 class NodeIRPHolder {
 public:
-	
+	friend class Solution;
+
 	int getId();
-	NodeIRPHolder(int id, NodeInstance& instance);
-	vector<NodeIRP*> Nodes;
+	NodeIRPHolder(NodeInstance& instance);
+	vector< NodeIRP* > NodePeriods;
 	
+	NodeIRP * getNode(int period);
 	int isInventoryFeasible();
 	int isInventoryFeasible(int period);
 	double moveQuantity(int from, int to, double quantity);
@@ -44,9 +51,18 @@ private:
 	int Id;
 	//To store node information
 	NodeInstance & Instance;
-	double getFeasibleServiceIncrease(int period);
+	double getFeasibleServiceIncrease(int period, int capacity);
 	double getFeasibleServiceDecrease(int period);
-	double getFeasibleServiceMove(int from, int to);
+	double getFeasibleServiceMove(int from, int to, int capacity);
+
+	// Sets
+	vector  <int> Periods;
+	vector  <int> AllPeriods;
+	vector  <int> DeliveryNodes;
+	vector <int> PickupNodes;
+	vector  <int> Nodes;
+	vector  <int> AllNodes;
+	vector  <int> Depot;
 };
 
 

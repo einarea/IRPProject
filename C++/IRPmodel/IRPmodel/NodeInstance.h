@@ -12,6 +12,7 @@ class NodeInstance
 	friend class NodeIRPHolder;
 	friend class NodeIRP;
 	friend class NodeInstanceDB;
+	friend class IRP;
 private:
 	static int nPeriods;
 	
@@ -25,6 +26,8 @@ private:
 	vector<int> Demand;
 	int InitInventory;
 	int nPeriods;
+	//Set of forbidden traversals
+	vector<NodeInstance*> ForbiddenNodes;
 
 public:
 
@@ -32,6 +35,7 @@ public:
 	NodeInstance(int NodeId, int posX, int posY);
 	NodeInstance(int id, int randSeed);
 	bool isDelivery();
+	bool hasArc(NodeInstance * node);
 	double getXpos() const;
 	double getYpos() const ;
 	int getId();	

@@ -2,10 +2,8 @@
 #include "NodeIRPHolder.h"
 
 
-//Constructor
-NodeIRPHolder::NodeIRPHolder()
-{
-}
+
+using namespace std;
 
 //Destructor
 NodeIRPHolder::~NodeIRPHolder()
@@ -13,44 +11,53 @@ NodeIRPHolder::~NodeIRPHolder()
 }
 
 
-//Constructor
-NodeIRPHolder::NodeIRPHolder(int id, NodeInstance& instance)
-	:
-	Instance(instance),
-	Id(id)
+int NodeIRPHolder::getId()
 {
-	Nodes.resize(Instance.getNumOfPeriods() + 1);
+	return Instance.getId();
+}
+
+//Constructor
+NodeIRPHolder::NodeIRPHolder(NodeInstance& instance)
+	:
+	Instance(instance)
+{
+	NodePeriods.resize(Instance.nPeriods + 1);
 	//Initialize the holder with one node for each period
-	for (auto t : Instance.Periods) {
-		Nodes[t] = new NodeIRP(getId());
+	for (auto t = 1; t <= Instance.nPeriods; t++) {
+		NodePeriods[t] = new NodeIRP(instance);
 	}
 }
 
-int IRP::NodeIRPHolder::isInventoryFeasible()
+NodeIRP * NodeIRPHolder::getNode(int period)
 {
-	for (auto t : Instance.Periods) {
+	return NodePeriods[period];
+}
+
+int NodeIRPHolder::isInventoryFeasible()
+{
+	for (int t: Periods) {
 		if (isInventoryFeasible(t) == ModelParameters::LOWER_LIMIT_BREAK || isInventoryFeasible(t) == ModelParameters::UPPER_LIMIT_BREAK)
 			return isInventoryFeasible(t);
 	}
 	return  ModelParameters::WITHIN_LIMITS;
 }
 
-int IRP::NodeIRPHolder::isInventoryFeasible(int period)
+int NodeIRPHolder::isInventoryFeasible(int period)
 {
-	if (Nodes[period]->Inventory < Instance.map.getLowerLimit(getId()))
+	if (NodePeriods[period]->Inventory < Instance.LowerLimit)
 		return ModelParameters::LOWER_LIMIT_BREAK;
-	if (Nodes[period]->Inventory > Instance.map.getUpperLimit(getId()))
+	if (NodePeriods[period]->Inventory > Instance.UpperLimit)
 		return ModelParameters::UPPER_LIMIT_BREAK;
 	else
 		return ModelParameters::WITHIN_LIMITS;
 }
 
-double IRP::NodeIRPHolder::moveQuantity(int from, int to, double quantity)
+double NodeIRPHolder::moveQuantity(int from, int to, double quantity)
 {
 	double holder;
 	//Move from period
 	//move from period, check capacity feasible
-	quantity = min(getFeasibleServiceMove(from, to), quantity);
+	quantity = min(getFeasibleServiceMove(from, to, 1000), quantity);
 	changeQuantity(from, -quantity);
 	//insert in period
 	changeQuantity(to, quantity);
@@ -74,42 +81,42 @@ double IRP::NodeIRPHolder::moveQuantity(int from, int to, double quantity)
 
 
 //inserts minimum quantity to make node feasible with respect to lower bound
-double IRP::NodeIRPHolder::getMinQuantity()
+double NodeIRPHolder::getMinQuantity()
 {
 	double minQuantity = 0;
-	for (auto t : Instance.Periods) {
+	for (auto t : Periods) {
 		if (isInventoryFeasible(t) == ModelParameters::LOWER_LIMIT_BREAK)
-			minQuantity = max(minQuantity, Instance.map.getLowerLimit(getId()) - inventory(t));
+			minQuantity = max(minQuantity, Instance.LowerLimit - inventory(t));
 	}
 
 	return minQuantity;
 }
 
-double IRP::NodeIRPHolder::getExcessQuantity()
+double NodeIRPHolder::getExcessQuantity()
 {
 	double temp = 0;
-	for (auto t : Instance.Periods) {
-		temp = max(temp, inventory(t) - Instance.map.getUpperLimit(getId()));
+	for (auto t : Periods) {
+		temp = max(temp, inventory(t) - Instance.LowerLimit);
 	}
 	return temp;
 }
 
-void IRP::NodeIRPHolder::removeMinQuantity()
+void NodeIRPHolder::removeMinQuantity()
 {
-	for (auto t : Instance.Periods) {
+	for (auto t : Periods) {
 		if (isInventoryFeasible(t) == ModelParameters::UPPER_LIMIT_BREAK)
-			cout << inventory(t) - Instance.map.getUpperLimit(getId());
-		changeQuantity(t, inventory(t) - Instance.map.getUpperLimit(getId()));
+			//cout << inventory(t) - Instance.UpperLimit;
+		changeQuantity(t, inventory(t) - Instance.UpperLimit);
 		return;
 	}
 }
 
 
 
-void IRP::NodeIRPHolder::addEdge(double loadDel, double loadPick, NodeIRPHolder * NodeHolder, int period, double value)
+void NodeIRPHolder::addEdge(double loadDel, double loadPick, NodeIRPHolder * NodeHolder, int period, double value)
 {
-	NodeIRP * u = Nodes[period];
-	NodeIRP * v = NodeHolder->Nodes[period];
+	NodeIRP * u = NodePeriods[period];
+	NodeIRP * v = NodeHolder->NodePeriods[period];
 	u->addEdge(loadDel, loadPick, v, value);
 }
 
@@ -146,53 +153,53 @@ int NodeIRPHolder::getDemand(int period)
 //Propagate the inventory with the quantity. Positive if more is delivered, negative if more is picked up
 void NodeIRPHolder::propInvForw(int period, double quantity)
 {
-	if (period <= Instance.getNumOfPeriods())
+	if (period <= Instance.nPeriods)
 	{
-		Nodes[period]->Inventory += quantity;
+		NodePeriods[period]->Inventory += quantity;
 		propInvForw(period + 1, quantity);
 	}
 
 }
 
-double IRP::NodeIRPHolder::getOutflow(int period)
+double NodeIRPHolder::getOutflow(int period)
 {
-	return Nodes[period]->getOutflow();
+	return NodePeriods[period]->getOutflow();
 }
 
-double IRP::NodeIRPHolder::quantity(int period)
+double NodeIRPHolder::quantity(int period)
 {
-	return Nodes[period]->Quantity;
+	return NodePeriods[period]->Quantity;
 }
 
-double IRP::NodeIRPHolder::inventory(int period)
+double NodeIRPHolder::inventory(int period)
 {
-	return Nodes[period]->Inventory;
+	return NodePeriods[period]->Inventory;
 }
 
-double IRP::NodeIRPHolder::timeServed(int period)
+double NodeIRPHolder::timeServed(int period)
 {
-	return Nodes[period]->TimeServed;
+	return NodePeriods[period]->TimeServed;
 }
 
-vector<IRP::NodeIRP::EdgeIRP*> IRP::NodeIRPHolder::getEdges(int period)
+vector<NodeIRP::EdgeIRP*> NodeIRPHolder::getEdges(int period)
 {
-	return Nodes[period]->getEdges();
+	return NodePeriods[period]->getEdges();
 }
 
-IRP::NodeIRP::EdgeIRP * IRP::NodeIRPHolder::getEdge(int period)
+NodeIRP::EdgeIRP * NodeIRPHolder::getEdge(int period)
 {
-	return Nodes[period]->getEdge();
+	return NodePeriods[period]->getEdge();
 }
 
-double IRP::NodeIRPHolder::getHoldCost(int period)
+double NodeIRPHolder::getHoldCost(int period)
 {
-	return Instance.map.getHoldCost(getId()) * Nodes[period]->Inventory;
+	return Instance.HoldingCost * NodePeriods[period]->Inventory;
 }
 
 //Returns quantity inserted
-void IRP::NodeIRPHolder::changeQuantity(int period, double quantity)
+void NodeIRPHolder::changeQuantity(int period, double quantity)
 {
-	Nodes[period]->Quantity += quantity;
+	NodePeriods[period]->Quantity += quantity;
 
 	if (isDelivery())
 		propInvForw(period, quantity);
@@ -204,13 +211,13 @@ void IRP::NodeIRPHolder::changeQuantity(int period, double quantity)
 
 bool NodeIRPHolder::isDelivery()
 {
-	return Instance.getMap()->isDelivery(getId());
+	return Instance.isDelivery();
 }
 
-double NodeIRPHolder::getFeasibleServiceIncrease(int period)
+double NodeIRPHolder::getFeasibleServiceIncrease(int period, int capacity)
 {
 	// Check if quantity is feasible, if not adjust it
-	return Instance.Capacity - quantity(period);
+	return capacity - quantity(period);
 }
 
 double NodeIRPHolder::getFeasibleServiceDecrease(int period)
@@ -219,8 +226,8 @@ double NodeIRPHolder::getFeasibleServiceDecrease(int period)
 	return quantity(period);
 }
 
-double NodeIRPHolder::getFeasibleServiceMove(int from, int to)
+double NodeIRPHolder::getFeasibleServiceMove(int from, int to, int capacity)
 {
-	return min(getFeasibleServiceDecrease(from), getFeasibleServiceIncrease(to));
+	return min(getFeasibleServiceDecrease(from), getFeasibleServiceIncrease(to, capacity));
 }
 

@@ -2,10 +2,12 @@
 #include "NodeIRP.h"
 
 
-NodeIRP::NodeIRP(int id, NodeInstance& data)
+
+
+NodeIRP::NodeIRP(NodeInstance& data)
 	:
-	Node(id),
-	nodeData(data)
+	nodeData(data),
+	Node(nodeData.getId())
 {
 	//
 	Quantity = -1;
@@ -16,6 +18,11 @@ NodeIRP::NodeIRP(int id, NodeInstance& data)
 
 NodeIRP::~NodeIRP()
 {
+}
+
+bool NodeIRP::isDelivery()
+{
+	return DELIVERY;
 }
 
 NodeIRP::EdgeIRP::EdgeIRP(Node * child, double loadDel, double loadPick, double value = 1)
@@ -79,6 +86,16 @@ double NodeIRP::getPosX()
 double NodeIRP::getPosY()
 {
 	return nodeData.PosY;
+}
+
+double NodeIRP::getHoldCost()
+{
+	return nodeData.HoldingCost;
+}
+
+NodeInstance & NodeIRP::getData() const
+{
+	return nodeData;
 }
 
 

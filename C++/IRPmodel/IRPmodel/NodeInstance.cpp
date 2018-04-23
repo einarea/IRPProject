@@ -86,6 +86,15 @@ NodeInstance::NodeInstance(int id, int randSeed)
 }
 
 
+bool NodeInstance::hasArc(NodeInstance * node)
+{
+	for (NodeInstance * forbidden : ForbiddenNodes)
+		if (forbidden->getId() == node->getId())
+			return false;
+
+	return true;
+}
+
 double NodeInstance::getXpos() const
 {
 	return this->PosX;

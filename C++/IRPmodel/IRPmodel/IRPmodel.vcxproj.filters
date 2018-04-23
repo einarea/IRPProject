@@ -30,9 +30,6 @@
     <ClInclude Include="IRP.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Map.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ModelBase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -52,12 +49,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CustomerVRPDB.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MapIRP.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="CustomerIRPDB.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ModelParameters.h">

@@ -2,11 +2,11 @@
 
 
 #include "xprb_cpp.h"
-#include "MapIRP.h"
+#include "NodeInstanceDB.h"
 #include <vector>
-#include "CustomerDB.h"
 #include "xprs.h"
 #include "Node.h"
+#include "Solution.h"
 
 
 using namespace ::dashoptimization;
@@ -21,8 +21,7 @@ class IRP
 private:
 
 	//Problem
-	CustomerIRPDB database;
-	MapIRP map;
+	NodeInstanceDB &Database;
 	XPRBprob prob;
 	XPRSprob oprob;		//Express problem to use with cuts
 	bool MaskOn;
@@ -106,21 +105,18 @@ private:
 
 
 public:
-	//Forward declaration
-	class Solution;
-	class NodeIRP;
-	class NodeIRPHolder;
-	class Route;
+
+
 
 	void buildGraph(vector <Node*> &, int, bool includeDepot, double weight = 0.01);
-	vector <IRP::Solution *> solutions;
+	vector <Solution *> solutions;
 
 	XPRBvar ** inventory;
 	XPRBvar ** y;
 	XPRBvar *** x;
 
-	IRP::Solution * allocateSolution(IRP&);
-	void fillSolution(IRP::Solution * sol);
+	Solution * allocateSolution(NodeInstanceDB &);
+	void fillSolution(Solution * sol);
 
 	//To store all routes that are generated
 	vector <Route *> routes;
@@ -162,7 +158,7 @@ public:
 	
 	class LocalSearch {
 	public:
-		LocalSearch(IRP & model, IRP::Solution *origSol);
+		LocalSearch(IRP & model, Solution *origSol);
 
 		void ShiftQuantity(Solution *);
 
@@ -171,7 +167,7 @@ public:
 		int ChoosePeriod(int selection);
 	private:
 		IRP & Instance;
-		IRP::Solution * OrigSol;
+		Solution * OrigSol;
 	};
 	
 
@@ -191,7 +187,7 @@ public:
 		int VRPperiod;
 	};*/
 
-	IRP(CustomerIRPDB&, bool relaxed = false, bool maskOn = false, int ** VisitMask = 0);
+	IRP(NodeInstanceDB&, bool relaxed = false, bool maskOn = false, int ** VisitMask = 0);
 	//void addSolution(int ** y, int ***x, int **d, int **pic, int ***loadDel, int ***loadPic, int **inv, int ** t);
 
 	void addVisitConstraint(double ** VisitMatrix, int selection);
@@ -201,7 +197,7 @@ public:
 	void addValidIneq(int ValidInequality);
 
 	//Solution information
-	double ** getVisitDifference(IRP::Solution * sol1, IRP::Solution * sol2);
+	double ** getVisitDifference(Solution * sol1, Solution * sol2);
 
 
 
@@ -210,31 +206,29 @@ public:
 	void updateTabuMatrix(double ** changeMatrix);
 	int getNumOfNodes();
 	void addHoldingCostCtr(double holdingCost);
-	int solCounter;
 	void printMatrix();
 	int getCapacity();
 	void useIPSubtourElimination();
 	void useLPSubtourElimination();
 	bool LPSubtour;
-	Map * getMap();
 	void calculateExcess();
-	void IRP::buildGraphSol(vector<Node*> &graph, int t, Solution * solution);
-	IRP::Solution* allocateIRPSolution();
+	
+	Solution* allocateIRPSolution();
 	bool sepStrongComponents(vector<XPRBcut> &);
 	void addSubtourCut(vector<vector <Node *>> &, int t, bool &, vector<XPRBcut> &);
 	bool addSubtourCtr(vector<vector <Node *>> &, int t);
-	IRP::Solution * solveModel();
-	IRP::Solution * solveLPModel();
+	Solution * solveModel();
+	Solution * solveLPModel();
 	XPRBprob * getProblem();
-	CustomerDB * getDB();
 	vector <XPRBbasis> SavedBasis;
 	int nSubtourCuts;
 	int getNumOfPeriods();
 	int getNumOfCustomers();
-	void getVisitedCustomers(int period, vector <Customer *> &);
-	void getDemand(int period, vector<vector<double>> &, vector <Customer *> &);
+	//void getVisitedCustomers(int period, vector <Customer *> &);
+	//void getDemand(int period, vector<vector<double>> &, vector <Customer *> &);
 	Solution * getSolution(int id);
-	void printBounds();
+	NodeInstanceDB * IRP::getDB()
+	//void printBounds();
 
 	~IRP();
 };
