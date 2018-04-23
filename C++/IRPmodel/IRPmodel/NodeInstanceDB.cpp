@@ -87,6 +87,19 @@ void NodeInstanceDB::writeInstanceToFile(ofstream &instanceFile, string Filename
 	instanceFile.close();
 }
 
+void NodeInstanceDB::initializeSets()
+{
+	int NumOfCustomers = getNumNodes();				//Number of customers
+	int NumOfPeriods = getnPeriods();
+	ModelBase::createRangeSet(1, NumOfPeriods, Periods);
+	ModelBase::createRangeSet(0, NumOfPeriods, AllPeriods);
+	ModelBase::createRangeSet(1, NumOfCustomers, DeliveryNodes);
+	ModelBase::createRangeSet(NumOfCustomers + 1, 2 * NumOfCustomers, PickupNodes);
+	ModelBase::createUnion(DeliveryNodes, PickupNodes, Nodes);
+	ModelBase::createRangeSet(0, 0, Depot);
+	ModelBase::createUnion(Depot, Nodes, AllNodes);
+}
+
 
 string NodeInstanceDB::getNextToken(string &str, string& delimiter) const
 {
@@ -158,6 +171,8 @@ NodeInstanceDB::NodeInstanceDB(string fileName)
 		nodeID++;
 	
 	}
+
+	initializeSets();
 }
 
 NodeInstanceDB::~NodeInstanceDB()

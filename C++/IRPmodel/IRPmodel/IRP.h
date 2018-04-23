@@ -151,50 +151,6 @@ public:
 
 	};
 
-	//*****************Inner classes************************//
-	//Class to store routes and cost of routes
-	class Route {
-		static int counter;
-		public:
-		void setId(int id);
-		IRP & Instance;
-		double getTransportationCost();
-		int getPeriod();
-		bool isFeasible();
-		Route * generateRoute(Route * );
-		void setPeriod(int period);
-		bool coincide(vector<NodeIRP*> r);
-		void createSeperateRoute(Route *);
-		bool inRoute(Node *);
-		bool isDuplicate(Route * r);
-		//int removeNode(NodeIRP*, IRP::Route *);
-		//void insertSubRoute(vector<NodeIRP *>, NodeIRP * start, NodeIRP * end);
-	
-		Route * copyRoute();
-		void insertSubroute(vector<NodeIRP *> subroute);
-		vector<IRP::NodeIRP*> cheapestInsertion(vector<NodeIRP*> subroute, double &minCost);
-		vector<IRP::NodeIRP*> cheapestRemoval(int subroutesize, double &maxCost);
-		int getTotalDelivery();
-		int getTotalPickup();
-		void mergeRoute(IRP::Route * mergeIn);
-		void insert(NodeIRP * start, NodeIRP * end, vector<NodeIRP *> subroute);
-		int getPosition(Node * node);
-		int getId();
-		int ** getRouteMatrix();
-		void printPlot(string filename);
-		void printRoute();
-		double getResidualCapacity();
-		void removeSubroute(int selection);
-		void updateRoute();
-		vector<NodeIRP*> getSubroute(int selection);
-		Route(vector <NodeIRP*> & path, IRP &instance);
-	
-		//Graph 
-		vector <NodeIRP*> route;
-		private:
-			int Id;
-			int Period;
-	}; //end class Route
 
 
 
@@ -202,83 +158,6 @@ public:
 
 	//Class that define a IRP node in a particular period
 	
-
-	
-	class Solution {
-	public:
-		Solution(IRP &model, bool integer);
-		Solution(IRP &instance, vector<NodeIRPHolder*> nodes);
-		int SolID;
-		IRP::NodeIRP * getDepot(int period);
-		
-		void buildGraph(vector<Node*> &graph);
-
-		void routeSearch();
-		void routeOptimize();
-		double **pCapacity;
-		int *** getRouteMatrix();
-		vector<NodeIRPHolder *> NodeHolder;
-		int selectPeriod(int selection);
-		vector<NodeIRPHolder *>& getNodes();
-
-		//The set of routes for each period
-
-		//void buildGraph(vector<Node*> &graph, int t);
-		void print(string filname,int weight);
-
-		void mergeRoutes(int position, Route * route, vector<Route*> &Routes, vector<Route*> &newRoutes);
-		void generateRoutes(vector<IRP::Route* >&routeHolder);
-		vector <NodeIRP *> getVisitedNodes(int period);
-		void sort(vector <NodeIRP>*);
-		bool IntegerSolution;
-		bool isFeasible();
-		void clearRoutes();
-		void clearEdges(int period);
-		int shiftQuantity(int PeriodSelection, int ObjectiveSelection);
-		bool isRouteFeasible(IRP::Route *);
-		double getNumberOfRoutes(int period);
-		double getResidualCapacity(int period);
-		//Returns the amount of total product deliveried less the capacity x (number of vehicles used - 1)
-		double getTotalDelivery(int period);
-		//Returns the amount of total product pickup up less the capacity x (number of vehicles used - 1)
-		double getTotalPickup(int period);
-		double getNodeVisits(int period);
-		double ** getVisitedMatrix();
-		double getDeliveryNodeVisits(int period);
-		double getPickupNodeVisits(int period);
-		//Returns average delivery per node
-		double getDelivery(int period);
-		double getPickup(int period);
-		vector <IRP::Route *> getRoutes(int period);
-		NodeIRPHolder * getNode(int id);
-		int newRoute(vector <Node*> & route, int period);
-
-		int getnPeriods();
-		vector<Route*> getAllRoutes();
-		double getObjective();
-		void printSolution();
-		double getTransportationCost();
-		double getHoldingCost();
-		double getHoldingCost(int period);
-		double getTransportationCost(int period);
-		IRP &Instance;
-
-		//Operators
-		void removeVisit(IRP::Route * route, int selection = 1);
-		void solveInventoryProblem();
-		void insertCustomer(int customerID, int period);
-		void removeCustomer(int customerID, int period);
-		vector<NodeIRP*> getCustomer(int id);
-		void insertSubrouteInRoute(vector<NodeIRP*> subroute, int period);
-		void createSubroute(vector<NodeIRP*> nodes);
-
-		private:
-		//Integer solutions
-			vector<NodeIRP*> selectPair(IRP::Route *, int Selection);
-			
-		
-	
-	}; //End class solution
 
 	
 	class LocalSearch {
@@ -297,53 +176,7 @@ public:
 	
 
 	class RouteProblem{
-	public:
-		RouteProblem(IRP & Instance, vector<IRP::Route*> routes);
-		void addRouteConstraints();
-		void formulateRouteProblem(int objectiveSelection);
-		void initializeRouteParameters();
-		void initializeRouteVariables();
-		void addInventoryCtr();
-		int getShiftPeriod();
-		void shiftQuantityCtr(int quantity);
-		void initializeRoutes();
-		void printRouteMatrix();
-		void addRoutesToVector();
-		void updateSolution(IRP::Solution * sol);
-		void lockRoutes();
-		
-
-		int ShiftPeriod;
 	
-		IRP::Solution * solveProblem(IRP::Solution * currentSol = 0);
-	private:
-		XPRBprob routeProblem;
-
-		//Variables
-		XPRBvar ** inventory;
-		XPRBvar ** delivery;
-		XPRBvar ** pickup;
-		XPRBvar *** loadDelivery;
-		XPRBvar *** loadPickup;
-		XPRBvar ** travelRoute;
-
-		void lockRoute(IRP::Route * );
-		int getRoutePosition(int routeId);
-
-		void fillRoutes(vector<vector<IRP::Route* >>& routes);
-		void fillNodes(vector<NodeIRPHolder*> &nodeHolder);
-		void fillLoad(vector<NodeIRPHolder*> &nodeHolder);
-		//Holder of all routes
-		vector <Route *> routes;
-		IRP & Instance;
-		//Parameters*********
-		vector<double> RouteCost;
-		//Route matrix
-		vector<int **>A;
-		//Variables
-	
-		//Set of all routes
-		vector <int> Routes;
 	};
 
 	//Class that solves a VRP for a period while pushing quantity to other periods and its existing routes

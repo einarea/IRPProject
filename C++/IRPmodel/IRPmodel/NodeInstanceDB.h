@@ -1,6 +1,7 @@
 #pragma once
 
 #include "stdafx.h"
+#include "ModelBase.h"
 #include <vector>
 #include "NodeInstance.h"
 #include <iostream>
@@ -42,5 +43,16 @@ public:
 	int getX(int);
 	int getY(int);
 	void writeInstanceToFile(ofstream &instanceFile, string Filename);
+	void initializeSets();
+
+	//sets
+
+	vector  <int> Periods;
+	vector  <int> AllPeriods;
+	vector  <int> DeliveryNodes;
+	vector <int> PickupNodes;
+	vector  <int> Nodes;
+	vector  <int> AllNodes;
+	vector  <int> Depot;
 
 };
