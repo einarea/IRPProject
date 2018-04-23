@@ -7,6 +7,15 @@ using namespace ::std;
 
 
 
+bool NodeInstance::inArcSet(NodeInstance * n)
+{
+	for (auto m : ForbiddenNodes)
+		if (m == n)
+			return false;
+
+	return true;
+}
+
 NodeInstance::NodeInstance(int id, int posX, int posY, int nPeriods, int initial, int holdingCost, vector<int> demand)
 	:
 	NodeID(id),

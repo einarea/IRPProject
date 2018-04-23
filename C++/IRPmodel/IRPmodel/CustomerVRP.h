@@ -1,5 +1,5 @@
 #pragma once
-#include "Customer.h"
+/*#include "Customer.h"
 
 
 class CustomerVRP:
@@ -15,5 +15,5 @@ public:
 	void setDelivery(double quantity);
 	void setPickup(double quantity);
 	~CustomerVRP();
-};
+};*/
 

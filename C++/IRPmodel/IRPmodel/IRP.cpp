@@ -332,9 +332,11 @@ void IRP::calculateExcess()
 
 Solution * IRP::allocateIRPSolution()
 {
-
+	NodeIRPHolder * d;
+	Node * u = d->getNode(3);
 	//Allocate x and loading solutions
 	Solution *sol = allocateSolution(Database);
+	u = sol->getDepot(3);
 
 	fillSolution(sol);
 	return sol;

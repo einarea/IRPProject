@@ -1,6 +1,6 @@
 #pragma once
-#include "Customer.h"
-class CustomerIRP :
+
+/*class CustomerIRP :
 	public Customer
 {
 private:
@@ -25,5 +25,5 @@ public:
 	int getLowerLimit(int);
 	int getDemand(int period, int indicator);
 	int getInitInventory(int indicator);
-};
+};*/
 

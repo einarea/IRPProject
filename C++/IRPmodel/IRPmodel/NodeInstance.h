@@ -26,6 +26,7 @@ private:
 	vector<int> Demand;
 	int InitInventory;
 	int nPeriods;
+	bool inArcSet(NodeInstance * n);
 	//Set of forbidden traversals
 	vector<NodeInstance*> ForbiddenNodes;
 

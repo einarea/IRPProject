@@ -7,6 +7,8 @@
 #include "xprs.h"
 #include "Node.h"
 #include "Solution.h"
+#include "NodeIRP.h"
+#include "NodeIRPHolder.h"
 
 
 using namespace ::dashoptimization;
@@ -227,7 +229,7 @@ public:
 	//void getVisitedCustomers(int period, vector <Customer *> &);
 	//void getDemand(int period, vector<vector<double>> &, vector <Customer *> &);
 	Solution * getSolution(int id);
-	NodeInstanceDB * IRP::getDB()
+	NodeInstanceDB * IRP::getDB();
 	//void printBounds();
 
 	~IRP();

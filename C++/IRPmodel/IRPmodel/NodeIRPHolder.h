@@ -1,5 +1,6 @@
 #pragma once
 #include "NodeIRP.h"
+#include "Node.h"
 #include <algorithm>
 #include <stdlib.h>
 #include "stdafx.h"

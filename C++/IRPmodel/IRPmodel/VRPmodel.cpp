@@ -15,6 +15,20 @@ void XPRS_CC cbmngtime(XPRSprob oprob, void * vd, int parent, int newnode, int b
 	}
 }
 
+VRPmodel::VRPmodel(NodeInstanceDB & db, vector<NodeIRP*> nodes, int cap)
+	:
+	Nodes(nodes),
+	prob("VRP"),
+	Capacity(cap),
+	Database(db)
+{
+	initializeSets();
+	initializeParameters();
+	initializeVariables();
+
+	formulateProblem();
+}
+
 VRPmodel::VRPmodel(CustomerVRPDB &db, Map &map, int Cap)
 	:
 	database(db),
@@ -77,52 +91,53 @@ void VRPmodel::solveModel()
 
 bool VRPmodel::initializeSets()
 {
-	vector <Customer *> * customers = database.getCustomers();
+	for (NodeIRP * n : AllNodes) {
 
-	int node = 1;
-	for (Customer * c : (*customers)) {
-		CustomerVRP * cust = database.getCustomer(c->getId());
-		if (cust->getDemand(Customer::DELIVERY) > 0.01)
-			DeliveryNodes.push_back(map.getDeliveryNode(cust));
-			
-		if (cust->getDemand(Customer::PICKUP) > 0.01)
-			PickupNodes.push_back(map.getPickupNode(cust));
+		if (n->Quantity > 0.01) {
+			Nodes.push_back(n);
+			if (n->isDelivery())
+				DeliveryNodes.push_back(n);
+			else
+				PickupNodes.push_back(n);
+		}
 	}
 
-	ModelBase::createUnion(DeliveryNodes, PickupNodes, Nodes);
-	ModelBase::createRangeSet(0, 0, Depot);
-	ModelBase::createUnion(Depot, Nodes, AllNodes);
 	return true;
 }
 
 bool VRPmodel::initializeParameters()
 {
-	int nNodes = ModelBase::getMax(AllNodes) + 1;
+	int max = -1;
+	int nNodes;
+	for (NodeIRP* n : AllNodes)
+		if (n->getId() > max)
+			nNodes = n->getId();
+
+	nNodes = nNodes + 1;
 
 	MaxTime = ModelParameters::maxTime;
 	Demand = new int [nNodes];
 	int cust;
 
-	for (int i : DeliveryNodes) {
-		cust = map.nodeToCustomer(i);
-		Demand[i] = database.getDemand(cust, Customer::DELIVERY);
+	int i;
+	for (auto n : Nodes) {
+		i = n->getId();
+		Demand[i] = n->Quantity;
 		//printf("%-10d", Demand[i]);
-			
-		}
-
-	for (int i : PickupNodes) {
-		cust = map.nodeToCustomer(i);
-		Demand[i] = database.getDemand(cust, Customer::PICKUP);
 	} // end demand
 
+	int j; 
+
 	TransCost = new int *[nNodes];
-	for (int i : AllNodes) {
+	for (auto node1 : AllNodes) {
+		i = node1->getId();
 		//printf("\n");
 		TransCost[i] = new int[nNodes];
-		for (int j : AllNodes)
-			if (map.inArcSet(i, j))
+		for (auto node2 : AllNodes)
+			if (node1->inArcSet(node2))
 			{
-				TransCost[i][j] = map.getTransCost(i, j, ModelParameters::TRANSCOST_MULTIPLIER, ModelParameters::SERVICECOST_MULTIPLIER);
+				j = node2->getId();
+				TransCost[i][j] = Database.getTransCost(node1->getData(), node1->getData());
 				//printf("%d\t", TransCost[i][j]);
 			}
 			else {
@@ -133,16 +148,18 @@ bool VRPmodel::initializeParameters()
 
 	//TravelTime
 	TravelTime = new int *[nNodes];
-	for (int i : AllNodes) {
+	for (auto node1 : AllNodes) {
+		i = node1->getId();
 		TravelTime[i] = new int[nNodes];
-		for (int j : AllNodes)
-			if (map.inArcSet(i, j)) {
-				TravelTime[i][j] = map.getTravelTime(i, j, ModelParameters::TRAVELTIME_MULTIPLIER, ModelParameters::SERVICETIME);
+		for (auto node2 : AllNodes) {
+			if (node1->inArcSet(node2)) {
+				j = node2->getId();
+				TravelTime[i][j] = Database.getTravelTime(i, j);
 			}
+		}
 	}
 
 	nVehicles = ModelParameters::nVehicles;
-
 	return true;
 }
 

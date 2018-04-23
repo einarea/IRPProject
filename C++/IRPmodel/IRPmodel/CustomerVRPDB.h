@@ -1,5 +1,5 @@
 #pragma once
-#include "CustomerVRP.h"
+/*#include "CustomerVRP.h"
 #include "CustomerIRP.h"
 #include "IRP.h"
 #include "NodeIRP.h"
@@ -13,5 +13,5 @@ public:
 	int getDemand(int id, int indicator);
 	CustomerVRP * getCustomer(int);
 	~CustomerVRPDB();
-};
+};*/
 

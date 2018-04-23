@@ -24,6 +24,7 @@ public:
 	};
 
 	NodeIRP();
+	bool inArcSet(NodeIRP *);
 	NodeIRP(NodeInstance& data);
 	~NodeIRP();
 	bool isDelivery();

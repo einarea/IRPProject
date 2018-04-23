@@ -1,6 +1,5 @@
 #pragma once
 #include "xprb_cpp.h"
-#include "Map.h"
 #include <vector>
 #include "CustomerVRPDB.h"
 #include "NodeIRP.h"
@@ -14,6 +13,7 @@ using namespace dashoptimization;
 class VRPmodel
 {
 public:
+	VRPmodel(NodeInstanceDB & db, vector<NodeIRP*> nodes, int Capacity);
 	VRPmodel(CustomerVRPDB & db, Map &map, int Capacity);
 	void solveModel();
 	~VRPmodel();
@@ -21,17 +21,16 @@ public:
 	void addRoutesToIRP(IRP& instance, int t, IRP::Solution * sol);
 
 private:
+	//Sets
+	vector<NodeIRP*> AllNodes;
+	vector<NodeIRP*> DeliveryNodes;
+	vector<NodeIRP*> PickupNodes;
+	vector<NodeIRP*> Nodes;
 
-	CustomerVRPDB database;
-	Map map;
 	XPRBprob prob;
 
-	//Sets
-	vector <int> DeliveryNodes;
-	vector <int> PickupNodes;
-	vector <int> Nodes;
-	vector <int> AllNodes;
-	vector <int> Depot;
+
+
 
 	//Variables
 	XPRBvar **x;
@@ -55,6 +54,7 @@ private:
 
 	//Linear expreassions;
 	XPRBexpr objective;
+	NodeInstanceDB Database;
 
 
 

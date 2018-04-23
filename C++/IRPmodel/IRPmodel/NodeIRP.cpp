@@ -4,6 +4,11 @@
 
 
 
+bool NodeIRP::inArcSet(NodeIRP * n)
+{
+	return nodeData.inArcSet(&n->nodeData);
+}
+
 NodeIRP::NodeIRP(NodeInstance& data)
 	:
 	nodeData(data),

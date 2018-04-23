@@ -30,7 +30,7 @@ NodeIRPHolder::NodeIRPHolder(NodeInstance& instance)
 
 NodeIRP * NodeIRPHolder::getNode(int period)
 {
-	return NodePeriods[period];
+	return (NodeIRP*) NodePeriods[period];
 }
 
 int NodeIRPHolder::isInventoryFeasible()
