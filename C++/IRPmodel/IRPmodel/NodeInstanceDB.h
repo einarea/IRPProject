@@ -26,6 +26,7 @@ private:
 
 	//Database vector
 	vector <NodeInstance * > NodeData;
+	void initializeArcSet();
 
 public:
 	int Capacity;

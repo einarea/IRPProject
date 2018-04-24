@@ -23,7 +23,6 @@ public:
 
 	//Simultanous model
 	static const bool Simultaneous = false;
-
 	//Heurestic
 	//static const double VisitRatio = 0.5;
 

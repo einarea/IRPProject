@@ -13,8 +13,6 @@
 using namespace ::dashoptimization;
 using namespace::std;
 
-
-
 void XPRS_CC acceptInt(XPRSprob oprob, void * vd, int soltype, int * ifreject, double *cutoff) {
 	IRP * modelInstance;
 	modelInstance = (IRP*)vd;
@@ -748,7 +746,7 @@ bool IRP::formulateProblem()
 
 			for (int t : Database.Periods) {
 				if (arcIndicator)
-					objective += Database.getTransCost(i, j) * x[i][j][t];
+					objective += node1->getTransCost(node2) * x[i][j][t];
 			}
 		}
 
@@ -759,7 +757,7 @@ bool IRP::formulateProblem()
 					i = node2->getId();
 				if (Database.isColocated(i, j))
 					for (int t : Database.Periods)
-						objective += simAction[i][j][t] * Database.getTransCost(i, j);
+						objective += simAction[i][j][t] * node1->getTransCost(node2);
 			}
 		}
 	} // End transportation costs
@@ -903,10 +901,10 @@ bool IRP::formulateProblem()
 			for (auto node2 : Database.Nodes){
 				j = node2->getId();
 				if (node1->inArcSet(node2)) {
-					p1 = time[i][t] - time[j][t] + Database.getTravelTime(i, j)
-						+ (ModelParameters::maxTime + Database.getTravelTime(i, j) * x[i][j][t]);
+					p1 = time[i][t] - time[j][t] + node1->getTravelTime(node2)
+						+ (ModelParameters::maxTime + node1->getTravelTime(node2) * x[i][j][t]);
 
-					p2 = ModelParameters::maxTime + Database.getTravelTime(i, j);
+					p2 = ModelParameters::maxTime + node1->getTravelTime(node2);
 					prob.newCtr("Time flow", p1 <= p2);
 					p1 = 0;
 					p2 = 0;
@@ -919,7 +917,7 @@ bool IRP::formulateProblem()
 				}
 
 			if (node1->inArcSet(Database.getDepot())) {
-				p1 = time[i][t] + Database.getTravelTime(i, 0) * x[i][0][t];
+				p1 = time[i][t] + node1->getTravelTime(DataBase.getDepot()) * x[i][0][t];
 				prob.newCtr("Final time", p1 <= ModelParameters::maxTime);
 				p1 = 0;
 			}
@@ -1807,13 +1805,12 @@ void IRP::addHoldingCostCtr(double holdingCost)
 			if (node1->inArcSet(node2)) {
 				j = node2->getId();
 				for (int t : Database.Periods)
-					p1 += Database.getTransCost(*node1, *node2) * x[i][j][t];
+					p1 += node1->getTransCost(node2) * x[i][j][t];
 			}
 	}
 	prob.setObj(prob.newCtr("OBJ", p1));
 	prob.print();
 }
-
 
 int IRP::getCapacity()
 {

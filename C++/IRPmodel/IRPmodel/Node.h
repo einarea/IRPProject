@@ -1,13 +1,13 @@
 #pragma once
 #include <vector>;
 
+
 using namespace std;
 class Node
 {
-
-public:
 	class Edge {
 	public:
+		//Edge(Edge& edge);
 		Edge(Node& endNode, double value);
 		double getValue();
 		void setValue(double);
@@ -18,15 +18,32 @@ public:
 		Node &EndNode;
 	};
 
+private:
+	int NodeID;
+	int State;
+	vector <Edge*> Edges;
 
-	Node(int id);
+public:
+	//Constructores
 	Node(int id, vector<Edge*> edges);
-	void setId(int id);
+	Node(Node&);
+	Node(int id);
+
+	//Destructor
+	~Node();
+
+	//get functions
 	Edge * getEdge(Node & n);
 	int getnEdges();
 	//Returns the first edge
 	Edge * getEdge();
 	vector <Edge*> getEdges();
+	int getState();
+	int getId() const;
+
+	//modifier functions
+	void setId(int id);
+	void setState(int s);
 	void addEdge(double value, Node * child);
 	void addEdge(Edge *);
 	bool hasEdge(Edge *);
@@ -35,20 +52,12 @@ public:
 	void deleteEdges();
 	void deleteEdge(Node *);
 	void removeEdges();
-	void setState(int s);
-	int getState();
-	int getId() const;
-	~Node();
-
+	
+	//Operator overloading
 	bool operator==(const Node &) const;
 	bool operator!=(const Node &node) const
 	{
 		return !(*this == node); // invokes Array::operator==
 	}
-
-private:
-	int NodeID;
-	int State;
-	vector <Edge*> Edges;
 };
 

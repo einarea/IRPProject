@@ -2,19 +2,27 @@
 #include "Node.h"
 
 
-
-Node::Node(int id)
-	:
-	NodeID(id)
-{
-}
-
 Node::Node(int id, vector<Edge*> edges)
 	:
 	NodeID(id),
 	Edges(edges)
 {
 }
+
+Node::Node(Node & cpNode)
+{
+	//Do not copy the edges
+}
+
+
+
+Node::Node(int id)
+	:
+	NodeID(id)
+{
+
+}
+	
 
 void Node::setId(int id)
 {
@@ -59,6 +67,8 @@ vector<Node::Edge*> Node::getEdges()
 {
 	return Edges;
 }
+
+
 
 Node::Edge::Edge(Node & endNode, double value)
 	:
@@ -154,4 +164,7 @@ Node *Node::Edge::getEndNode()
 
 Node::~Node()
 {
+	//Release dynamic memory
+	for (Edge* edge : Edges)
+		delete edge;
 }

@@ -161,6 +161,18 @@ string NodeInstanceDB::getNextToken(string &str, string& delimiter) const
 	return token;
 }
 
+void NodeInstanceDB::initializeArcSet()
+{
+	for (auto nodePick : PickupNodes) {
+		for (auto nodeDel : DeliveryNodes)
+			if (nodePick->isColocated(nodeDel)) {
+				nodePick->ForbiddenNodes.push_back(nodeDel);
+				break;
+			}
+	}
+
+}
+
 
 //Constructor
 NodeInstanceDB::NodeInstanceDB(string fileName)

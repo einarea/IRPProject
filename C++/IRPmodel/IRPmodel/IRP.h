@@ -12,14 +12,9 @@
 using namespace ::dashoptimization;
 using namespace::std;
 
-
-
-
 class IRP
-{
-	
+{	
 private:
-
 	//Problem
 	NodeInstanceDB &Database;
 	XPRBprob prob;
@@ -43,13 +38,7 @@ private:
 	int Capacity;
 	int NumOfPeriods;
 
-
-	//Map map;
-
-	//Variables
-					//Arc variables
-				//Customer visits variables
-		
+	//Variables	
 	XPRBvar ** delivery;
 	XPRBvar ** pickup;
 	XPRBvar *** loadDelivery;
@@ -63,16 +52,9 @@ private:
 	XPRBctr ** TabuMatrix;
 	double ** CountMatrix;
 
-
-
-
 	XPRBexpr objective;
 	int ** t;
 
-
-
-
-	//
 	XPRBctr VisitCtr;
 
 	//Utility functions
@@ -82,9 +64,6 @@ private:
 	bool initializeVariables();
 	bool initializeParameters();
 	bool formulateProblem();
-
-
-	
 
 	void printGraph(vector <Node> &);
 
@@ -116,22 +95,6 @@ public:
 	//For valid ineq
 	double *** ExcessConsumption;
 	double *** ExcessProd;
-
-	//Solving the aggregated model
-	class IRPproblem
-	{
-
-
-	};
-
-
-
-
-	//Class to store solutions to the instance
-
-	//Class that define a IRP node in a particular period
-	
-
 	
 	class LocalSearch {
 	public:
@@ -148,22 +111,7 @@ public:
 	};
 	
 
-
-	//Class that solves a VRP for a period while pushing quantity to other periods and its existing routes
-	/*class RouteProblemWithVRP : public RouteProblem {
-	public:
-		RouteProblemWithVRP(IRP & Instance, int period, vector<IRP::Route*> routes);
-		void initializeVaribles();
-		void formulateProblem();
-		void solveProblem();
-		void addRoutingConstraints();
-	private:
-		int VRPperiod;
-	};*/
-
 	IRP(NodeInstanceDB&, bool relaxed = false, bool maskOn = false, int ** VisitMask = 0);
-	//void addSolution(int ** y, int ***x, int **d, int **pic, int ***loadDel, int ***loadPic, int **inv, int ** t);
-
 	void addVisitConstraint(double ** VisitMatrix, int selection);
 	Route * getRoute(int id);
 	vector<Route const*>& getRoutes();
@@ -173,10 +121,7 @@ public:
 	//Solution information
 	double ** getVisitDifference(Solution * sol1, Solution * sol2);
 
-
-
 	//Route functions
-
 	void updateTabuMatrix(double ** changeMatrix);
 	int getNumOfNodes();
 	void addHoldingCostCtr(double holdingCost);

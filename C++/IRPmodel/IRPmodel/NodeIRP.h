@@ -25,9 +25,13 @@ public:
 		double LoadPick;
 	};
 
-	NodeIRP();
+	//Copy constructor
+	NodeIRP(NodeIRP&);
 	bool inArcSet(NodeIRP *);
 	bool inArcSet(NodeInstance *);
+	template<typename T> double getTransportationCost(T * node);
+	template<typename T> double getTravelTime(T* node);
+
 	NodeIRP(NodeInstance& data);
 	~NodeIRP();
 	bool isDelivery();
@@ -46,7 +50,26 @@ public:
 	NodeInstance& getData() const;
 private:
 	bool DELIVERY;
-	NodeInstance &nodeData;
+	NodeInstance &NodeData;
+	template<typename T> getDistance(T * node);
 };
 
 #endif
+
+template<typename T>
+inline double NodeIRP::getTransportationCost(T * node)
+{
+	return getDistance(node) * ModelParameters::TRANSCOST_MULTIPLIER + ModelParameters::SERVICECOST_MULTIPLIER;
+}
+
+template<typename T>
+inline double NodeIRP::getTravelTime(T * node)
+{
+	return getDistance(node) * ModelParameters::TRAVELTIME_MULTIPLIER + ModelParameters::SERVICETIME;
+}
+
+template<typename T>
+inline NodeIRP::getDistance(T * node)
+{
+	return (int)floor(sqrt(pow(PosX - node->PosX, 2) + pow(PosY - node->PosY, 2)));
+}

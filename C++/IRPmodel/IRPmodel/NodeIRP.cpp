@@ -1,23 +1,28 @@
 #include "stdafx.h"
 #include "NodeIRP.h"
 
-
-
+//Copy constructor
+NodeIRP::NodeIRP(NodeIRP & cpNode)
+	:
+	Node(cpNode),
+	NodeData(cpNode.NodeData)
+{
+}
 
 bool NodeIRP::inArcSet(NodeIRP * n)
 {
-	return nodeData.inArcSet(&n->nodeData);
+	return NodeData.inArcSet(&n->NodeData);
 }
 
 bool NodeIRP::inArcSet(NodeInstance * n)
 {
-	return nodeData.inArcSet(n);
+	return NodeData.inArcSet(n);
 }
 
 NodeIRP::NodeIRP(NodeInstance& data)
 	:
-	nodeData(data),
-	Node(nodeData.getId())
+	NodeData(data),
+	Node(NodeData.getId())
 {
 	//
 	Quantity = -1;
@@ -90,22 +95,22 @@ double NodeIRP::getOutflow()
 
 double NodeIRP::getPosX()
 {
-	return nodeData.PosX;
+	return NodeData.PosX;
 }
 
 double NodeIRP::getPosY()
 {
-	return nodeData.PosY;
+	return NodeData.PosY;
 }
 
 double NodeIRP::getHoldCost()
 {
-	return nodeData.HoldingCost;
+	return NodeData.HoldingCost;
 }
 
 NodeInstance & NodeIRP::getData() const
 {
-	return nodeData;
+	return NodeData;
 }
 
 
