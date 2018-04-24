@@ -13,7 +13,11 @@ public:
 	friend class Solution;
 
 	int getId();
+
+	//Constructor and destructor
 	NodeIRPHolder(NodeInstance& instance);
+	NodeIRPHolder::~NodeIRPHolder();
+
 	vector< NodeIRP* > NodePeriods;
 	
 	NodeIRP * getNode(int period);

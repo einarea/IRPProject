@@ -14,14 +14,14 @@ class VRPmodel
 {
 public:
 	VRPmodel(NodeInstanceDB & db, vector<NodeIRP*> nodes, int Capacity);
-	VRPmodel(CustomerVRPDB & db, Map &map, int Capacity);
 	void solveModel();
 	~VRPmodel();
-	void addToIRPSolution(int t, IRP::Solution * sol, IRP &);
-	void addRoutesToIRP(IRP& instance, int t, IRP::Solution * sol);
+	void addToIRPSolution(int t, Solution * sol);
+	void addRoutesToIRP(int t, Solution * sol);
 
 private:
 	//Sets
+	int nNodes;
 	vector<NodeIRP*> AllNodes;
 	vector<NodeIRP*> DeliveryNodes;
 	vector<NodeIRP*> PickupNodes;

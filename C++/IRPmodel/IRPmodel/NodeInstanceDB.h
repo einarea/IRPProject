@@ -19,21 +19,26 @@ class NodeInstanceDB
 
 private:
 	int nPeriods;
-	int Capacity;
+
 
 	//utility functions
 	string getNextToken(string & str, string & delimiter) const;
-protected:
-	vector <NodeInstance *> NodeData; //Vector of all nodes
-	vector <NodeInstance *> DeliveryNodes;
-	vector <NodeInstance *> PickupNodes;
-	vector <NodeInstance *> Nodes;
+
+	//Database vector
+	vector <NodeInstance * > NodeData;
+
 public:
+	int Capacity;
 
 	NodeInstanceDB(string fileName);
+	NodeInstanceDB(int nCustomers, int nPeriods);
 	~NodeInstanceDB();
 
+	static NodeInstanceDB * createInstance(int nCustomers, int nPeriods, int version);
+	static string getFilename(int nCustomers, int nPeriods, int version);
+
 	bool inArcSet(NodeInstance * node1, NodeInstance * node2);
+	NodeInstance * getDepot();
 	bool inArcSet(int id1, int id2);
 	bool inExtensiveArcSet(int, int);
 	bool inSimultaneousArcSet(int, int);
@@ -64,7 +69,10 @@ public:
 	vector  <int> Periods;
 	vector  <int> AllPeriods;
 
-	vector  <int> AllNodes;
-	vector  <int> Depot;
+	vector  <NodeInstance *> AllNodes;
+	vector <NodeInstance *> DeliveryNodes;
+	vector <NodeInstance *> PickupNodes;
+	vector <NodeInstance *> Nodes;
+	vector  <NodeInstance *> Depot;
 
 };

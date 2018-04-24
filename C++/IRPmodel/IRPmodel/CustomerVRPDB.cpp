@@ -2,7 +2,7 @@
 #include "CustomerVRPDB.h"
 
 
-CustomerVRP * CustomerVRPDB::getCustomer(int id)
+/*CustomerVRP * CustomerVRPDB::getCustomer(int id)
 {
 	for (Customer *c : Customers) {
 		if (c->getId() == id) {
@@ -71,4 +71,4 @@ int CustomerVRPDB::getDemand(int id, int indicator)
 
 CustomerVRPDB::~CustomerVRPDB()
 {
-}
+}*/

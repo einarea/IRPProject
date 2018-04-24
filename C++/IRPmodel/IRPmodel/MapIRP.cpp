@@ -1,6 +1,7 @@
 #include "stdafx.h"
-#include "MapIRP.h"
 
+
+/*
 
 MapIRP::MapIRP(CustomerIRPDB &db)
 	:
@@ -59,3 +60,4 @@ int MapIRP::getInitInventory(int node)
 MapIRP::~MapIRP()
 {
 }
+*/

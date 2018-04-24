@@ -1,3 +1,6 @@
+#ifndef MODELBASE_H
+#define MODELBASE_H
+
 #include "stdafx.h"
 #include "xprb_cpp.h"
 #include <vector>
@@ -18,3 +21,4 @@ public:
 	~ModelBase();
 };
 
+#endif

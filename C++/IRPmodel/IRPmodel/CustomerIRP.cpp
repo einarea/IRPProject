@@ -3,7 +3,7 @@
 #include <time.h>
 
 
-
+/*
 
 CustomerIRP::CustomerIRP(int id, int * holdCost, int * lowLim, int * uppLim, int ** dem, int * init, int coordinateX, int coordinateY)
 	:
@@ -132,4 +132,4 @@ int CustomerIRP::getInitInventory(int indicator)
 
 CustomerIRP::~CustomerIRP()
 {
-}
+}*/

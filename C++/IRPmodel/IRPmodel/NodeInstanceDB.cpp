@@ -39,6 +39,7 @@ int NodeInstanceDB::getDistance(int i, int j)
 
 bool NodeInstanceDB::isColocated(int i, int j)
 {
+	return false;
 }
 
 int NodeInstanceDB::getTransCost(const NodeInstance &node1, const NodeInstance &node2)
@@ -99,26 +100,28 @@ void NodeInstanceDB::writeInstanceToFile(ofstream &instanceFile, string Filename
 {
 	instanceFile.open(Filename);
 	instanceFile << "nPeriods = " << getnPeriods() << "\n";
-	instanceFile << "HD\tLL\tUL\t";
+	instanceFile << "DEL\tHC\tLL\tUL\t";
 
-	for (int t = 1; t <= getnPeriods(); t++) {
+	for (int t = 1; t <= nPeriods; t++) {
 		instanceFile << "Q" << t << "\t";
 	}
 
 	
 
-	instanceFile << "I01\tX\tY\n";
+	instanceFile << "I0\tX\tY\n";
 
-	for (auto n : NodeData) {
-		if (n->getId() != 0) {
-			NodeInstance * node = getNode(n->getId());
+	int i; 
+	for (auto node : Nodes) {
+		if (node->getId() != 0) {
+	
+			node->Delivery ? i = 1 : i = 0;
+			instanceFile << i <<  "\t"
+				<< node->HoldingCost << "\t"
+				<< node->LowerLimit << "\t"
+				<< node->UpperLimit << "\t";
 
-			instanceFile << node->HoldingCost << "\t"
-				<< "\t" << node->LowerLimit << "\t"
-				<< "\t" << node->UpperLimit << "\t";
-
-			for (int t = 1; t <= getnPeriods(); t++) {
-				instanceFile << node->Demand[t];
+			for (int t = 1; t <= nPeriods; t++) {
+				instanceFile << node->Demand[t] <<"\t";
 			}
 			
 			instanceFile << node->InitInventory << "\t";
@@ -133,7 +136,8 @@ void NodeInstanceDB::writeInstanceToFile(ofstream &instanceFile, string Filename
 void NodeInstanceDB::initializeSets()
 {
 	for (auto node : NodeData) {
-		if (node->getId != 0) {
+		AllNodes.push_back(node);
+		if (node->getId() != 0) {
 			Nodes.push_back(node);
 			if (node->isDelivery())
 				DeliveryNodes.push_back(node);
@@ -145,7 +149,6 @@ void NodeInstanceDB::initializeSets()
 	int NumOfPeriods = getnPeriods();
 	ModelBase::createRangeSet(1, NumOfPeriods, Periods);
 	ModelBase::createRangeSet(0, NumOfPeriods, AllPeriods);
-	ModelBase::createRangeSet(0, 0, Depot);
 }
 
 
@@ -158,6 +161,8 @@ string NodeInstanceDB::getNextToken(string &str, string& delimiter) const
 	return token;
 }
 
+
+//Constructor
 NodeInstanceDB::NodeInstanceDB(string fileName)
 {
 	
@@ -179,7 +184,7 @@ NodeInstanceDB::NodeInstanceDB(string fileName)
 
 
 	//Push back depot
-	NodeData.push_back(new NodeInstance(0, 0, 0));
+	NodeData.push_back(new NodeInstance(0, 0, nPeriods, 0));
 	//check file for errors
 	getline(nodeRecords, line);
 
@@ -189,7 +194,7 @@ NodeInstanceDB::NodeInstanceDB(string fileName)
 	int InitInventory;
 	int LowerLimit;
 	int UpperLimit;
-
+	bool Del;
 
 	while (!getline(nodeRecords, line).eof()) {
 
@@ -198,6 +203,7 @@ NodeInstanceDB::NodeInstanceDB(string fileName)
 		delimiter = "\t";
 
 		//Inventory parameters
+		Del  = stoi(getNextToken(line, delimiter)) == 1 ? true : false;
 		HoldingCost = stoi(getNextToken(line, delimiter));
 		LowerLimit = stoi(getNextToken(line, delimiter));
 		UpperLimit = stoi(getNextToken(line, delimiter));
@@ -214,11 +220,10 @@ NodeInstanceDB::NodeInstanceDB(string fileName)
 		//If datafile provide coordinates
 		int x = stoi(getNextToken(line, delimiter));
 		int y = stoi(getNextToken(line, delimiter));
-		NodeInstance * node = new NodeInstance(nodeID, x, y, nPeriods, InitInventory, HoldingCost, Demand);
+		NodeInstance * node = new NodeInstance(nodeID, Del, x, y, nPeriods, InitInventory, HoldingCost, Demand);
 		NodeData.push_back(node);
 		nodeID++;
 
-		initializeSets();
 	
 	}
 
@@ -236,8 +241,44 @@ NodeInstanceDB::NodeInstanceDB(string fileName)
 	initializeSets();
 }
 
+//Generate two colocated nodes for nCustomers
+NodeInstanceDB::NodeInstanceDB(int nCustomers, int nPer)
+	:
+	nPeriods(nPer)
+{
+	NodeData.push_back(new NodeInstance(0, false, 0, 0, nPer, 1));
+
+	for (int i = 1; i <= 2*nCustomers; i = i+2) {
+		auto delNode = new NodeInstance(i, true, nPer, i);
+		NodeData.push_back(delNode);
+		NodeData.push_back(new NodeInstance(i+1, false, delNode->PosX, delNode->PosY, nPer, i+1));
+	}
+
+	initializeSets();
+}
+
+
 NodeInstanceDB::~NodeInstanceDB()
 {
+}
+
+NodeInstanceDB* NodeInstanceDB::createInstance(int nCustomers, int nPeriods, int version)
+{
+	//Sleep(1000);
+	NodeInstanceDB *db = new NodeInstanceDB(nCustomers, nPeriods);
+
+	ofstream instanceFile;
+
+	string filename = getFilename(nCustomers, nPeriods, version);
+	db->writeInstanceToFile(instanceFile, filename);
+	return db;
+
+}
+
+string NodeInstanceDB::getFilename(int nCustomers, int nPeriods, int version)
+{
+	string extension(".txt");
+	return  "Instances/C" + to_string(nCustomers) + "T" + to_string(nPeriods) + "_v" + to_string(version) + extension;
 }
 
 bool NodeInstanceDB::inArcSet(int i, int j)
@@ -257,6 +298,13 @@ bool NodeInstanceDB::inArcSet(NodeInstance * node1, NodeInstance * node2)
 		return true;
 	
 	return false;
+}
+
+NodeInstance * NodeInstanceDB::getDepot()
+{
+	for (auto node : Nodes)
+		if (node->getId() == 0)
+			return node;
 }
 
 
@@ -296,4 +344,19 @@ NodeInstance * NodeInstanceDB::getNode(int id)
 		if (n->getId()==id)
 			return n;
 	}
+}
+
+int NodeInstanceDB::getnNodes()
+{
+	return Nodes.size();
+}
+
+int NodeInstanceDB::getX(int id)
+{
+	return getNode(id)->PosX;
+}
+
+int NodeInstanceDB::getY(int id)
+{
+	return getNode(id)->PosY;
 }

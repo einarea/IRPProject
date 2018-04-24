@@ -1,5 +1,4 @@
 #include "stdafx.h"
-#include "Map.h"
 #include <iostream>
 #include <math.h>
 #include <algorithm>
@@ -8,7 +7,7 @@ using namespace ::std;
 #include "ModelParameters.h"
 #include "math.h"
 
-
+/*
 
 bool Map::isDelivery(int node)
 {
@@ -150,4 +149,4 @@ bool Map::inArcSet(int i, int j)
 
 Map::~Map()
 {
-}
+}*/

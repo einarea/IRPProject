@@ -7,64 +7,30 @@ using namespace ::std;
 
 
 
-bool NodeInstance::inArcSet(NodeInstance * n)
+
+
+void NodeInstance::randomQuantities(int randSeed)
 {
-	for (auto m : ForbiddenNodes)
-		if (m == n)
-			return false;
-
-	return true;
-}
-
-NodeInstance::NodeInstance(int id, int posX, int posY, int nPeriods, int initial, int holdingCost, vector<int> demand)
-	:
-	NodeID(id),
-	PosX(posX),
-	PosY(posY),
-	nPeriods(nPeriods),
-	InitInventory(initial),
-	HoldingCost(holdingCost),
-	Demand(Demand)
-{
-}
-
-NodeInstance::NodeInstance(int nodeId, int posX, int posY)
-	:
-	NodeID(nodeId),
-	PosX(posX),
-	PosY(posY)
-{
-}
-
-//Create random node
-NodeInstance::NodeInstance(int id, int randSeed)
-	:
-	NodeID(id)
-{
-	srand(time(0) + randSeed);
-	PosX = (rand() % 100 + 0) - 50;
-	PosY = (rand() % 100 + 0) - 50;
-
 	Demand.resize(nPeriods + 1);
 
 	srand(time(0) + randSeed);
 
-	HoldingCost= rand() % (ModelParameters::HoldingCostHigh - ModelParameters::HoldingCostLow) + ModelParameters::HoldingCostLow;
-	
+	HoldingCost = rand() % (ModelParameters::HoldingCostHigh - ModelParameters::HoldingCostLow) + ModelParameters::HoldingCostLow;
+
 	int maxDemand = 0;
 
 	//for delivery nodes
-	if (isDelivery()){
+	if (isDelivery()) {
 		for (int t = 1; t <= nPeriods; t++) {
 			Demand[t] = rand() % (ModelParameters::DemandDelHigh - ModelParameters::DemandDelLow) + ModelParameters::DemandDelLow;
 
 			if (Demand[t] >= maxDemand) {
 				maxDemand = Demand[t];
 			}
-		
+
 		}
 
-	 
+
 		LowerLimit = ModelParameters::LBDel;
 
 		do {
@@ -94,6 +60,67 @@ NodeInstance::NodeInstance(int id, int randSeed)
 	}
 }
 
+bool NodeInstance::inArcSet(NodeInstance * n)
+{
+	for (auto m : ForbiddenNodes)
+		if (m == n)
+			return false;
+
+	return true;
+}
+
+NodeInstance::NodeInstance(int id, bool del, int posX, int posY, int nPer, int initial, int holdingCost, vector<int> demand)
+	:
+	NodeID(id),
+	Delivery(del),
+	PosX(posX),
+	PosY(posY),
+	nPeriods(nPer),
+	InitInventory(initial),
+	HoldingCost(holdingCost),
+	Demand(Demand)
+{
+}
+
+NodeInstance::NodeInstance(int nodeId, bool Del, int posX, int posY, int nPer, int randSeed)
+	:
+	NodeID(nodeId),
+	Delivery(Del),
+	PosX(posX),
+	PosY(posY),
+	nPeriods(nPer)
+
+{
+	randomQuantities(randSeed);
+}
+
+//Create random node
+NodeInstance::NodeInstance(int id, bool del, int nPer, int randSeed)
+	:
+	NodeID(id),
+	Delivery(del),
+	nPeriods(nPer)
+{
+	srand(time(0) + randSeed);
+	PosX = (rand() % 100 + 0) - 50;
+	PosY = (rand() % 100 + 0) - 50;
+
+	randomQuantities(randSeed);
+}
+
+bool NodeInstance::isDelivery()
+{
+	return Delivery;
+}
+
+
+bool NodeInstance::isColocated(NodeInstance * node)
+{
+	if (PosX == node->PosX && PosY == node->PosY)
+		return true;
+	else
+		return false;
+}
 
 bool NodeInstance::hasArc(NodeInstance * node)
 {

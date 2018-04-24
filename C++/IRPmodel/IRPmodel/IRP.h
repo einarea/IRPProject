@@ -5,9 +5,7 @@
 #include "NodeInstanceDB.h"
 #include <vector>
 #include "xprs.h"
-#include "Node.h"
 #include "Solution.h"
-#include "NodeIRP.h"
 #include "NodeIRPHolder.h"
 
 
@@ -44,14 +42,6 @@ private:
 	int MaxTime;
 	int Capacity;
 	int NumOfPeriods;
-	int ** Dist;
-	int ** TransCost;
-	int * HoldCost;
-	int * InitInventory;
-	int * UpperLimit;
-	int * LowerLimit;
-	int ** Demand;
-	int ** TravelTime;
 
 
 	//Map map;
@@ -100,15 +90,8 @@ private:
 
 	int SolutionCounter; // Tracks number of solutions, solution's ID equals the counter value at the time added
 	int getCounter();
-	
-
-
-
-
 
 public:
-
-
 
 	void buildGraph(vector <Node*> &, int, bool includeDepot, double weight = 0.01);
 	vector <Solution *> solutions;
@@ -117,7 +100,6 @@ public:
 	XPRBvar ** y;
 	XPRBvar *** x;
 
-	Solution * allocateSolution(NodeInstanceDB &);
 	void fillSolution(Solution * sol);
 
 	//To store all routes that are generated
@@ -126,13 +108,6 @@ public:
 	vector<vector<vector<XPRBvar>>> subtourIndices;
 	//Sets
 	int startTime;
-	vector  <int> Periods;
-	vector  <int> AllPeriods;
-	vector  <int> DeliveryNodes;
-	vector <int> PickupNodes;
-	vector  <int> Nodes;
-	vector  <int> AllNodes;
-	vector  <int> Depot;
 	vector <int> integers1;
 
 
@@ -173,9 +148,6 @@ public:
 	};
 	
 
-	class RouteProblem{
-	
-	};
 
 	//Class that solves a VRP for a period while pushing quantity to other periods and its existing routes
 	/*class RouteProblemWithVRP : public RouteProblem {
@@ -229,7 +201,7 @@ public:
 	//void getVisitedCustomers(int period, vector <Customer *> &);
 	//void getDemand(int period, vector<vector<double>> &, vector <Customer *> &);
 	Solution * getSolution(int id);
-	NodeInstanceDB * IRP::getDB();
+	NodeInstanceDB const * getDB();
 	//void printBounds();
 
 	~IRP();

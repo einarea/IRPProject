@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "CustomerIRPDB.h"
+/*#include "CustomerIRPDB.h"
 
 
 CustomerIRPDB::CustomerIRPDB(string FileName, bool COORDINATE_INPUT)
@@ -208,5 +208,5 @@ CustomerIRPDB::~CustomerIRPDB()
 CustomerIRP * CustomerIRPDB::generateCustomer(int id, int periods, int randSeed)
 {
 	return new CustomerIRP(id, periods, randSeed);
-}
+}*/
 

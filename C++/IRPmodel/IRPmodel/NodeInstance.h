@@ -12,15 +12,18 @@ class NodeInstance
 	friend class NodeIRPHolder;
 	friend class NodeIRP;
 	friend class NodeInstanceDB;
+	friend class RouteProblem;
 	friend class IRP;
 private:
-	static int nPeriods;
 	
 	int NodeID;
 	double PosX;
 	double PosY;
+	bool Delivery;
+
 
 	int HoldingCost;
+	void randomQuantities(int randSeed);
 	int LowerLimit;
 	int UpperLimit;
 	vector<int> Demand;
@@ -30,19 +33,18 @@ private:
 	//Set of forbidden traversals
 	vector<NodeInstance*> ForbiddenNodes;
 
+
 public:
 
-	NodeInstance(int NodeId, int posX, int posY, int nPeriods, int inital, int holdingCost, vector<int> Demand);
-	NodeInstance(int NodeId, int posX, int posY);
-	NodeInstance(int id, int randSeed);
+	NodeInstance(int NodeId, bool Del, int posX, int posY, int nPer, int inital, int holdingCost, vector<int> Demand);
+	NodeInstance(int NodeId, bool Del, int posX, int posY, int nPer, int randSeed);
+	NodeInstance(int id, bool Del, int nPer, int randSeed);
 	bool isDelivery();
+	bool isColocated(NodeInstance *);
 	bool hasArc(NodeInstance * node);
 	double getXpos() const;
 	double getYpos() const ;
 	int getId();	
 	void print();
-
-	static const int  DELIVERY = 0;
-	static const int PICKUP = 1;
 
 };

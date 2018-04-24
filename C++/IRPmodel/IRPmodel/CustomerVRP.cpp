@@ -3,7 +3,7 @@
 #include "IRP.h"
 
 
-
+/*
 
 CustomerVRP::CustomerVRP(int id, int x, int y, double del, double pick)
 	:
@@ -34,4 +34,4 @@ void CustomerVRP::setPickup(double quantity)
 
 CustomerVRP::~CustomerVRP()
 {
-}
+}*/

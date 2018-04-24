@@ -9,9 +9,7 @@ graphAlgorithm::graphAlgorithm()
 }
 
 
-
-
-void graphAlgorithm::printGraph(vector<Node*>& graph, IRP &instance, string filename, int weight) {
+void graphAlgorithm::printGraph(vector<Node*>& graph, NodeInstanceDB &db, string filename, int weight) {
 
 
 	FILE *gnuplotPipe = _popen("C:\\Octave\\3.2.4_gcc-4.4.0\\bin\\gnuplot", "w");
@@ -33,8 +31,8 @@ void graphAlgorithm::printGraph(vector<Node*>& graph, IRP &instance, string file
 	int nextPickup = 0;
 	for (Node *node : graph) {
 
-		xLoc = instance.getMap()->getX(node->getId());
-		yLoc = instance.getMap()->getY(node->getId());
+		xLoc = db.getX(node->getId());
+		yLoc = db.getY(node->getId());
 
 		if (xLoc == 0 && yLoc == 0) {
 			Depot.push_back(make_pair(xLoc, yLoc));
@@ -51,10 +49,10 @@ void graphAlgorithm::printGraph(vector<Node*>& graph, IRP &instance, string file
 	}
 	for (Node *node : graph) {
 		
-		x1 = instance.getMap()->getX(node->getId());
-		y1 = instance.getMap()->getY(node->getId());
+		x1 = db.getX(node->getId());
+		y1 = db.getY(node->getId());
 
-		if (!instance.getMap()->isDelivery(node->getId()))
+		if (!db.isDelivery(node->getId()))
 			//Move outgoing arc from pickup
 		{
 			x1 += 4;
@@ -62,22 +60,22 @@ void graphAlgorithm::printGraph(vector<Node*>& graph, IRP &instance, string file
 
 		for (Node::Edge* edge : node->getEdges()) {
 			if (edge->getValue() != -1) {
-				x2 = instance.getMap()->getX(edge->getEndNode()->getId());
-				y2 = instance.getMap()->getY(edge->getEndNode()->getId());
+				x2 = db.getX(edge->getEndNode()->getId());
+				y2 = db.getY(edge->getEndNode()->getId());
 
-				if (!instance.getMap()->isDelivery(edge->getEndNode()->getId()))
+				if (!db.isDelivery(edge->getEndNode()->getId()))
 					//Move outgoing arc from pickup
 					{
 						x2 += 4;
 					}
 				int id;
-				IRP::NodeIRP::EdgeIRP * edgePtr;
+				NodeIRP::EdgeIRP * edgePtr;
 				switch (weight) {
 				case 0:
 					id = getColor(1);
 				case ModelParameters::LOAD:
-					edgePtr = static_cast<IRP::NodeIRP::EdgeIRP*> (edge);
-					id = getColor((edgePtr->LoadDel + edgePtr->LoadPick) / instance.getCapacity());
+					edgePtr = static_cast<NodeIRP::EdgeIRP*> (edge);
+					id = getColor((edgePtr->LoadDel + edgePtr->LoadPick) / db.Capacity);
 					break;
 
 				case ModelParameters::X:
@@ -173,8 +171,8 @@ void graphAlgorithm::printGraph(vector<Node*>& graph, IRP &instance, string file
 void graphAlgorithm::getRoutes(vector<Node*>& graph,  vector<vector<Node*>>& routes)
 {
 	// Do a depth-first-search to identify routes.
-	IRP::NodeIRP *depot = IRP::NodeIRP::getNode(graph[0]);
-	vector <IRP::NodeIRP::EdgeIRP*> edges = depot->getEdges();
+	NodeIRP *depot = NodeIRP::getNode(graph[0]);
+	vector <NodeIRP::EdgeIRP*> edges = depot->getEdges();
 	//edges->erase(edges->begin());
 
 	vector<Node*> route;

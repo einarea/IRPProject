@@ -1,6 +1,8 @@
+#ifndef NODEIRP_H
+#define NODEIRP_H
+
 #include "Node.h"
 #include "NodeInstance.h"
-
 
 
 //Class that represents a node in a time period
@@ -25,6 +27,7 @@ public:
 
 	NodeIRP();
 	bool inArcSet(NodeIRP *);
+	bool inArcSet(NodeInstance *);
 	NodeIRP(NodeInstance& data);
 	~NodeIRP();
 	bool isDelivery();
@@ -45,3 +48,5 @@ private:
 	bool DELIVERY;
 	NodeInstance &nodeData;
 };
+
+#endif

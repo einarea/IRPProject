@@ -29,20 +29,6 @@ VRPmodel::VRPmodel(NodeInstanceDB & db, vector<NodeIRP*> nodes, int cap)
 	formulateProblem();
 }
 
-VRPmodel::VRPmodel(CustomerVRPDB &db, Map &map, int Cap)
-	:
-	database(db),
-	map(map),
-	prob("VRP"),
-	Capacity(Cap)
-{
-	initializeSets();
-	initializeParameters();
-	initializeVariables();
-
-	formulateProblem();
-
-}
 
 void VRPmodel::solveModel()
 {
@@ -108,7 +94,6 @@ bool VRPmodel::initializeSets()
 bool VRPmodel::initializeParameters()
 {
 	int max = -1;
-	int nNodes;
 	for (NodeIRP* n : AllNodes)
 		if (n->getId() > max)
 			nNodes = n->getId();
@@ -169,22 +154,24 @@ bool VRPmodel::initializeVariables()
 
 
 	//Initialize routing variables, load and penalty variables
-	int nNodes = ModelBase::getMax(AllNodes) + 1;
 	loadDelivery = new XPRBvar *[nNodes];
 	loadPickup = new XPRBvar *[nNodes];
 	pCapacity = new XPRBvar *[nNodes];
 
 	x = new XPRBvar * [nNodes];
-
-	for (int i : AllNodes) {
+	int i; 
+	int j;
+	for (NodeIRP* node1 : AllNodes) {
+		i = node1->getId();
 		x[i] = new XPRBvar[nNodes];
 
 		pCapacity[i] = new XPRBvar[nNodes];
 		loadDelivery[i] = new XPRBvar[nNodes];
 		loadPickup[i] = new XPRBvar[nNodes];
 
-		for (int j : AllNodes) {
-			if (map.inArcSet(i, j)) {
+		for (NodeIRP* node2 : AllNodes) {
+			j = node2->getId();
+			if (node1->inArcSet(node2)) {
 				x[i][j] = prob.newVar(XPRBnewname("x%d-%d", i, j), XPRB_BV, 0, 1);
 
 				//pCapacity[i][j] = prob.newVar(XPRBnewname("pCap%d%d", i, j), XPRB_PL, 0, Capacity);
@@ -196,7 +183,8 @@ bool VRPmodel::initializeVariables()
 	}
 
 	y = new XPRBvar[nNodes];
-	for (int i : Nodes) {
+	for (NodeIRP * node1 : Nodes) {
+		i = node1->getId();
 		y[i] = prob.newVar(XPRBnewname("y%d", i), XPRB_PL, 0, 1);
 	}
 
@@ -209,7 +197,8 @@ bool VRPmodel::initializeVariables()
 
 	//Time variables
 	time = new XPRBvar[nNodes];
-	for (int i : AllNodes) {
+	for (NodeIRP * node1 : AllNodes) {
+		i = node1->getId();
 		time[i] = prob.newVar(XPRBnewname("time_%d", i), XPRB_PL, 0, MaxTime);
 	}
 
@@ -218,12 +207,15 @@ bool VRPmodel::initializeVariables()
 
 bool VRPmodel::formulateProblem()
 {
-	
+	int i;
+	int j;
 	//Objective
 	objective = 0;
-	for (int i : AllNodes)
-		for (int j : AllNodes) {
-			if (map.inArcSet(i, j)) {
+	for (auto node1 : AllNodes)
+		for (auto node2 : AllNodes) {
+			if (node1->inArcSet(node2)) {
+				i = node1->getId();
+				j = node2->getId();
 				objective += TransCost[i][j] * x[i][j];
 				int a = TransCost[i][j];
 			}
@@ -249,12 +241,14 @@ bool VRPmodel::formulateProblem()
 	//Routing constraints
 	XPRBexpr p1;
 	XPRBexpr p2;
-	for (int i : AllNodes) {
-		for (int j : AllNodes) {
-			if (map.inArcSet(i, j)) {
+	for (auto node1 : AllNodes) {
+		i = node1->getId();
+		for (auto node2 : AllNodes) {
+			if (node1->inArcSet(node2)) {
+				j = node2->getId();
 				p1 += x[i][j];
 			}
-			if (map.inArcSet(j, i)) {
+			if (node2->inArcSet(node1)) {
 				p2 += x[j][i];
 			}
 		}
@@ -265,9 +259,11 @@ bool VRPmodel::formulateProblem()
 	
 
 	//Linking x and y
-	for (int i : AllNodes) {
-		for (int j : AllNodes) {
-			if (map.inArcSet(i, j)) {
+	for (auto node1 : AllNodes) {
+		i = node1->getId();
+		for (auto node2 : AllNodes) {
+			if (node1->inArcSet(node2)) {
+				j = node1->getId();
 				p1 += x[i][j];
 			}
 		}
@@ -286,21 +282,23 @@ bool VRPmodel::formulateProblem()
 	
 
 	//Max visit
-	for (int i : Nodes) {
-		p1 = y[i];
+	for (auto node : Nodes) {
+		p1 = y[node->getId()];
 		prob.newCtr("Max visit", p1 == 1);
 		p1 = 0;
 	}
 
 	//Quantity
 	//Loading constraints
-	for (int i : DeliveryNodes) {
-		for (int j : AllNodes) {
-			if (map.inArcSet(j, i)) {
+	for (auto node1 : DeliveryNodes) {
+		i = node1->getId();
+		for (auto node2 : AllNodes) {
+			j = node2->getId();
+			if (node2->inArcSet(node1)) {
 				p1 += loadDelivery[j][i];
 				p2 -= loadPickup[j][i];
 			}
-			if (map.inArcSet(i, j)) {
+			if (node1->inArcSet(node2)) {
 				p1 -= loadDelivery[i][j];
 				p2 += loadPickup[i][j];
 			}
@@ -315,13 +313,15 @@ bool VRPmodel::formulateProblem()
 
 
 
-	for (int i : PickupNodes) {
-		for (int j : AllNodes) {
-			if (map.inArcSet(j, i)) {
+	for (auto node1 : PickupNodes) {
+		i = node1->getId();
+		for (auto node2 : AllNodes) {
+			j = node2->getId();
+			if (node2->inArcSet(node1)) {
 				p1 += loadPickup[j][i];
 				p2 += loadDelivery[j][i];
 			}
-			if (map.inArcSet(i, j)) {
+			if (node1->inArcSet(node2)) {
 				p1 -= loadPickup[i][j];
 				p2 -= loadDelivery[i][j];
 			}
@@ -336,9 +336,11 @@ bool VRPmodel::formulateProblem()
 	
 
 	//Arc capacity
-	for (int i : AllNodes) {
-		for (int j : AllNodes) {
-			if (map.inArcSet(i, j)) {			
+	for (auto node1 : AllNodes) {
+		i = node1->getId();
+		for (auto node2 : AllNodes) {
+			if (node1->inArcSet(node2)) {	
+				j = node2->getId();
 				p1 = loadDelivery[i][j] + loadPickup[i][j] - Capacity * x[i][j];
 				prob.newCtr("ArcCapacity", p1 <= 0);
 				p1 = 0;
@@ -353,9 +355,10 @@ bool VRPmodel::formulateProblem()
 	p1 = 0;
 
 
-	for (int i : AllNodes) {
-		for (int j : Nodes) {
-			if (map.inArcSet(i, j)) {
+	for (auto node1 : AllNodes) {
+		i = node1->getId();
+		for (auto node2 : Nodes) {
+			if (node1->inArcSet(node2)) {
 				p1 = time[i] - time[j] + TravelTime[i][j]
 					+ (ModelParameters::maxTime + TravelTime[i][j]) * x[i][j];
 
@@ -372,12 +375,11 @@ bool VRPmodel::formulateProblem()
 
 		}
 
-		if (map.inArcSet(i, 0)) {
+		if (node1->inArcSet(Database.getDepot())) {
 			p1 = time[i] + TravelTime[i][0] * x[i][0];
 			prob.newCtr("Final time", p1 <= ModelParameters::maxTime);
 			p1 = 0;
-		}
-		
+		}	
 	}
 	
 
@@ -403,17 +405,21 @@ VRPmodel::~VRPmodel()
 {
 }
 
-void VRPmodel::addToIRPSolution(int t, IRP::Solution * sol, IRP &instance)
+void VRPmodel::addToIRPSolution(int t, Solution * sol)
 {
+	int i;
+	int j;
 	//Add load variables
-	for (int i : AllNodes) {
+	for (auto node1 : AllNodes) {
+		i = node1->getId();
 		//Clear edges of all nodes
-		sol->NodeHolder[i]->Nodes[t]->deleteEdges();
-		for (int j : AllNodes) {
-			if (map.inArcSet(i, j)) {
-				if(x[i][j].getSol()>0.01)
+		sol->Nodes[i]->NodePeriods[t]->deleteEdges();
+		for (auto node2 : AllNodes) {
+			if (node1->inArcSet(node2)) {
+				j = node2->getId();
+				if(x[i][j].getSol()>0.001)
 				//get solution from VRP
-				sol->NodeHolder[i]->addEdge(loadDelivery[i][j].getSol(), loadPickup[i][j].getSol(), sol->NodeHolder[j], t, x[i][j].getSol());
+				sol->Nodes[i]->addEdge(loadDelivery[i][j].getSol(), loadPickup[i][j].getSol(), sol->Nodes[j], t, x[i][j].getSol());
 			}
 
 		
@@ -421,8 +427,9 @@ void VRPmodel::addToIRPSolution(int t, IRP::Solution * sol, IRP &instance)
 	}
 
 	//Add time variables
-	for (int i : Nodes) {
-		sol->NodeHolder[i]->Nodes[t]->TimeServed = time[i].getSol();
+	for (auto node : Nodes) {
+		i = node->getId();
+		sol->Nodes[i]->NodePeriods[t]->TimeServed = time[i].getSol();
 	}
 
 }

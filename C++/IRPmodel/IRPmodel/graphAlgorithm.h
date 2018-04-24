@@ -1,5 +1,4 @@
 #pragma once
-#include "NodeIRP.h"
 #include "NodeStrong.h"
 #include <stack>
 #include "IRP.h"
