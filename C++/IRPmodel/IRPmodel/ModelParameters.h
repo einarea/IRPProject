@@ -7,13 +7,16 @@ public:
 	static const int MAX_RUNNING_TIME_IRP = 57600; //seconds
 	static const int MAX_RUNNING_TIME_VRP = 7200; //seconds
 
+	//Period selection for shift quantity
+	static const int MAX_SHIFT = 3;
+
 	//TabuList 
 	static const int TabuLength = 2;
 
 
 
 	////Model parameters;
-	static const int nVehicles = 4;
+	static const int nVehicles = 7;
 	static const int TRANSCOST_MULTIPLIER = 13;
 	static const int SERVICECOST_MULTIPLIER =100;
 	static const int TRAVELTIME_MULTIPLIER = 1;

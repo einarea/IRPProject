@@ -36,31 +36,31 @@ public:
 	~NodeInstanceDB();
 
 	static NodeInstanceDB * createInstance(int nCustomers, int nPeriods, int version);
+	static NodeInstanceDB * openInstance(int nCustomers, int nPeriods, int version);
 	static string getFilename(int nCustomers, int nPeriods, int version);
 
-	bool inArcSet(NodeInstance * node1, NodeInstance * node2);
-	NodeInstance * getDepot();
-	bool inArcSet(int id1, int id2);
-	bool inExtensiveArcSet(int, int);
-	bool inSimultaneousArcSet(int, int);
-	bool isColocated(int i, int j);
-	int getTransCost(const NodeInstance &node1, const NodeInstance &node2);
-	int getTravelTime(int i, int j);
-	int getTransCost(int i, int j);
-	int getDemand(const NodeInstance &node1, int period);
-	int getDistance(const NodeInstance & node1, const NodeInstance &node2);
-	int getDistance(int i, int j);
-	int getX(const NodeInstance & node);
-	int getY(const NodeInstance & node);
-	int getNumNodes();
-	bool isDelivery(int id);
+	bool inArcSet(NodeInstance * node1, NodeInstance * node2) const;
+	const NodeInstance * getDepot() const;
+	bool inArcSet(int id1, int id2) const;
+	bool inExtensiveArcSet(int, int) const;
+	bool inSimultaneousArcSet(int, int) const;
+	bool isColocated(int i, int j) const;
+	int getTransCost(const NodeInstance &node1, const NodeInstance &node2) const;
+	int getTravelTime(int i, int j) const;
+	int getTransCost(int i, int j) const;
+	int getDemand(const NodeInstance &node1, int period) const;
+	int getDistance(const NodeInstance & node1, const NodeInstance &node2) const;
+	int getDistance(int i, int j) const; 
+	int getX(const NodeInstance & node) const;
+	int getY(const NodeInstance & node) const;
+	int getNumNodes() const;
+	bool isDelivery(int id) const;
 
 	int getnPeriods() const;
 	vector <NodeInstance *> * getNodes();
-	NodeInstance * getNode(int id);
-	int getnNodes();
-	int getX(int);
-	int getY(int);
+	NodeInstance const * getNode(int id) const;
+	int getX(int) const;
+	int getY(int) const;
 	void writeInstanceToFile(ofstream &instanceFile, string Filename);
 	void initializeSets();
 

@@ -7,22 +7,25 @@ NodeIRP::NodeIRP(NodeIRP & cpNode)
 	Node(cpNode),
 	NodeData(cpNode.NodeData)
 {
+	Quantity = cpNode.Quantity;
+	TimeServed = cpNode.TimeServed;
+	Inventory = cpNode.Inventory;
 }
 
-bool NodeIRP::inArcSet(NodeIRP * n)
+bool NodeIRP::inArcSet(const NodeIRP * n) const
 {
 	return NodeData.inArcSet(&n->NodeData);
 }
 
-bool NodeIRP::inArcSet(NodeInstance * n)
+bool NodeIRP::inArcSet(const NodeInstance * n) const
 {
 	return NodeData.inArcSet(n);
 }
 
-NodeIRP::NodeIRP(NodeInstance& data)
+NodeIRP::NodeIRP(const NodeInstance& data)
 	:
 	NodeData(data),
-	Node(NodeData.getId())
+	Node(data.getId())
 {
 	//
 	Quantity = -1;
@@ -37,7 +40,7 @@ NodeIRP::~NodeIRP()
 
 bool NodeIRP::isDelivery()
 {
-	return DELIVERY;
+	return NodeData.isDelivery();
 }
 
 NodeIRP::EdgeIRP::EdgeIRP(Node * child, double loadDel, double loadPick, double value = 1)
@@ -47,6 +50,9 @@ NodeIRP::EdgeIRP::EdgeIRP(Node * child, double loadDel, double loadPick, double 
 	LoadPick(loadPick)
 {
 }
+NodeIRP::EdgeIRP::~EdgeIRP()
+{
+}
 void NodeIRP::addEdge(double loadDel, double loadPick, NodeIRP * child, double value = 1)
 {
 	Node * nodePtr = child;
@@ -54,6 +60,13 @@ void NodeIRP::addEdge(double loadDel, double loadPick, NodeIRP * child, double v
 	Edge * edgePtr = edge;
 	Node::addEdge(edgePtr);
 }
+
+void NodeIRP::copyEdge(NodeIRP::EdgeIRP * edge, NodeIRP * nextNode)
+{
+	addEdge(edge->LoadDel, edge->LoadPick, nextNode, edge->getValue());
+}
+
+
 
 NodeIRP::EdgeIRP * NodeIRP::getEdge()
 {
@@ -93,12 +106,12 @@ double NodeIRP::getOutflow()
 	return outflow;
 }
 
-double NodeIRP::getPosX()
+double NodeIRP::getPosX() const
 {
 	return NodeData.PosX;
 }
 
-double NodeIRP::getPosY()
+double NodeIRP::getPosY() const
 {
 	return NodeData.PosY;
 }
@@ -108,10 +121,11 @@ double NodeIRP::getHoldCost()
 	return NodeData.HoldingCost;
 }
 
-NodeInstance & NodeIRP::getData() const
+const NodeInstance & NodeIRP::getData() const
 {
 	return NodeData;
 }
+
 
 
 NodeIRP * NodeIRP::EdgeIRP::getEndNode()

@@ -9,7 +9,7 @@ using namespace std;
 
 
 
-int NodeInstanceDB::getDistance(const NodeInstance& node1, const NodeInstance& node2)
+int NodeInstanceDB::getDistance(const NodeInstance& node1, const NodeInstance& node2) const
 {
 	int distance;
 
@@ -23,7 +23,7 @@ int NodeInstanceDB::getDistance(const NodeInstance& node1, const NodeInstance& n
 	return distance;
 }
 
-int NodeInstanceDB::getDistance(int i, int j)
+int NodeInstanceDB::getDistance(int i, int j) const
 {
 	auto node1 = getNode(i);
 	auto node2 = getNode(j);
@@ -37,54 +37,54 @@ int NodeInstanceDB::getDistance(int i, int j)
 	return distance;
 }
 
-bool NodeInstanceDB::isColocated(int i, int j)
+bool NodeInstanceDB::isColocated(int i, int j) const
 {
 	return false;
 }
 
-int NodeInstanceDB::getTransCost(const NodeInstance &node1, const NodeInstance &node2)
+int NodeInstanceDB::getTransCost(const NodeInstance &node1, const NodeInstance &node2) const
 {
 	int distance = getDistance(node1, node2);
 	return distance * ModelParameters::TRANSCOST_MULTIPLIER + ModelParameters::SERVICECOST_MULTIPLIER;
 }
 
-int NodeInstanceDB::getTravelTime(int i, int j)
+int NodeInstanceDB::getTravelTime(int i, int j) const
 {
 	return getDistance(i, j) * ModelParameters::TRAVELTIME_MULTIPLIER + ModelParameters::SERVICETIME;
 }
 
-int NodeInstanceDB::getTransCost(int i, int j)
+int NodeInstanceDB::getTransCost(int i, int j) const
 {
 	int distance = getDistance(i, j);
 	return distance * ModelParameters::TRANSCOST_MULTIPLIER + ModelParameters::SERVICECOST_MULTIPLIER;
 }
 
-int NodeInstanceDB::getDemand(const NodeInstance & node1, int period)
+int NodeInstanceDB::getDemand(const NodeInstance & node1, int period) const
 {
 	return node1.Demand[period];
 }
 
 
-int NodeInstanceDB::getX(const NodeInstance& node)
+int NodeInstanceDB::getX(const NodeInstance& node) const
 {
 	return node.getXpos();
 }
 
-int NodeInstanceDB::getY(const NodeInstance& node)
+int NodeInstanceDB::getY(const NodeInstance& node) const
 {
 	return node.getYpos();
 }
 
 //returns the number of pickup and delivery nodes
-int NodeInstanceDB::getNumNodes()
+int NodeInstanceDB::getNumNodes() const
 {
 	//Do not count depot
 	return Nodes.size() - 1;
 }
 
-bool NodeInstanceDB::isDelivery(int id)
+bool NodeInstanceDB::isDelivery(int id) const
 {
-	NodeInstance * node = getNode(id);
+	const NodeInstance * node = getNode(id);
 	if (node->isDelivery())
 		return true;
 	else
@@ -145,10 +145,13 @@ void NodeInstanceDB::initializeSets()
 				PickupNodes.push_back(node);
 		}
 	}
-	int NumOfCustomers = getNumNodes();				//Number of customers
-	int NumOfPeriods = getnPeriods();
-	ModelBase::createRangeSet(1, NumOfPeriods, Periods);
-	ModelBase::createRangeSet(0, NumOfPeriods, AllPeriods);
+
+	for (int t = 0; t <= getnPeriods(); t++) {
+		AllPeriods.push_back(t);
+		if (t != 0)
+			Periods.push_back(t);
+	}
+
 }
 
 
@@ -196,7 +199,7 @@ NodeInstanceDB::NodeInstanceDB(string fileName)
 
 
 	//Push back depot
-	NodeData.push_back(new NodeInstance(0, 0, nPeriods, 0));
+	NodeData.push_back(new NodeInstance(0, false, 0, 0, nPeriods, 1));
 	//check file for errors
 	getline(nodeRecords, line);
 
@@ -220,9 +223,10 @@ NodeInstanceDB::NodeInstanceDB(string fileName)
 		LowerLimit = stoi(getNextToken(line, delimiter));
 		UpperLimit = stoi(getNextToken(line, delimiter));
 
-		Demand.resize(nPeriods);
-
-		for (int t = 0; t < nPeriods; t++) {
+		Demand.resize(nPeriods + 1);
+		//Not defined for period 0
+		Demand[0] = -1;
+		for (int t = 1; t <= nPeriods; t++) {
 			Demand[t] = stoi(getNextToken(line, delimiter));
 		}
 
@@ -232,12 +236,15 @@ NodeInstanceDB::NodeInstanceDB(string fileName)
 		//If datafile provide coordinates
 		int x = stoi(getNextToken(line, delimiter));
 		int y = stoi(getNextToken(line, delimiter));
-		NodeInstance * node = new NodeInstance(nodeID, Del, x, y, nPeriods, InitInventory, HoldingCost, Demand);
+		NodeInstance * node = new NodeInstance(nodeID, Del, x, y, nPeriods, InitInventory, HoldingCost, UpperLimit, LowerLimit, Demand);
 		NodeData.push_back(node);
 		nodeID++;
 
 	
 	}
+
+
+	initializeSets();
 
 	//Initialize capacity
 	int TotalDemand = 0;
@@ -250,7 +257,6 @@ NodeInstanceDB::NodeInstanceDB(string fileName)
 	Capacity = 2 * floor(TotalDemand / (ModelParameters::nVehicles*getnPeriods()));
 
 
-	initializeSets();
 }
 
 //Generate two colocated nodes for nCustomers
@@ -267,6 +273,16 @@ NodeInstanceDB::NodeInstanceDB(int nCustomers, int nPer)
 	}
 
 	initializeSets();
+
+	//Initialize capacity
+	int TotalDemand = 0;
+	for (int t : Periods) {
+		for (auto node : NodeData) {
+			TotalDemand += node->Demand[t];
+		}
+	}
+
+	Capacity = 2 * floor(TotalDemand / (ModelParameters::nVehicles*getnPeriods()));
 }
 
 
@@ -287,13 +303,18 @@ NodeInstanceDB* NodeInstanceDB::createInstance(int nCustomers, int nPeriods, int
 
 }
 
+NodeInstanceDB * NodeInstanceDB::openInstance(int nCustomers, int nPeriods, int version)
+{
+	return new NodeInstanceDB(getFilename(nCustomers, nPeriods, version));
+}
+
 string NodeInstanceDB::getFilename(int nCustomers, int nPeriods, int version)
 {
 	string extension(".txt");
 	return  "Instances/C" + to_string(nCustomers) + "T" + to_string(nPeriods) + "_v" + to_string(version) + extension;
 }
 
-bool NodeInstanceDB::inArcSet(int i, int j)
+bool NodeInstanceDB::inArcSet(int i, int j) const
 {
 	if (ModelParameters::Simultaneous)
 		return inSimultaneousArcSet(i, j);
@@ -301,7 +322,7 @@ bool NodeInstanceDB::inArcSet(int i, int j)
 		return inExtensiveArcSet(i, j);
 }
 
-bool NodeInstanceDB::inArcSet(NodeInstance * node1, NodeInstance * node2)
+bool NodeInstanceDB::inArcSet(NodeInstance * node1, NodeInstance * node2) const
 {
 	if (node1->getId() == node2->getId())
 		return false;
@@ -312,21 +333,23 @@ bool NodeInstanceDB::inArcSet(NodeInstance * node1, NodeInstance * node2)
 	return false;
 }
 
-NodeInstance * NodeInstanceDB::getDepot()
+const NodeInstance * NodeInstanceDB::getDepot() const
 {
-	for (auto node : Nodes)
+	for (auto node : AllNodes)
 		if (node->getId() == 0)
 			return node;
+
+	exit(111);
 }
 
 
-bool NodeInstanceDB::inExtensiveArcSet(int i, int j)
+bool NodeInstanceDB::inExtensiveArcSet(int i, int j) const
 {
 	bool a = (i == j || (i == getNumNodes() + j && j != 0));
 	return !a;
 }
 
-bool NodeInstanceDB::inSimultaneousArcSet(int i, int j)
+bool NodeInstanceDB::inSimultaneousArcSet(int i, int j) const
 {
 	//Check if incident from delivery node and not to co-located pickup node
 	if (i == 0)
@@ -350,7 +373,7 @@ vector<NodeInstance*>* NodeInstanceDB::getNodes()
 	return &NodeData;
 }
 
-NodeInstance * NodeInstanceDB::getNode(int id)
+NodeInstance const * NodeInstanceDB::getNode(int id) const
 {
 	for (NodeInstance *n: NodeData) {
 		if (n->getId()==id)
@@ -358,17 +381,13 @@ NodeInstance * NodeInstanceDB::getNode(int id)
 	}
 }
 
-int NodeInstanceDB::getnNodes()
-{
-	return Nodes.size();
-}
 
-int NodeInstanceDB::getX(int id)
+int NodeInstanceDB::getX(int id) const
 {
 	return getNode(id)->PosX;
 }
 
-int NodeInstanceDB::getY(int id)
+int NodeInstanceDB::getY(int id) const
 {
 	return getNode(id)->PosY;
 }

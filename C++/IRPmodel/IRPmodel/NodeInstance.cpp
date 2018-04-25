@@ -60,8 +60,12 @@ void NodeInstance::randomQuantities(int randSeed)
 	}
 }
 
-bool NodeInstance::inArcSet(NodeInstance * n)
+bool NodeInstance::inArcSet(const NodeInstance * n) const
 {
+	//no arc to itself
+	if (*this == *n)
+		return false;
+
 	for (auto m : ForbiddenNodes)
 		if (m == n)
 			return false;
@@ -69,7 +73,16 @@ bool NodeInstance::inArcSet(NodeInstance * n)
 	return true;
 }
 
-NodeInstance::NodeInstance(int id, bool del, int posX, int posY, int nPer, int initial, int holdingCost, vector<int> demand)
+
+bool NodeInstance::operator==(const NodeInstance & node) const
+{
+	if (this->NodeID == node.NodeID)
+		return true;
+	else
+		return false;
+}
+
+NodeInstance::NodeInstance(int id, bool del, int posX, int posY, int nPer, int initial, int holdingCost, int upperLim, int lowerLim, vector<int> demand)
 	:
 	NodeID(id),
 	Delivery(del),
@@ -78,7 +91,9 @@ NodeInstance::NodeInstance(int id, bool del, int posX, int posY, int nPer, int i
 	nPeriods(nPer),
 	InitInventory(initial),
 	HoldingCost(holdingCost),
-	Demand(Demand)
+	UpperLimit(upperLim),
+	LowerLimit(lowerLim),
+	Demand(demand)
 {
 }
 
@@ -108,7 +123,7 @@ NodeInstance::NodeInstance(int id, bool del, int nPer, int randSeed)
 	randomQuantities(randSeed);
 }
 
-bool NodeInstance::isDelivery()
+bool NodeInstance::isDelivery() const
 {
 	return Delivery;
 }
@@ -141,7 +156,7 @@ double NodeInstance::getYpos() const
 	return this->PosY;
 }
 
-int NodeInstance::getId()
+int NodeInstance::getId() const
 {
 	return NodeID;
 }

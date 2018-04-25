@@ -10,6 +10,9 @@ Node::Node(int id, vector<Edge*> edges)
 }
 
 Node::Node(Node & cpNode)
+	:
+	NodeID(cpNode.NodeID),
+	State(cpNode.State)
 {
 	//Do not copy the edges
 }
@@ -77,6 +80,10 @@ Node::Edge::Edge(Node & endNode, double value)
 {
 }
 
+Node::Edge::~Edge()
+{
+}
+
 bool Node::operator==(const Node & node) const
 {
 	if (this->getId() == node.getId())
@@ -134,10 +141,10 @@ void Node::setState(int s)
 
 void Node::deleteEdges()
 {
-	int size = Edges.size();
-	for (int i = size - 1; i >= 0; i--) {
-		Edges.erase(Edges.begin() + i);
+	for(Node::Edge* edge : Edges){
+		delete edge;
 	}
+	Edges.resize(0);
 }
 
 void Node::deleteEdge(Node * node)

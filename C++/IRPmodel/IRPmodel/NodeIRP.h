@@ -20,6 +20,7 @@ public:
 
 	public:
 		EdgeIRP(Node *child, double loadDel, double loadPick, double value);
+		~EdgeIRP();
 		NodeIRP * getEndNode();
 		double LoadDel;
 		double LoadPick;
@@ -27,16 +28,19 @@ public:
 
 	//Copy constructor
 	NodeIRP(NodeIRP&);
-	bool inArcSet(NodeIRP *);
-	bool inArcSet(NodeInstance *);
-	template<typename T> double getTransportationCost(T * node);
-	template<typename T> double getTravelTime(T* node);
+	bool inArcSet(const NodeIRP *) const;
+	bool inArcSet(const NodeInstance *) const;
+	double getTransCost(const NodeIRP * node) const;
+	double getTravelTime(const NodeIRP * node) const;
+	double getTransCost(const NodeInstance * node) const;
+	double getTravelTime(const NodeInstance * node) const;
 
-	NodeIRP(NodeInstance& data);
+	NodeIRP(const NodeInstance& data);
 	~NodeIRP();
 	bool isDelivery();
 	//Override
 	void addEdge(double loadDel, double loadPick, NodeIRP * child, double value);
+	void copyEdge(NodeIRP::EdgeIRP * edge, NodeIRP *);
 	EdgeIRP * getEdge();
 	static NodeIRP * getNode(Node *);
 	double Quantity;
@@ -44,32 +48,46 @@ public:
 	double TimeServed;
 	vector <EdgeIRP*> getEdges();
 	double getOutflow();
-	double getPosX();
-	double getPosY();
+	double getPosX() const;
+	double getPosY() const;
 	double getHoldCost();
-	NodeInstance& getData() const;
+	const NodeInstance& getData() const;
 private:
-	bool DELIVERY;
-	NodeInstance &NodeData;
-	template<typename T> getDistance(T * node);
+	const NodeInstance &NodeData;
+	double getDistance(const NodeIRP * node) const;
+	double getDistance(const NodeInstance * node) const;
 };
 
-#endif
 
-template<typename T>
-inline double NodeIRP::getTransportationCost(T * node)
+inline double NodeIRP::getTransCost(const NodeIRP * node) const
 {
 	return getDistance(node) * ModelParameters::TRANSCOST_MULTIPLIER + ModelParameters::SERVICECOST_MULTIPLIER;
 }
 
-template<typename T>
-inline double NodeIRP::getTravelTime(T * node)
+inline double NodeIRP::getTravelTime(const NodeIRP * node) const
 {
 	return getDistance(node) * ModelParameters::TRAVELTIME_MULTIPLIER + ModelParameters::SERVICETIME;
 }
 
-template<typename T>
-inline NodeIRP::getDistance(T * node)
+inline double NodeIRP::getDistance(const NodeIRP * node) const
 {
-	return (int)floor(sqrt(pow(PosX - node->PosX, 2) + pow(PosY - node->PosY, 2)));
+	return (int)floor(sqrt(pow(NodeData.PosX - node->NodeData.PosX, 2) + pow(NodeData.PosY - node->NodeData.PosY, 2)));
 }
+
+inline double NodeIRP::getTransCost(const NodeInstance * node) const
+{
+	return getDistance(node) * ModelParameters::TRANSCOST_MULTIPLIER + ModelParameters::SERVICECOST_MULTIPLIER;
+}
+
+inline double NodeIRP::getTravelTime(const NodeInstance * node) const
+{
+	return getDistance(node) * ModelParameters::TRAVELTIME_MULTIPLIER + ModelParameters::SERVICETIME;
+}
+
+inline double NodeIRP::getDistance(const NodeInstance * node) const
+{
+	return (int)floor(sqrt(pow(NodeData.PosX - node->PosX, 2) + pow(NodeData.PosY - node->PosY, 2)));
+}
+
+
+#endif

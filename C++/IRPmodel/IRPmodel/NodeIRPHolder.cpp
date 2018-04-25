@@ -11,7 +11,7 @@ NodeIRPHolder::~NodeIRPHolder()
 }
 
 
-int NodeIRPHolder::getId()
+int NodeIRPHolder::getId() const
 {
 	return Instance.getId();
 }
@@ -19,12 +19,25 @@ int NodeIRPHolder::getId()
 //Constructor
 NodeIRPHolder::NodeIRPHolder(NodeInstance& instance)
 	:
-	Instance(instance)
+	Instance(instance),
+	Id(instance.getId())
 {
 	NodePeriods.resize(Instance.nPeriods + 1);
 	//Initialize the holder with one node for each period
 	for (auto t = 1; t <= Instance.nPeriods; t++) {
 		NodePeriods[t] = new NodeIRP(instance);
+	}
+}
+
+NodeIRPHolder::NodeIRPHolder(NodeIRPHolder & cpNode)
+	:
+	Instance(cpNode.Instance),
+	Id(cpNode.Id)
+{
+	NodePeriods.resize(cpNode.NodePeriods.size());
+	for (int t = 1; t < cpNode.NodePeriods.size(); t++) {
+		//Does not copy the NodeIRP's edges
+		NodePeriods[t] = new NodeIRP(*cpNode.NodePeriods[t]);
 	}
 }
 
@@ -209,7 +222,7 @@ void NodeIRPHolder::changeQuantity(int period, double quantity)
 }
 
 
-bool NodeIRPHolder::isDelivery()
+bool NodeIRPHolder::isDelivery() const
 {
 	return Instance.isDelivery();
 }

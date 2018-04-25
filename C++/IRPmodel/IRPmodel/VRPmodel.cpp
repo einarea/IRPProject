@@ -15,22 +15,23 @@ void XPRS_CC cbmngtime(XPRSprob oprob, void * vd, int parent, int newnode, int b
 	}
 }
 
-VRPmodel::VRPmodel(NodeInstanceDB & db, vector<NodeIRP*> nodes, int cap)
+VRPmodel::VRPmodel(const NodeInstanceDB & db, vector<NodeIRP*> nodes, int period)
 	:
-	Nodes(nodes),
+	AllNodes(nodes),
 	prob("VRP"),
-	Capacity(cap),
-	Database(db)
+	Database(db),
+	Period(period)
+
 {
 	initializeSets();
 	initializeParameters();
 	initializeVariables();
-
 	formulateProblem();
+	prob.print();
 }
 
 
-void VRPmodel::solveModel()
+void VRPmodel::solveModel(Solution * prevSol)
 {
 
 	oprob = prob.getXPRSprob();
@@ -39,111 +40,30 @@ void VRPmodel::solveModel()
 	//Set time callback
 	//XPRSsetcbnewnode(oprob, cbmngtime, &(*this));
 
-	//prob.print();
+	prob.print();
 	int d = prob.mipOptimise();
 
-	/*for (int i : AllNodes)
-		for (int j : AllNodes)
-			if (map.inArcSet(i, j))
-				if (pCapacity[i][j].getSol() >= 0.5)
-					cout << pCapacity[i][j].getSol();
-	/*for (int i : AllNodes)
-	{
-		y[i].print();
-		printf("\t");
-		for (int j : AllNodes) {
-			if (map.inArcSet(i, j))
-				if (x[i][j].getSol() > 0.1) {
-					x[i][j].print();
-					printf("\t");
-				}
-		}
-		
-			/*(loadDelivery[i][j][t]).print();
-			printf("\t");
-			(loadPickup[i][j][t]).print();
-			printf("\t");
-			}
-			}
-
-			time[i].print();
-			printf("\n");
-
-
-		
-	}*/
+	updateSolution(prevSol);
 }
 
 
 bool VRPmodel::initializeSets()
 {
-	for (NodeIRP * n : AllNodes) {
-
-		if (n->Quantity > 0.01) {
-			Nodes.push_back(n);
-			if (n->isDelivery())
-				DeliveryNodes.push_back(n);
+	for (NodeIRP * node : AllNodes) {
+		if (node->getId() != 0) {
+			Nodes.push_back(node);
+			if (node->isDelivery())
+				DeliveryNodes.push_back(node);
 			else
-				PickupNodes.push_back(n);
+				PickupNodes.push_back(node);
 		}
+	
 	}
-
 	return true;
 }
 
 bool VRPmodel::initializeParameters()
 {
-	int max = -1;
-	for (NodeIRP* n : AllNodes)
-		if (n->getId() > max)
-			nNodes = n->getId();
-
-	nNodes = nNodes + 1;
-
-	MaxTime = ModelParameters::maxTime;
-	Demand = new int [nNodes];
-	int cust;
-
-	int i;
-	for (auto n : Nodes) {
-		i = n->getId();
-		Demand[i] = n->Quantity;
-		//printf("%-10d", Demand[i]);
-	} // end demand
-
-	int j; 
-
-	TransCost = new int *[nNodes];
-	for (auto node1 : AllNodes) {
-		i = node1->getId();
-		//printf("\n");
-		TransCost[i] = new int[nNodes];
-		for (auto node2 : AllNodes)
-			if (node1->inArcSet(node2))
-			{
-				j = node2->getId();
-				TransCost[i][j] = Database.getTransCost(node1->getData(), node1->getData());
-				//printf("%d\t", TransCost[i][j]);
-			}
-			else {
-				TransCost[i][j] = 0;
-				//printf("%d\t", TransCost[i][j]);
-			}
-	} // end transcost
-
-	//TravelTime
-	TravelTime = new int *[nNodes];
-	for (auto node1 : AllNodes) {
-		i = node1->getId();
-		TravelTime[i] = new int[nNodes];
-		for (auto node2 : AllNodes) {
-			if (node1->inArcSet(node2)) {
-				j = node2->getId();
-				TravelTime[i][j] = Database.getTravelTime(i, j);
-			}
-		}
-	}
-
 	nVehicles = ModelParameters::nVehicles;
 	return true;
 }
@@ -154,20 +74,20 @@ bool VRPmodel::initializeVariables()
 
 
 	//Initialize routing variables, load and penalty variables
-	loadDelivery = new XPRBvar *[nNodes];
-	loadPickup = new XPRBvar *[nNodes];
-	pCapacity = new XPRBvar *[nNodes];
+	loadDelivery = new XPRBvar *[Database.AllNodes.size()];
+	loadPickup = new XPRBvar *[Database.AllNodes.size()];
+	pCapacity = new XPRBvar *[Database.AllNodes.size()];
 
-	x = new XPRBvar * [nNodes];
+	x = new XPRBvar * [Database.AllNodes.size()];
 	int i; 
 	int j;
 	for (NodeIRP* node1 : AllNodes) {
 		i = node1->getId();
-		x[i] = new XPRBvar[nNodes];
+		x[i] = new XPRBvar[Database.AllNodes.size()];
 
-		pCapacity[i] = new XPRBvar[nNodes];
-		loadDelivery[i] = new XPRBvar[nNodes];
-		loadPickup[i] = new XPRBvar[nNodes];
+		pCapacity[i] = new XPRBvar[Database.AllNodes.size()];
+		loadDelivery[i] = new XPRBvar[Database.AllNodes.size()];
+		loadPickup[i] = new XPRBvar[Database.AllNodes.size()];
 
 		for (NodeIRP* node2 : AllNodes) {
 			j = node2->getId();
@@ -175,14 +95,14 @@ bool VRPmodel::initializeVariables()
 				x[i][j] = prob.newVar(XPRBnewname("x%d-%d", i, j), XPRB_BV, 0, 1);
 
 				//pCapacity[i][j] = prob.newVar(XPRBnewname("pCap%d%d", i, j), XPRB_PL, 0, Capacity);
-				loadDelivery[i][j] = prob.newVar(XPRBnewname("loadDel_%d%d", i, j), XPRB_PL, 0, Capacity);
-				loadPickup[i][j] = prob.newVar(XPRBnewname("loadPic_%d%d", i, j), XPRB_PL, 0, Capacity);
+				loadDelivery[i][j] = prob.newVar(XPRBnewname("loadDel_%d%d", i, j), XPRB_PL, 0, Database.Capacity);
+				loadPickup[i][j] = prob.newVar(XPRBnewname("loadPic_%d%d", i, j), XPRB_PL, 0, Database.Capacity);
 				//loadDelivery[i][j].print();
 			}
 		}
 	}
 
-	y = new XPRBvar[nNodes];
+	y = new XPRBvar[Database.AllNodes.size()];
 	for (NodeIRP * node1 : Nodes) {
 		i = node1->getId();
 		y[i] = prob.newVar(XPRBnewname("y%d", i), XPRB_PL, 0, 1);
@@ -196,7 +116,7 @@ bool VRPmodel::initializeVariables()
 
 
 	//Time variables
-	time = new XPRBvar[nNodes];
+	time = new XPRBvar[Database.AllNodes.size()];
 	for (NodeIRP * node1 : AllNodes) {
 		i = node1->getId();
 		time[i] = prob.newVar(XPRBnewname("time_%d", i), XPRB_PL, 0, MaxTime);
@@ -216,17 +136,23 @@ bool VRPmodel::formulateProblem()
 			if (node1->inArcSet(node2)) {
 				i = node1->getId();
 				j = node2->getId();
-				objective += TransCost[i][j] * x[i][j];
-				int a = TransCost[i][j];
+				objective += node1->getTransCost(node2) * x[i][j];
 			}
 		}
+	//Avoid mathematical equivalent solution
+	for (NodeIRP * node : Nodes){
+		objective += loadDelivery[node->getId()][0];
+		objective += loadPickup[0][node->getId()];
+	}
+
+		
 
 	//Vehicle penalty
 	objective += ModelParameters::VehiclePenalty * extraVehicle;
 
 	/*Penalty capacity
-	for(int i: AllNodes)
-		for (int j : AllNodes) {
+	for(int i: Database.AllNodes)
+		for (int j : Database.AllNodes) {
 			if (map.inArcSet(i, j)) {
 				
 			}
@@ -241,9 +167,9 @@ bool VRPmodel::formulateProblem()
 	//Routing constraints
 	XPRBexpr p1;
 	XPRBexpr p2;
-	for (auto node1 : AllNodes) {
+	for (NodeIRP* node1 : AllNodes) {
 		i = node1->getId();
-		for (auto node2 : AllNodes) {
+		for (NodeIRP* node2 : AllNodes) {
 			if (node1->inArcSet(node2)) {
 				j = node2->getId();
 				p1 += x[i][j];
@@ -259,11 +185,11 @@ bool VRPmodel::formulateProblem()
 	
 
 	//Linking x and y
-	for (auto node1 : AllNodes) {
+	for (NodeIRP* node1 : AllNodes) {
 		i = node1->getId();
-		for (auto node2 : AllNodes) {
+		for (NodeIRP* node2 : AllNodes) {
 			if (node1->inArcSet(node2)) {
-				j = node1->getId();
+				j = node2->getId();
 				p1 += x[i][j];
 			}
 		}
@@ -290,9 +216,9 @@ bool VRPmodel::formulateProblem()
 
 	//Quantity
 	//Loading constraints
-	for (auto node1 : DeliveryNodes) {
+	for (NodeIRP* node1 : DeliveryNodes) {
 		i = node1->getId();
-		for (auto node2 : AllNodes) {
+		for (NodeIRP* node2 : AllNodes) {
 			j = node2->getId();
 			if (node2->inArcSet(node1)) {
 				p1 += loadDelivery[j][i];
@@ -303,7 +229,7 @@ bool VRPmodel::formulateProblem()
 				p2 += loadPickup[i][j];
 			}
 		}
-		p1 -= Demand[i];
+		p1 -= node1->Quantity;
 
 		prob.newCtr("LoadBalance Delivery", p1 == 0);
 		prob.newCtr("PickupBalance at deliveryNodes", p2 == 0);
@@ -313,9 +239,9 @@ bool VRPmodel::formulateProblem()
 
 
 
-	for (auto node1 : PickupNodes) {
+	for (NodeIRP* node1 : PickupNodes) {
 		i = node1->getId();
-		for (auto node2 : AllNodes) {
+		for (NodeIRP* node2 : AllNodes) {
 			j = node2->getId();
 			if (node2->inArcSet(node1)) {
 				p1 += loadPickup[j][i];
@@ -326,7 +252,7 @@ bool VRPmodel::formulateProblem()
 				p2 -= loadDelivery[i][j];
 			}
 		}
-		p1 += Demand[i];
+		p1 += node1->Quantity;
 		prob.newCtr("LoadBalance pickup", p1 == 0);
 		prob.newCtr("DeliveryBalance at pickupNodes", p2 == 0);
 		p1 = 0;
@@ -336,12 +262,12 @@ bool VRPmodel::formulateProblem()
 	
 
 	//Arc capacity
-	for (auto node1 : AllNodes) {
+	for (NodeIRP* node1 : AllNodes) {
 		i = node1->getId();
-		for (auto node2 : AllNodes) {
+		for (NodeIRP * node2 : AllNodes) {
 			if (node1->inArcSet(node2)) {	
 				j = node2->getId();
-				p1 = loadDelivery[i][j] + loadPickup[i][j] - Capacity * x[i][j];
+				p1 = loadDelivery[i][j] + loadPickup[i][j] - Database.Capacity * x[i][j];
 				prob.newCtr("ArcCapacity", p1 <= 0);
 				p1 = 0;
 				
@@ -355,19 +281,20 @@ bool VRPmodel::formulateProblem()
 	p1 = 0;
 
 
-	for (auto node1 : AllNodes) {
+	for (NodeIRP* node1 : AllNodes) {
 		i = node1->getId();
-		for (auto node2 : Nodes) {
+		for (NodeIRP* node2 : Nodes) {
 			if (node1->inArcSet(node2)) {
-				p1 = time[i] - time[j] + TravelTime[i][j]
-					+ (ModelParameters::maxTime + TravelTime[i][j]) * x[i][j];
+				j = node2->getId();
+				p1 = time[i] - time[j] + node1->getTravelTime(node2);
+					+ (ModelParameters::maxTime + node1->getTravelTime(node2)) * x[i][j];
 
-				p2 = ModelParameters::maxTime + TravelTime[i][j];
+				p2 = ModelParameters::maxTime + node1->getTravelTime(node2);
 				prob.newCtr("Time flow", p1 <= p2);
 				p1 = 0;
 				p2 = 0;
 
-				p1 = time[i] + TravelTime[i][j] * x[i][j];
+				p1 = time[i] + node1->getTravelTime(node2) * x[i][j];
 			
 				//prob.newCtr("Final time", p1 <= ModelParameters::maxTime );
 				p1 = 0;
@@ -376,7 +303,7 @@ bool VRPmodel::formulateProblem()
 		}
 
 		if (node1->inArcSet(Database.getDepot())) {
-			p1 = time[i] + TravelTime[i][0] * x[i][0];
+			p1 = time[i] + node1->getTravelTime(Database.getDepot()) * x[i][0];
 			prob.newCtr("Final time", p1 <= ModelParameters::maxTime);
 			p1 = 0;
 		}	
@@ -385,8 +312,8 @@ bool VRPmodel::formulateProblem()
 
 	//Valid inequalitites
 	/*
-	for (int i : AllNodes) {
-		for (int j : AllNodes) {
+	for (int i : Database.AllNodes) {
+		for (int j : Database.AllNodes) {
 			if (map.inArcSet(i, j))
 				p1 += TravelTime[i][j] * x[i][j];
 		}
@@ -405,31 +332,35 @@ VRPmodel::~VRPmodel()
 {
 }
 
-void VRPmodel::addToIRPSolution(int t, Solution * sol)
+void VRPmodel::updateSolution(Solution * sol)
 {
-	int i;
-	int j;
-	//Add load variables
-	for (auto node1 : AllNodes) {
-		i = node1->getId();
-		//Clear edges of all nodes
-		sol->Nodes[i]->NodePeriods[t]->deleteEdges();
-		for (auto node2 : AllNodes) {
-			if (node1->inArcSet(node2)) {
-				j = node2->getId();
-				if(x[i][j].getSol()>0.001)
-				//get solution from VRP
-				sol->Nodes[i]->addEdge(loadDelivery[i][j].getSol(), loadPickup[i][j].getSol(), sol->Nodes[j], t, x[i][j].getSol());
+	//If an exisiting solution is defined
+	if (sol != 0) {
+		int i;
+		int j;
+		//Add load variables
+		for (NodeIRP* node1 : AllNodes) {
+			i = node1->getId();
+			//Clear edges of all nodes
+			node1->deleteEdges();
+			for (NodeIRP* node2 : AllNodes) {
+				if (node1->inArcSet(node2)) {
+					j = node2->getId();
+					cout << x[i][j].print()<< "\t";
+					if (x[i][j].getSol() > 0.001)
+						//get solution from VRP
+						node1->addEdge(loadDelivery[i][j].getSol(), loadPickup[i][j].getSol(), node2, x[i][j].getSol());
+				}
+
+
 			}
-
-		
 		}
-	}
 
-	//Add time variables
-	for (auto node : Nodes) {
-		i = node->getId();
-		sol->Nodes[i]->NodePeriods[t]->TimeServed = time[i].getSol();
+		//Add time variables
+		for (auto node : Nodes) {
+			i = node->getId();
+			node->TimeServed = time[i].getSol();
+		}
 	}
 
 }

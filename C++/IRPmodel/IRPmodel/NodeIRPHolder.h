@@ -12,10 +12,11 @@ class NodeIRPHolder {
 public:
 	friend class Solution;
 
-	int getId();
+	int getId() const;
 
 	//Constructor and destructor
 	NodeIRPHolder(NodeInstance& instance);
+	NodeIRPHolder(NodeIRPHolder& cpNode);
 	NodeIRPHolder::~NodeIRPHolder();
 
 	vector< NodeIRP* > NodePeriods;
@@ -49,13 +50,13 @@ public:
 	NodeIRP::EdgeIRP * getEdge(int period);
 	double getHoldCost(int period);
 	void changeQuantity(int period, double quantity);
-	bool isDelivery();
+	bool isDelivery() const;
 
 private:
 
 	int Id;
 	//To store node information
-	NodeInstance & Instance;
+	const NodeInstance & Instance;
 	double getFeasibleServiceIncrease(int period, int capacity);
 	double getFeasibleServiceDecrease(int period);
 	double getFeasibleServiceMove(int from, int to, int capacity);
@@ -63,11 +64,6 @@ private:
 	// Sets
 	vector  <int> Periods;
 	vector  <int> AllPeriods;
-	vector  <int> DeliveryNodes;
-	vector <int> PickupNodes;
-	vector  <int> Nodes;
-	vector  <int> AllNodes;
-	vector  <int> Depot;
 };
 
 

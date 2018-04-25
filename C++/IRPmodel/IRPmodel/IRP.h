@@ -16,7 +16,7 @@ class IRP
 {	
 private:
 	//Problem
-	NodeInstanceDB &Database;
+	const NodeInstanceDB &Database;
 	XPRBprob prob;
 	XPRSprob oprob;		//Express problem to use with cuts
 	bool MaskOn;
@@ -111,7 +111,7 @@ public:
 	};
 	
 
-	IRP(NodeInstanceDB&, bool relaxed = false, bool maskOn = false, int ** VisitMask = 0);
+	IRP(const NodeInstanceDB&, bool relaxed = false, bool maskOn = false, int ** VisitMask = 0);
 	void addVisitConstraint(double ** VisitMatrix, int selection);
 	Route * getRoute(int id);
 	vector<Route const*>& getRoutes();

@@ -13,24 +13,16 @@ using namespace dashoptimization;
 class VRPmodel
 {
 public:
-	VRPmodel(NodeInstanceDB & db, vector<NodeIRP*> nodes, int Capacity);
-	void solveModel();
+	VRPmodel(const NodeInstanceDB & db, vector<NodeIRP*> nodes, int period);
+	void solveModel(Solution * currentSol = 0);
 	~VRPmodel();
-	void addToIRPSolution(int t, Solution * sol);
+	void updateSolution(Solution * sol);
 	void addRoutesToIRP(int t, Solution * sol);
 
 private:
-	//Sets
-	int nNodes;
-	vector<NodeIRP*> AllNodes;
-	vector<NodeIRP*> DeliveryNodes;
-	vector<NodeIRP*> PickupNodes;
-	vector<NodeIRP*> Nodes;
 
+	int Period;
 	XPRBprob prob;
-
-
-
 
 	//Variables
 	XPRBvar **x;
@@ -41,22 +33,22 @@ private:
 	XPRBvar extraVehicle;
 	XPRBvar **pCapacity; //Penalty capacity
 
+	//Sets
+	vector<NodeIRP*> AllNodes;
+	vector<NodeIRP*> Nodes;
+	vector<NodeIRP*> DeliveryNodes;
+	vector<NodeIRP*> PickupNodes;
+	
 	//Parameters
-	int Capacity;
 	int MaxTime;
 	int nVehicles;
-	int * Demand;
-	int ** TransCost;
-	int ** TravelTime;
 
 	int startTime;
 	XPRSprob oprob;
 
 	//Linear expreassions;
 	XPRBexpr objective;
-	NodeInstanceDB Database;
-
-
+	const NodeInstanceDB &Database;
 
 	//Helper functions
 	bool initializeSets();

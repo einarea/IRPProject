@@ -5,10 +5,14 @@
 using namespace std;
 class Node
 {
+
+public:
 	class Edge {
 	public:
 		//Edge(Edge& edge);
 		Edge(Node& endNode, double value);
+		//Declared virtual to invoke destructor of any derived classes, avoids memory leak
+		virtual ~Edge();
 		double getValue();
 		void setValue(double);
 		Node *getEndNode();
@@ -18,12 +22,7 @@ class Node
 		Node &EndNode;
 	};
 
-private:
-	int NodeID;
-	int State;
-	vector <Edge*> Edges;
 
-public:
 	//Constructores
 	Node(int id, vector<Edge*> edges);
 	Node(Node&);
@@ -59,5 +58,10 @@ public:
 	{
 		return !(*this == node); // invokes Array::operator==
 	}
+
+private:
+	int NodeID;
+	int State;
+	vector <Edge*> Edges;
 };
 

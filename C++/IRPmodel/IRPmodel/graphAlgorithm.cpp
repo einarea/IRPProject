@@ -9,7 +9,7 @@ graphAlgorithm::graphAlgorithm()
 }
 
 
-void graphAlgorithm::printGraph(vector<Node*>& graph, NodeInstanceDB &db, string filename, int weight) {
+void graphAlgorithm::printGraph(vector<Node*>& graph, const NodeInstanceDB &db, string filename, int weight) {
 
 
 	FILE *gnuplotPipe = _popen("C:\\Octave\\3.2.4_gcc-4.4.0\\bin\\gnuplot", "w");

@@ -132,7 +132,7 @@ NodeInstanceDB const * IRP::getDB()
 	}
 }*/
 
-IRP::IRP(NodeInstanceDB& db, bool ArcRel, bool maskOn, int ** VisitMask)
+IRP::IRP(const NodeInstanceDB& db, bool ArcRel, bool maskOn, int ** VisitMask)
 	:
 	Database(db),
 	prob("IRP"),			//Initialize problem in BCL		
@@ -232,9 +232,9 @@ Solution * IRP::solveModel()
 	
 	}
 	//XPRSsetcbpreintsol(oprob, acceptInt, &(*this));
-	prob.print();
+	//prob.print();
 	int d = prob.mipOptimise();
-//	prob.print();
+	prob.print();
 
 	return allocateIRPSolution();
 }
@@ -317,13 +317,13 @@ void IRP::calculateExcess()
 	}
 
 	excess = 0;
-	ExcessProd = new double **[Database.Nodes.size() + 1];
+	ExcessProd = new double **[Database.AllNodes.size()];
 	for (auto node : Database.PickupNodes) {
 		i = node->getId();
-		ExcessProd[i] = new double *[Database.Periods.size() + 1];
+		ExcessProd[i] = new double *[Database.AllPeriods.size()];
 	
 		for (int t1 : Database.Periods) {
-			ExcessProd[i][t1] = new double[Database.Periods.size() + 1];
+			ExcessProd[i][t1] = new double[Database.AllPeriods.size()];
 			for (int t2 : Database.Periods) {
 
 				//initialize excess
@@ -753,11 +753,12 @@ bool IRP::formulateProblem()
 		if (ModelParameters::Simultaneous) {
 			for (auto node1 : Database.DeliveryNodes) {
 				i = node1->getId();
-				for (auto node2 : Database.PickupNodes)
+				for (auto node2 : Database.PickupNodes) {
 					i = node2->getId();
-				if (Database.isColocated(i, j))
-					for (int t : Database.Periods)
-						objective += simAction[i][j][t] * node1->getTransCost(node2);
+					if (Database.isColocated(i, j))
+						for (int t : Database.Periods)
+							objective += simAction[i][j][t] * node1->getTransCost(node2);
+				}
 			}
 		}
 	} // End transportation costs
@@ -795,7 +796,7 @@ bool IRP::formulateProblem()
 			i = node->getId();
 			for (int t : Database.Periods)
 			{
-				p1 = pickup[i][t] - min(Capacity, node->UpperLimit - node->LowerLimit)*actionPickup[i][t];
+				p1 = pickup[i][t] - min(Database.Capacity, node->UpperLimit - node->LowerLimit)*actionPickup[i][t];
 				prob.newCtr("PickupAction", p1 <= 0);
 				p1 = 0;
 			}
@@ -804,7 +805,7 @@ bool IRP::formulateProblem()
 				i = node->getId();
 			for (int t : Database.Periods)
 			{
-				p1 = delivery[i][t] - min(Capacity, node->UpperLimit - node->LowerLimit)*actionDelivery[i][t];
+				p1 = delivery[i][t] - min(Database.Capacity, node->UpperLimit - node->LowerLimit)*actionDelivery[i][t];
 				prob.newCtr("PickupAction", p1 <= 0);
 				p1 = 0;
 			}
@@ -917,7 +918,7 @@ bool IRP::formulateProblem()
 				}
 
 			if (node1->inArcSet(Database.getDepot())) {
-				p1 = time[i][t] + node1->getTravelTime(DataBase.getDepot()) * x[i][0][t];
+				p1 = time[i][t] + node1->getTravelTime(Database.getDepot()) * x[i][0][t];
 				prob.newCtr("Final time", p1 <= ModelParameters::maxTime);
 				p1 = 0;
 			}
@@ -928,28 +929,28 @@ bool IRP::formulateProblem()
 
 	addInventoryAndLoadingCtr(prob);
 
-	//Arc capacity
+	//Arc Database.Capacity
 	for (auto node1 : Database.AllNodes) {
 		i = node1->getId();
 		for (auto node2 : Database.AllNodes) {
 			j = node2->getId();
 			if (node1->inArcSet(node2)) {
 				for (int t : Database.Periods) {
-					p1 = loadDelivery[i][j][t] + loadPickup[i][j][t] - Capacity * x[i][j][t];
-					prob.newCtr("ArcCapacity", p1 <= 0);
+					p1 = loadDelivery[i][j][t] + loadPickup[i][j][t] - Database.Capacity * x[i][j][t];
+					prob.newCtr("Arc_Capacity", p1 <= 0);
 					p1 = 0;
 				}
 			}
 		}
 	}
 
-	//Vehicle capacity
+	//Vehicle Database.Capacity
 	for (auto nodeDel : Database.DeliveryNodes) {
 		i = nodeDel->getId();
 		for (int t : Database.Periods) {
-			p1 = delivery[i][t] - min(Capacity, nodeDel->UpperLimit - nodeDel->LowerLimit)*y[i][t];
+			p1 = delivery[i][t] - min(Database.Capacity, nodeDel->UpperLimit - nodeDel->LowerLimit)*y[i][t];
 
-			prob.newCtr("Vehicle capacity delivery", p1 <= 0);
+			prob.newCtr("Vehicle Database.Capacity delivery", p1 <= 0);
 			p1 = 0;
 		}
 	}
@@ -957,9 +958,9 @@ bool IRP::formulateProblem()
 	for (auto nodePick : Database.PickupNodes) {
 		i = nodePick->getId();
 		for (int t : Database.Periods) {
-			p1 = pickup[i][t] - min(Capacity, nodePick->UpperLimit - nodePick->LowerLimit)*y[i][t];
+			p1 = pickup[i][t] - min(Database.Capacity, nodePick->UpperLimit - nodePick->LowerLimit)*y[i][t];
 
-			prob.newCtr("Vehicle capacity pickup", p1 <= 0);
+			prob.newCtr("Vehicle Database.Capacity pickup", p1 <= 0);
 			p1 = 0;
 		}
 	}
@@ -1009,10 +1010,10 @@ void IRP::getSubset(vector<int> subset, int subsetSize, int nodePos, vector<int>
 				flow = ExcessProd[i][t1][t2];
 
 		if (subset.size() == 1) {
-			denominator = min(Capacity, Database.getNode(subset[0])->UpperLimit - Database.getNode(subset[0])->LowerLimit);
+			denominator = min(Database.Capacity, Database.getNode(subset[0])->UpperLimit - Database.getNode(subset[0])->LowerLimit);
 		}
 		else
-			denominator = Capacity;
+			denominator = Database.Capacity;
 
 		if (ceil(flow / denominator) - flow/denominator> ExcessParameter){
 
@@ -1222,8 +1223,8 @@ bool IRP::initializeVariables()
 					else
 						x[i][j][t] = prob.newVar(XPRBnewname("x%d-%d%d", i, j, t), XPRB_BV, 0, 1);
 
-					loadDelivery[i][j][t] = prob.newVar(XPRBnewname("lD_%d%d%d", i, j, t), XPRB_PL, 0, Capacity);
-					loadPickup[i][j][t] = prob.newVar(XPRBnewname("lP_%d%d%d", i, j, t), XPRB_PL, 0, Capacity);
+					loadDelivery[i][j][t] = prob.newVar(XPRBnewname("lD_%d%d%d", i, j, t), XPRB_PL, 0, Database.Capacity);
+					loadPickup[i][j][t] = prob.newVar(XPRBnewname("lP_%d%d%d", i, j, t), XPRB_PL, 0, Database.Capacity);
 				}
 			}
 		}
@@ -1302,7 +1303,7 @@ bool IRP::initializeVariables()
 
 	for (auto node : Database.Nodes) {
 		i = node->getId();
-		inventory[i] = new XPRBvar[Database.Periods.size()];
+		inventory[i] = new XPRBvar[Database.AllPeriods.size()];
 		for (int t : Database.AllPeriods) {
 			inventory[i][t] = prob.newVar(XPRBnewname("i_%d%d", i, t), XPRB_PL, node->LowerLimit, node->UpperLimit);
 		}
@@ -1310,23 +1311,23 @@ bool IRP::initializeVariables()
 
 
 	//Initialize at delivery nodes
-	delivery = new XPRBvar *[Database.DeliveryNodes.size()+1];
+	delivery = new XPRBvar *[Database.AllNodes.size()];
 	for (auto nodeDel : Database.DeliveryNodes) {
 		i = nodeDel->getId();
 		delivery[i] = new XPRBvar [Database.Periods.size()+1];
 		for (int t : Database.Periods) {
-			delivery[i][t] = prob.newVar(XPRBnewname("qD_%d%d", i, t), XPRB_PL, 0, Capacity);
+			delivery[i][t] = prob.newVar(XPRBnewname("qD_%d%d", i, t), XPRB_PL, 0, Database.Capacity);
 			
 		}
 	}
 
 	//Initialize at pickup nodes
-	pickup = new XPRBvar *[Database.PickupNodes.size()+NumOfCustomers+1];
+	pickup = new XPRBvar *[Database.AllNodes.size()];
 	for (auto nodePick : Database.PickupNodes){
 		i = nodePick->getId();
 		pickup[i] = new  XPRBvar[Database.Periods.size()+1];
 		for (int t : Database.Periods) {
-			pickup[i][t] = prob.newVar(XPRBnewname("qP_%d%d", i, t), XPRB_PL, 0, Capacity);
+			pickup[i][t] = prob.newVar(XPRBnewname("qP_%d%d", i, t), XPRB_PL, 0, Database.Capacity);
 		}
 	}
 
@@ -1489,7 +1490,7 @@ void IRP::addValidIneq(int ValidIneq)
 						for (int t = t1; t <= t2; t++) {
 							p1 += y[i][t];
 						}
-						minVisit = ExcessConsumption[i][t1][t2] / min(Capacity, nodeDel->UpperLimit - nodeDel->LowerLimit);
+						minVisit = ExcessConsumption[i][t1][t2] / min(Database.Capacity, nodeDel->UpperLimit - nodeDel->LowerLimit);
 						double b = ExcessConsumption[i][t1][t2];
 						if (ceil(minVisit) - minVisit >= ExcessParameter)
 						{
@@ -1512,7 +1513,7 @@ void IRP::addValidIneq(int ValidIneq)
 						for (int t = t1; t <= t2; t++) {
 							p1 += y[i][t];
 						}
-						minVisit = ExcessProd[i][t1][t2] / min(Capacity, nodePick->UpperLimit - nodePick->LowerLimit);
+						minVisit = ExcessProd[i][t1][t2] / min(Database.Capacity, nodePick->UpperLimit - nodePick->LowerLimit);
 						if (ceil(minVisit) - minVisit >= ExcessParameter)
 						{
 							prob.newCtr("MinVisitPickup", p1 >= ceil(minVisit)).print();
