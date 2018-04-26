@@ -915,7 +915,7 @@ bool IRP::formulateProblem()
 				j = node2->getId();
 				if (node1->inArcSet(node2)) {
 					p1 = time[i][t] - time[j][t] + node1->getTravelTime(node2)
-						+ (ModelParameters::maxTime + node1->getTravelTime(node2) * x[i][j][t]);
+						+ (ModelParameters::maxTime + node1->getTravelTime(node2)) * x[i][j][t];
 
 					p2 = ModelParameters::maxTime + node1->getTravelTime(node2);
 					prob.newCtr("Time flow", p1 <= p2);

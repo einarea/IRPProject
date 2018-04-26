@@ -29,7 +29,7 @@ public:
 	Node(int id);
 
 	//Destructor
-	~Node();
+	virtual ~Node();
 
 	//get functions
 	Edge * getEdge(Node & n);

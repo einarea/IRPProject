@@ -172,6 +172,5 @@ Node *Node::Edge::getEndNode()
 Node::~Node()
 {
 	//Release dynamic memory
-	for (Edge* edge : Edges)
-		delete edge;
+	deleteEdges();
 }

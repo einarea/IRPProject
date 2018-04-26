@@ -36,6 +36,7 @@ NodeIRP::NodeIRP(const NodeInstance& data)
 
 NodeIRP::~NodeIRP()
 {
+	//Calls parent which delete edges
 }
 
 bool NodeIRP::isDelivery()

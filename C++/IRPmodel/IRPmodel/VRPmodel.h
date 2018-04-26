@@ -20,7 +20,7 @@ public:
 	void addRoutesToIRP(int t, Solution * sol);
 
 private:
-
+	void clearVariables();
 	int Period;
 	XPRBprob prob;
 

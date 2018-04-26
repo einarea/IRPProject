@@ -330,6 +330,8 @@ bool VRPmodel::formulateProblem()
 
 VRPmodel::~VRPmodel()
 {
+	//Delete the variables
+	clearVariables();
 }
 
 void VRPmodel::updateSolution(Solution * sol)
@@ -363,6 +365,22 @@ void VRPmodel::updateSolution(Solution * sol)
 		}
 	}
 
+}
+
+void VRPmodel::clearVariables()
+{
+	int i, j;
+	for (auto node1 : Database.AllNodes) {
+		i = node1->getId();
+		delete[] x[i];
+		delete[] loadDelivery[i];
+		delete[] loadPickup[i];
+	}
+	
+	delete[] x;
+	delete[] y;
+	delete[] loadDelivery;
+	delete[] loadPickup;
 }
 
 /*void VRPmodel::addRoutesToIRP(IRP & instance, int t,  IRP::Solution * sol)

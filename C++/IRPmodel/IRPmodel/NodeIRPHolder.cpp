@@ -8,6 +8,10 @@ using namespace std;
 //Destructor
 NodeIRPHolder::~NodeIRPHolder()
 {
+	//Delete nodeIRP
+	for (NodeIRP * node : NodePeriods) {
+		delete node;
+	}
 }
 
 
