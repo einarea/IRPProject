@@ -234,6 +234,18 @@ Solution * IRP::solveModel()
 	//XPRSsetcbpreintsol(oprob, acceptInt, &(*this));
 	//prob.print();
 	int d = prob.mipOptimise();
+
+	int i, j;
+	for (auto node1 : Database.AllNodes) {
+		i = node1->getId();
+		for (auto node2 : Database.AllNodes) {
+			if (node1->inArcSet(node2)) {
+				j = node2->getId();
+				for (auto t : Database.Periods)
+					cout << x[i][j][t].print()<<"\t"<<x[i][j][t].getUB() << "\t" << "SOL:" << x[i][j][t].getSol()<<"\n";
+			}
+		}
+	}
 	prob.print();
 
 	return allocateIRPSolution();
@@ -742,7 +754,7 @@ bool IRP::formulateProblem()
 			if (ModelParameters::Simultaneous)
 				arcIndicator = (Database.inSimultaneousArcSet(i, j) && !node1->isColocated(node2));
 			else
-				arcIndicator = Database.inExtensiveArcSet(i, j);
+				arcIndicator = node1->inArcSet(node2);
 
 			for (int t : Database.Periods) {
 				if (arcIndicator)

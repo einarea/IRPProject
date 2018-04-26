@@ -152,6 +152,8 @@ void NodeInstanceDB::initializeSets()
 			Periods.push_back(t);
 	}
 
+	initializeArcSet();
+
 }
 
 
@@ -255,7 +257,6 @@ NodeInstanceDB::NodeInstanceDB(string fileName)
 	}
 
 	Capacity = 2 * floor(TotalDemand / (ModelParameters::nVehicles*getnPeriods()));
-
 
 }
 
