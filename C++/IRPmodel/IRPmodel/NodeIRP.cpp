@@ -2,7 +2,7 @@
 #include "NodeIRP.h"
 
 //Copy constructor
-NodeIRP::NodeIRP(NodeIRP & cpNode)
+NodeIRP::NodeIRP(const NodeIRP & cpNode)
 	:
 	Node(cpNode),
 	NodeData(cpNode.NodeData)
@@ -10,6 +10,20 @@ NodeIRP::NodeIRP(NodeIRP & cpNode)
 	Quantity = cpNode.Quantity;
 	TimeServed = cpNode.TimeServed;
 	Inventory = cpNode.Inventory;
+}
+
+NodeIRP * NodeIRP::getNextNode()
+{
+	return getEdge()->getEndNode();
+}
+
+NodeIRP & NodeIRP::operator=(const NodeIRP & cpNode)
+{
+	//Clear edges
+	for (auto edge : getEdges())
+		delete edge;
+
+	return *new NodeIRP(cpNode);
 }
 
 bool NodeIRP::inArcSet(const NodeIRP * n) const

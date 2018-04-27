@@ -88,7 +88,7 @@ public:
 	void insertCustomer(int customerID, int period);
 	void removeCustomer(int customerID, int period);
 	vector<NodeIRP*> getCustomer(int id);
-	void insertSubrouteInRoute(vector<NodeIRP*> subroute, int period);
+	void insertSubrouteInRoute(Route* subroute, int period);
 	void createSubroute(vector<NodeIRP*> nodes);
 
 private:

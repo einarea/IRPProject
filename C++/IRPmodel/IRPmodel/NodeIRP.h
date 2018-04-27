@@ -27,7 +27,10 @@ public:
 	};
 
 	//Copy constructor
-	NodeIRP(NodeIRP&);
+	NodeIRP(const NodeIRP&);
+	NodeIRP* getNextNode();
+	NodeIRP& operator =(const NodeIRP& cpNode);
+
 	bool inArcSet(const NodeIRP *) const;
 	bool inArcSet(const NodeInstance *) const;
 	double getTransCost(const NodeIRP * node) const;

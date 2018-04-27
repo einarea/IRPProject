@@ -18,6 +18,7 @@ public:
 	~VRPmodel();
 	void updateSolution(Solution * sol);
 	void addRoutesToIRP(int t, Solution * sol);
+	inline int getStartTime() const;
 
 private:
 	void clearVariables();

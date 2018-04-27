@@ -235,18 +235,7 @@ Solution * IRP::solveModel()
 	//prob.print();
 	int d = prob.mipOptimise();
 
-	int i, j;
-	for (auto node1 : Database.AllNodes) {
-		i = node1->getId();
-		for (auto node2 : Database.AllNodes) {
-			if (node1->inArcSet(node2)) {
-				j = node2->getId();
-				for (auto t : Database.Periods)
-					cout << x[i][j][t].print()<<"\t"<<x[i][j][t].getUB() << "\t" << "SOL:" << x[i][j][t].getSol()<<"\n";
-			}
-		}
-	}
-	prob.print();
+	//prob.print();
 
 	return allocateIRPSolution();
 }

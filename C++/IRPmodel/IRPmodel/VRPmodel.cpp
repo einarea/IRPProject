@@ -6,10 +6,10 @@
 //Time callback
 void XPRS_CC cbmngtime(XPRSprob oprob, void * vd, int parent, int newnode, int branch) {
 
-	IRP * modelInstance;
-	modelInstance = (IRP*)vd;
+	VRPmodel * modelInstance;
+	modelInstance = (VRPmodel*)vd;
 
-	if ((XPRB::getTime() - modelInstance->startTime) / 1000 >= ModelParameters::MAX_RUNNING_TIME_VRP)
+	if ((XPRB::getTime() - modelInstance->getStartTime()) / 1000 >= ModelParameters::MAX_RUNNING_TIME_VRP)
 	{
 		XPRSinterrupt(oprob, XPRS_STOP_TIMELIMIT);
 	}
@@ -27,7 +27,6 @@ VRPmodel::VRPmodel(const NodeInstanceDB & db, vector<NodeIRP*> nodes, int period
 	initializeParameters();
 	initializeVariables();
 	formulateProblem();
-	prob.print();
 }
 
 
@@ -38,7 +37,7 @@ void VRPmodel::solveModel(Solution * prevSol)
 	startTime = XPRB::getTime();
 
 	//Set time callback
-	//XPRSsetcbnewnode(oprob, cbmngtime, &(*this));
+	XPRSsetcbnewnode(oprob, cbmngtime, &(*this));
 
 	prob.print();
 	int d = prob.mipOptimise();
@@ -170,8 +169,8 @@ bool VRPmodel::formulateProblem()
 	for (NodeIRP* node1 : AllNodes) {
 		i = node1->getId();
 		for (NodeIRP* node2 : AllNodes) {
+			j = node2->getId();
 			if (node1->inArcSet(node2)) {
-				j = node2->getId();
 				p1 += x[i][j];
 			}
 			if (node2->inArcSet(node1)) {
@@ -367,10 +366,15 @@ void VRPmodel::updateSolution(Solution * sol)
 
 }
 
+int VRPmodel::getStartTime() const
+{
+	return startTime;
+}
+
 void VRPmodel::clearVariables()
 {
 	int i, j;
-	for (auto node1 : Database.AllNodes) {
+	for (auto node1 : AllNodes) {
 		i = node1->getId();
 		delete[] x[i];
 		delete[] loadDelivery[i];

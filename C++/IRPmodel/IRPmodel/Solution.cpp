@@ -227,7 +227,7 @@ vector<NodeIRP*> Solution::getCustomer(int id)
 }
 
 //Uses cheapest insertion heurestic for all routes in the period
-void Solution::insertSubrouteInRoute(vector<NodeIRP*> subroute, int period)
+void Solution::insertSubrouteInRoute(Route * subroute, int period)
 {
 	Route * path = 0;
 	double minCost = 100000;
@@ -237,8 +237,8 @@ void Solution::insertSubrouteInRoute(vector<NodeIRP*> subroute, int period)
 	NodeIRP *end = 0;
 	NodeIRP * u = 0;
 	NodeIRP * v = 0;
-	NodeIRP * k = subroute.front();
-	NodeIRP * l = subroute.back();
+	NodeIRP * k = subroute->front();
+	NodeIRP * l = subroute->back();
 
 	Route * route = 0;
 	vector<NodeIRP * > nodes;
@@ -590,10 +590,6 @@ void Solution::generateRoutes(vector<Route* >&routeHolder)
 		count++;
 	}
 
-	//Plot initial routes
-	/*for (auto a : routes) {
-	a->printPlot("Routes/initial" + to_string(a->getId()));
-	}*/
 	vector<Route*> generation;
 	int jj = 1;
 	if (routes.size() >= 2) {
@@ -707,30 +703,33 @@ void Solution::shiftQuantity(int PeriodSelection, int ObjectiveSelection)
 	Solution * tempSol;
 
 	for (int t : Instance.Periods) {
-		tempSol = new Solution(*this);
-		RouteProblem routeProb(Instance, getAllRoutes());
-		routeProb.ShiftPeriod = t;
-		routeProb.formulateRouteProblem(ObjectiveSelection);
-		routeProb.lockRoutes(Instance.Periods);
+		
+		if (getNumberOfRoutes(t) >= 1) {
+			tempSol = new Solution(*this);
+			RouteProblem routeProb(Instance, getAllRoutes());
+			routeProb.ShiftPeriod = t;
+			routeProb.formulateRouteProblem(ObjectiveSelection);
+			routeProb.lockRoutes(Instance.Periods);
 
-		if (PeriodSelection == ModelParameters::MAX_SHIFT)
-			origQuantity = getTotalDelivery(t) + getTotalPickup(t);
+			if (PeriodSelection == ModelParameters::MAX_SHIFT)
+				origQuantity = getTotalDelivery(t) + getTotalPickup(t);
 
-		routeProb.solveProblem(tempSol);
+			routeProb.solveProblem(tempSol);
 
 
-		if (PeriodSelection == ModelParameters::MAX_SHIFT) {
-			newQuantity = getTotalDelivery(t) + getTotalPickup(t);
+			if (PeriodSelection == ModelParameters::MAX_SHIFT) {
+				newQuantity = tempSol->getTotalDelivery(t) + tempSol->getTotalPickup(t);
 
-			if (origQuantity - newQuantity > maxShift) {
-				maxShift = origQuantity - newQuantity;
-				delete shiftSolution;
-				shiftSolution = tempSol;
-				shiftPeriod = t;
+				if (origQuantity - newQuantity > maxShift) {
+					maxShift = origQuantity - newQuantity;
+					delete shiftSolution;
+					shiftSolution = tempSol;
+					shiftPeriod = t;
+				}
+				else
+					delete tempSol;
+
 			}
-			else
-				delete tempSol;
-
 		}
 	}
 
@@ -891,7 +890,7 @@ void  Solution::solveInventoryProblem()
 	routeProb.solveProblem(this);
 }
 
-void Solution::insertCustomer(int customerID, int period)
+/*void Solution::insertCustomer(int customerID, int period)
 {
 	vector<NodeIRP *> nodes = getCustomer(customerID);
 	createSubroute(nodes);
@@ -910,7 +909,7 @@ void Solution::insertCustomer(int customerID, int period)
 
 	//Reoptimize inventory
 	solveInventoryProblem();
-}
+}*/
 
 
 //Returns a copy of the nodes in the solution. Hence any change to a route do not alter the solution.

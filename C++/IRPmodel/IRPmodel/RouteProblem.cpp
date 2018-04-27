@@ -99,14 +99,15 @@ void RouteProblem::initializeRouteParameters()
 		//r->printRoute();
 		r->setId(nRoutes);
 		Routes.push_back(nRoutes);
-		RouteCost[nRoutes] = r->getTransportationCost();
+		RouteCost[nRoutes] = r->getTransCost();
 		//Initialize the A holder
 		//Find max routes
 		nRoutes++;
 	}
+
 	A.resize(nRoutes);
 	for (auto r : Routes)
-		A[r] = routes[r]->getRouteMatrix();
+		A[r] = routes[r]->getRouteMatrix(Instance.AllNodes.size());
 }
 
 void RouteProblem::initializeRouteVariables()
@@ -123,8 +124,8 @@ void RouteProblem::initializeRouteVariables()
 		for (auto node2 : Instance.AllNodes) {
 			if (node1->inArcSet(node2)) {
 				j = node2->getId();
-				loadDelivery[i][j] = new XPRBvar[Instance.Periods.size()];
-				loadPickup[i][j] = new XPRBvar[Instance.Periods.size()];
+				loadDelivery[i][j] = new XPRBvar[Instance.AllPeriods.size()];
+				loadPickup[i][j] = new XPRBvar[Instance.AllPeriods.size()];
 
 				for (int t : Instance.Periods) {
 					loadDelivery[i][j][t] = routeProblem.newVar(XPRBnewname("lD_%d%d%d", i, j, t), XPRB_PL, 0, Instance.Capacity);
@@ -140,7 +141,7 @@ void RouteProblem::initializeRouteVariables()
 
 	for (auto node : Instance.Nodes) {
 		i = node->getId();
-		inventory[i] = new XPRBvar[Instance.Periods.size()];
+		inventory[i] = new XPRBvar[Instance.AllPeriods.size()];
 		for (int t : Instance.AllPeriods) {
 			inventory[i][t] = routeProblem.newVar(XPRBnewname("i_%d%d", i, t), XPRB_PL, node->LowerLimit, node->UpperLimit);
 		}
@@ -500,18 +501,35 @@ void RouteProblem::lockRoutes(vector<int> Periods)
 void RouteProblem::clearVariables()
 {
 	int i, j;
+
+	for (int r : Routes)
+		delete[] travelRoute[r];
+
+	delete[] travelRoute;
+
 	for (auto node1 : Instance.AllNodes) {
 		i = node1->getId();
 		for (auto node2 : Instance.AllNodes) {
-			j = node2->getId();
-			delete[] loadDelivery[i][j];
-			delete[] loadPickup[i][j];
+			if (node1->inArcSet(node2)) {
+				j = node2->getId();
+				delete[] loadPickup[i][j];
+				delete[] loadDelivery[i][j];
+			}
 
 		}
 		delete[] loadDelivery[i];
 		delete[] loadPickup[i];
+	}
+
+	for (auto nodeDel : Instance.DeliveryNodes) {
+		i = nodeDel->getId();
 		delete[] inventory[i];
 		delete[] delivery[i];
+	}
+
+	for (auto nodePick : Instance.PickupNodes) {
+		i = nodePick->getId();
+		delete[] inventory[i];
 		delete[] pickup[i];
 	}
 
@@ -521,10 +539,6 @@ void RouteProblem::clearVariables()
 	delete[] loadDelivery;
 	delete[] loadPickup;
 
-	for (int r : Routes)
-		delete[] travelRoute[r];
-
-	delete[] travelRoute;
 }
 
 void RouteProblem::lockRoute(Route * route)
@@ -537,6 +551,7 @@ void RouteProblem::lockRoute(Route * route)
 Solution * RouteProblem::solveProblem(Solution * sol)
 {
 	routeProblem.mipOptimise();
+	//routeProblem.print();
 	//If no solution, allocate a new solution
 	if (sol == 0) {
 		sol = Solution::allocateSolution(Instance);

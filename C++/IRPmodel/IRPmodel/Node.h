@@ -25,9 +25,10 @@ public:
 
 	//Constructores
 	Node(int id, vector<Edge*> edges);
-	Node(Node&);
+	Node(const Node&);
 	Node(int id);
 
+	virtual Node& operator =(const Node&);
 	//Destructor
 	virtual ~Node();
 

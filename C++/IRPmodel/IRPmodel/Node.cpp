@@ -9,7 +9,7 @@ Node::Node(int id, vector<Edge*> edges)
 {
 }
 
-Node::Node(Node & cpNode)
+Node::Node(const Node & cpNode)
 	:
 	NodeID(cpNode.NodeID),
 	State(cpNode.State)
@@ -24,6 +24,14 @@ Node::Node(int id)
 	NodeID(id)
 {
 
+}
+
+Node & Node::operator=(const Node &cpNode)
+{
+	for (Edge *edge: Edges)
+		delete edge;
+
+	return * new Node(cpNode);
 }
 	
 

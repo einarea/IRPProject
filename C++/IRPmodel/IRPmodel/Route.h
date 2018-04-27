@@ -9,47 +9,57 @@ class Route
 	static int counter;
 public:
 	void setId(int id);
+	Route();
+	Route(vector <NodeIRP*> & path);
+	//Copy assignment operator
+	Route& operator =(const Route&);
+	NodeIRP * operator [](int i);
+
 
 	//Destructor
 	Route::~Route();
 
-	double getTransportationCost();
 	int getPeriod();
 	bool isFeasible();
-	Route * generateRoute(Route *);
+	void resize(int size);
+	Route * generateRoute(const Route *);
 	void setPeriod(int period);
-	bool coincide(vector<NodeIRP*> r);
+	bool coincide(Route* r);
 	void createSeperateRoute(Route *);
 	bool inRoute(Node *);
+	vector<Route*> getSubgraphs(int n) const;
 	bool isDuplicate(Route * r);
-	double getTransCost(NodeIRP * u, NodeIRP * v);
+	double getTransCost();
 	//int removeNode(NodeIRP*, Route *);
 	//void insertSubRoute(vector<NodeIRP *>, NodeIRP * start, NodeIRP * end);
 
 	Route * copyRoute();
+	NodeIRP * front();
+	NodeIRP * back();
 	void insertSubroute(vector<NodeIRP *> subroute);
-	vector<NodeIRP*> cheapestInsertion(vector<NodeIRP*> subroute, double &minCost);
+	vector<NodeIRP*> cheapestInsertion(Route* subroute, double &minCost);
 	vector<NodeIRP*> cheapestRemoval(int subroutesize, double &maxCost);
 	int getTotalDelivery();
 	int getTotalPickup();
-	void mergeRoute(Route * mergeIn);
-	void insert(NodeIRP * start, NodeIRP * end, vector<NodeIRP *> subroute);
+	void insertSubgraph(Route* subgraph);
+	void insert(NodeIRP * start, NodeIRP * end, Route* subroute);
 	int getPosition(Node * node);
 	int getId();
-	int ** getRouteMatrix();
-	void printPlot(string filename);
+	int** getRouteMatrix(int gridSize);
+	void printPlot(string filename) const;
 	void printRoute();
-	double getResidualCapacity();
+	double getResidualCapacity(int capacity);
 	void removeSubroute(int selection);
 	void updateRoute();
 	vector<NodeIRP*> getSubroute(int selection);
-	Route(vector <NodeIRP*> & path, const NodeInstanceDB &instance);
+	
+
+
 
 	//Graph 
 	vector <NodeIRP*> route;
 private:
 	int Id;
-	const NodeInstanceDB & Instance;
 	int Period;
 };
 

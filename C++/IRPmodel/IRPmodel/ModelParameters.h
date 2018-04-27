@@ -4,8 +4,8 @@ class ModelParameters
 public:
 
 	//Running time
-	static const int MAX_RUNNING_TIME_IRP = 57600; //seconds
-	static const int MAX_RUNNING_TIME_VRP = 7200; //seconds
+	static const int MAX_RUNNING_TIME_IRP = 60; //seconds
+	static const int MAX_RUNNING_TIME_VRP = 30; //seconds
 
 	//Period selection for shift quantity
 	static const int MAX_SHIFT = 3;

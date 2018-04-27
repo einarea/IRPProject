@@ -201,7 +201,7 @@ NodeInstanceDB::NodeInstanceDB(string fileName)
 
 
 	//Push back depot
-	NodeData.push_back(new NodeInstance(0, false, 0, 0, nPeriods, 1));
+	NodeData.push_back(new NodeInstance(0, true, 0, 0, nPeriods, 1));
 	//check file for errors
 	getline(nodeRecords, line);
 
@@ -265,7 +265,7 @@ NodeInstanceDB::NodeInstanceDB(int nCustomers, int nPer)
 	:
 	nPeriods(nPer)
 {
-	NodeData.push_back(new NodeInstance(0, false, 0, 0, nPer, 1));
+	NodeData.push_back(new NodeInstance(0, true, 0, 0, nPer, 1));
 
 	for (int i = 1; i <= 2*nCustomers; i = i+2) {
 		auto delNode = new NodeInstance(i, true, nPer, i);
