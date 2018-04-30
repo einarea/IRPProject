@@ -100,9 +100,10 @@ bool Node::operator==(const Node & node) const
 		return false;
 }
 
-void Node::addEdge(Edge* edge)
+Node::Edge* Node::addEdge(Edge* edge)
 {
 	this->Edges.push_back(edge);
+	return edge;
 }
 
 bool Node::hasEdge(Edge * checkEdge)
@@ -115,14 +116,16 @@ bool Node::hasEdge(Edge * checkEdge)
 	return false;
 }
 
-void Node::addEdge(double value, Node *child)
+Node::Edge* Node::addEdge(double value, Node *child)
 {
-	this->Edges.push_back(new Edge(*child, value));
+	Edge * edge = new Edge(*child, value);
+	this->Edges.push_back(edge);
+	return edge;
 }
 
-void Node::addEdge(Node * child)
+Node::Edge * Node::addEdge(Node * child)
 {
-	addEdge(1, child);
+	return addEdge(1, child);
 }
 
 void Node::removeEdge(Node & child)

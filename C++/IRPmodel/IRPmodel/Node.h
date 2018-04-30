@@ -44,10 +44,10 @@ public:
 	//modifier functions
 	void setId(int id);
 	void setState(int s);
-	void addEdge(double value, Node * child);
-	void addEdge(Edge *);
+	Edge* addEdge(double value, Node * child);
+	Edge* addEdge(Edge *);
 	bool hasEdge(Edge *);
-	void addEdge(Node * child);
+	Edge* addEdge(Node * child);
 	void removeEdge(Node &child);
 	void deleteEdges();
 	void deleteEdge(Node *);
@@ -59,10 +59,13 @@ public:
 	{
 		return !(*this == node); // invokes Array::operator==
 	}
+	//Possible state constants
+	static const int TABU_EDGE = 31;
 
 private:
 	int NodeID;
 	int State;
+
 	vector <Edge*> Edges;
 };
 

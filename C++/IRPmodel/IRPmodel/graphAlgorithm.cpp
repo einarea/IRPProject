@@ -9,7 +9,7 @@ graphAlgorithm::graphAlgorithm()
 }
 
 
-void graphAlgorithm::printGraph(vector<Node*>& graph, const NodeInstanceDB &db, string filename, int weight) {
+void graphAlgorithm::printGraph(vector<NodeIRP*>& graph, string filename, int weight) {
 
 
 	FILE *gnuplotPipe = _popen("C:\\Octave\\3.2.4_gcc-4.4.0\\bin\\gnuplot", "w");
@@ -29,10 +29,10 @@ void graphAlgorithm::printGraph(vector<Node*>& graph, const NodeInstanceDB &db, 
 
 	int pickup = 0;
 	int nextPickup = 0;
-	for (Node *node : graph) {
+	for (NodeIRP *node : graph) {
 
-		xLoc = db.getX(node->getId());
-		yLoc = db.getY(node->getId());
+		xLoc = node->getPosX();
+		yLoc = node->getPosY();
 
 		if (xLoc == 0 && yLoc == 0) {
 			Depot.push_back(make_pair(xLoc, yLoc));
@@ -47,12 +47,12 @@ void graphAlgorithm::printGraph(vector<Node*>& graph, const NodeInstanceDB &db, 
 				yLoc));
 		}
 	}
-	for (Node *node : graph) {
+	for (NodeIRP *node : graph) {
 		
-		x1 = db.getX(node->getId());
-		y1 = db.getY(node->getId());
+		x1 = node->getPosX();
+		y1 = node->getPosY();
 
-		if (!db.isDelivery(node->getId()))
+		if (!node->isDelivery())
 			//Move outgoing arc from pickup
 		{
 			x1 += 4;
@@ -60,10 +60,10 @@ void graphAlgorithm::printGraph(vector<Node*>& graph, const NodeInstanceDB &db, 
 
 		for (Node::Edge* edge : node->getEdges()) {
 			if (edge->getValue() != -1) {
-				x2 = db.getX(edge->getEndNode()->getId());
-				y2 = db.getY(edge->getEndNode()->getId());
+				x2 = node->getNextNode()->getPosX();
+				y2 = node->getNextNode()->getPosY();
 
-				if (!db.isDelivery(edge->getEndNode()->getId()))
+				if (!node->getNextNode()->isDelivery())
 					//Move outgoing arc from pickup
 					{
 						x2 += 4;
@@ -75,7 +75,7 @@ void graphAlgorithm::printGraph(vector<Node*>& graph, const NodeInstanceDB &db, 
 					id = getColor(1);
 				case ModelParameters::LOAD:
 					edgePtr = static_cast<NodeIRP::EdgeIRP*> (edge);
-					id = getColor((edgePtr->LoadDel + edgePtr->LoadPick) / db.Capacity);
+					id = getColor((edgePtr->LoadDel + edgePtr->LoadPick) / 100);
 					break;
 
 				case ModelParameters::X:
@@ -208,7 +208,7 @@ int graphAlgorithm::getColor(double value)
 }
 
 //Returns the proportion of equal arcs in the two graphs
-double graphAlgorithm::getSimiliarity(vector<Node*>& graph1, vector<Node*>& graph2)
+double graphAlgorithm::getSimiliarity(vector<NodeIRP*>& graph1, vector<NodeIRP*>& graph2)
 {
 	double equalEdges = 0;
 	double totalEdges = 0;

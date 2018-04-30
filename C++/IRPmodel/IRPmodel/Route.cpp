@@ -93,6 +93,8 @@ int Route::getTotalPickup()
 	return 0;
 }
 
+
+//Returns the edges added
 void Route::insertSubgraph(Route* subgraph)
 {
 	double minCost = 100000;
@@ -102,17 +104,18 @@ void Route::insertSubgraph(Route* subgraph)
 
 void Route::insert(NodeIRP * start, NodeIRP * end, Route * subroute)
 {
+	vector<Node::Edge*> edges;
 	NodeIRP* k = subroute->front();
 	NodeIRP* l = subroute->back();
 	//Insert edges
 	start->Node::deleteEdge(end);
 	start->Node::addEdge(k);
+	start->setState(Node::TABU_EDGE);
 	l->Node::deleteEdges();
 	l->Node::addEdge(end);
+	l->setState(Node::TABU_EDGE);
 
-	//route[0]->deleteEdges();
 	updateRoute();
-	//Update route positions
 }
 
 
@@ -176,12 +179,12 @@ void Route::printPlot(string filename) const
 	auto pickNode = new Node(Instance.map.getPickupNode(customer));
 	delnode->addEdge(pickNode);
 
-	*/vector<Node*> graph;
+	*/vector<NodeIRP*> graph;
 
 	//graph.push_back(delnode);
 	//graph.push_back(pickNode);*/
 
-for (Node* node : route)
+for (NodeIRP* node : route)
 {
 	graph.push_back(node);
 }
@@ -289,10 +292,6 @@ void Route::setId(int id)
 	Id = id;
 }
 
-Route::Route()
-{
-}
-
 
 
 int Route::getPeriod()
@@ -317,63 +316,78 @@ void Route::resize(int size)
 	route.resize(size);
 }
 
-Route * Route::generateRoute(const Route * r)
+//Generate route that is not in routeholder
+Route * Route::generateRoute( Route * r, vector<Route*> & RouteHolder)
 {
 	//Target route
-	const Route OrigRoute = *this;
-	vector<Route > bestRoute;
-	Route targetRoute;
+	const Route* OrigRoute = this;
+	list <Route*> bestRoutes;
+	Route* bestRoute = 0;
+	Route* targetRoute = 0;
 	double minCost = 100000;
 	double bestCost = 100000;
+	double origTransCost = OrigRoute->getTransCost();
 	int lowestSubroute = 3;
 	int highestSubroute = r->route.size() - 1;
 	int nRoutes = highestSubroute - lowestSubroute;
-	bestRoute.resize(highestSubroute+1);
 
 	vector<Route*> subgraphs;
 	int i = 0;
 	//For each subgraph of r OG size n, n-1, n-k, insert the subgraph
 	for (int n = highestSubroute; n >= lowestSubroute; n--) {
 		subgraphs = r->getSubgraphs(n);
-	
+
 		printPlot("Routes/targetRoute");
 		r->printPlot("Routes/insertionRoute");
 		for (Route * r : subgraphs)
 			r->printPlot("Routes/sub" + to_string(i++));
 
-		targetRoute = OrigRoute;
 
 		for (auto subgraph : subgraphs) {
-			targetRoute.insertSubgraph(subgraph);
-			minCost = targetRoute.getTransCost();
+			*targetRoute = *OrigRoute;
+
+			targetRoute->insertSubgraph(subgraph);
+			minCost = targetRoute->getTransCost() - origTransCost;
 			if (minCost <= bestCost) {
-				bestRoute[n] = targetRoute;
+				*bestRoute = *targetRoute;
 				bestCost = minCost;
 			}
-			targetRoute = OrigRoute;
 		}
+
+		//Remove random size of the new route
+		int remove = rand() % n;
+		bestRoute->removeSubroute(remove);
+
+		//Ensure route is time feasible
+		while (!bestRoute->isFeasible())
+			bestRoute->removeSubroute(1);
+
+		bool Duplicate = false;
+		for (Route * r : RouteHolder)
+			if (bestRoute->isDuplicate(r))
+				Duplicate = true;
+
+		if (!Duplicate) {
+			auto pos = bestRoutes.begin();
+			
+			while (pos != bestRoutes.end()) {
+				if ((*pos)->getTransCost() - origTransCost > bestCost) {
+					bestRoutes.insert(pos, bestRoute);
+					break;
+				};
+				pos++;
+			}
+		}
+
 		minCost = 200000;
 		bestCost = 200000;
-		bestRoute[n].printPlot("Routes/best" + to_string(n));
 	}
 
 
 
 	//newroute->printPlot("Routes/afterMerge" + to_string(rand()%100));
 
-	//Remove random size of the new route
-	int averge = (int)round((route.size() + r->route.size()) / 2);
-	int averageDifference = OrigRoute.route.size() - (int)round((route.size() + r->route.size()) / 2);
-
-	int max = min(averageDifference + 2, OrigRoute.route.size() - 2);
-	int min = max(averageDifference - 2, 0);
-
-	int remove = rand() % (max - min + 1) + min;
-	//Route.removeSubroute(remove);
-
-	//Ensure route is time feasible
-	//while (!OrigRoute.isFeasible())
-	//	OrigRoute.removeSubroute(1);
+	
 
 	return new Route();
 }
@@ -434,7 +448,7 @@ NodeIRP * Route::operator[](int i)
 	return route[i];
 }
 
-Route * Route::copyRoute()
+/*Route * Route::copyRoute()
 {
 	vector<NodeIRP*> path;
 	path.resize(route.size());
@@ -447,7 +461,7 @@ Route * Route::copyRoute()
 		u = v;
 	}
 	return new Route(path);
-}
+}*/
 
 NodeIRP * Route::front()
 {
@@ -459,7 +473,8 @@ NodeIRP * Route::back()
 	return route.back();
 }
 
-void Route::insertSubroute(vector<NodeIRP *> subroute)
+//Returns the edges added to the route
+/*vector<NodeIRP::EdgeIRP*> Route::insertSubroute(vector<NodeIRP *> subroute)
 {
 	/*printRoute();
 	double minCost = 100000;
@@ -485,8 +500,8 @@ void Route::insertSubroute(vector<NodeIRP *> subroute)
 		u = u->getEdge()->getEndNode();
 		route[position] = u;
 	}
-	printRoute();*/
-}
+	printRoute();
+}*/
 
 //Returns nodes to be connected for cheapest removal
 vector<NodeIRP*> Route::cheapestRemoval(int subroutesize, double &minCost)
@@ -508,21 +523,23 @@ vector<NodeIRP*> Route::cheapestRemoval(int subroutesize, double &minCost)
 
 	for (int i = 0; i < route.size() - subroutesize; i++) {
 		u = route[i];
-		k = u->getEdge()->getEndNode();
+		k = u->getNextNode();
 		l = route[i + subroutesize];
-		v = l->getEdge()->getEndNode();
-		C_uk = u->getTransCost(k);
-		C_lv = l->getTransCost(v);
-		C_uv = u->getTransCost(v);
+		if (u->getState() == Node::TABU_EDGE && l->getState() == Node::TABU_EDGE) {
+			v = l->getNextNode();
+			C_uk = u->getTransCost(k);
+			C_lv = l->getTransCost(v);
+			C_uv = u->getTransCost(v);
 
-		tempCost = C_uv - C_uk - C_lv;
+			tempCost = C_uv - C_uk - C_lv;
 
-		if (tempCost < minCost) {
-			minCost = tempCost;
-			Nodes[0] = u;
-			Nodes[1] = v;
+			if (tempCost < minCost) {
+				minCost = tempCost;
+				Nodes[0] = u;
+				Nodes[1] = v;
+			}
+			u = v;
 		}
-		u = v;
 	}
 
 	return Nodes;
@@ -544,7 +561,7 @@ bool Route::isDuplicate(Route * r)
 	return false;
 }
 
-double Route::getTransCost()
+double Route::getTransCost() const
 {
 	double transCost = 0;
 	for (NodeIRP * node : route)

@@ -231,6 +231,11 @@ bool NodeIRPHolder::isDelivery() const
 	return Instance.isDelivery();
 }
 
+const NodeInstance & NodeIRPHolder::getData()
+{
+	return Instance;
+}
+
 double NodeIRPHolder::getFeasibleServiceIncrease(int period, int capacity)
 {
 	// Check if quantity is feasible, if not adjust it

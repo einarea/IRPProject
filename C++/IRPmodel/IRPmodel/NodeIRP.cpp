@@ -12,6 +12,8 @@ NodeIRP::NodeIRP(const NodeIRP & cpNode)
 	Inventory = cpNode.Inventory;
 }
 
+
+
 NodeIRP * NodeIRP::getNextNode()
 {
 	return getEdge()->getEndNode();
@@ -100,6 +102,16 @@ NodeIRP * NodeIRP::getNode(Node * n)
 	}
 }
 
+int NodeIRP::getPosX()
+{
+	return NodeData.PosX;
+}
+
+int NodeIRP::getPosY()
+{
+	return NodeData.PosY;
+}
+
 vector<NodeIRP::EdgeIRP*> NodeIRP::getEdges()
 {
 	vector<Edge*> edges = Node::getEdges();
@@ -151,3 +163,5 @@ NodeIRP * NodeIRP::EdgeIRP::getEndNode()
 		return derivedPtr;
 	}
 }
+
+

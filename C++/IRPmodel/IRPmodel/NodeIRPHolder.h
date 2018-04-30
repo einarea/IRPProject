@@ -17,7 +17,7 @@ public:
 	//Constructor and destructor
 	NodeIRPHolder(NodeInstance& instance);
 	NodeIRPHolder(NodeIRPHolder& cpNode);
-	NodeIRPHolder::~NodeIRPHolder();
+	~NodeIRPHolder();
 
 	vector< NodeIRP* > NodePeriods;
 	
@@ -51,6 +51,7 @@ public:
 	double getHoldCost(int period);
 	void changeQuantity(int period, double quantity);
 	bool isDelivery() const;
+	const  NodeInstance &getData();
 
 private:
 

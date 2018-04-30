@@ -205,9 +205,9 @@ Solution * IRP::solveModel()
 				graph.clear();
 				result.clear();
 				buildGraph(graph, t, false, EDGE_WEIGHT); //Do not include depot in graph			
-				graphAlgorithm::printGraph(graph, Database, "graphSolutions/graph", ModelParameters::X);
+				//graphAlgorithm::printGraph(graph, "graphSolutions/graph", ModelParameters::X);
 				graphAlgorithm::sepByStrongComp(graph, result);
-				graphAlgorithm::printGraph(graph, Database, "graphSolutions/graph", ModelParameters::X);
+				//graphAlgorithm::printGraph(graph, "graphSolutions/graph", ModelParameters::X);
 				temp = addSubtourCtr(result, t);
 				if (temp)
 					isSubtours = true;
@@ -256,9 +256,9 @@ Solution * IRP::solveLPModel()
 			for (int t : Database.Periods) {
 				graph.clear();
 				buildGraph(graph, t, true, EDGE_WEIGHT); //Do not include depot in graph			
-				graphAlgorithm::printGraph(graph, Database, "graphSolutions/graph", ModelParameters::X);
+				//graphAlgorithm::printGraph(graph, Database, "graphSolutions/graph", ModelParameters::X);
 				graphAlgorithm::sepByStrongComp(graph, result);
-				graphAlgorithm::printGraph(graph, Database, "graphSolutions/graph", ModelParameters::X);
+				//graphAlgorithm::printGraph(graph, Database, "graphSolutions/graph", ModelParameters::X);
 				temp = addSubtourCtr(result, t);
 				if (temp)
 					isSubtours = true;

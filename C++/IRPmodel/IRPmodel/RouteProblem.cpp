@@ -455,7 +455,7 @@ void RouteProblem::addRoutesToVector()
 	//Update set of routes
 	for (Route *r : routes) {
 		Routes.push_back(r->getId());
-		A[r->getId()] = r->getRouteMatrix();
+		A[r->getId()] = r->getRouteMatrix(Instance.AllNodes.size());
 	}
 
 }

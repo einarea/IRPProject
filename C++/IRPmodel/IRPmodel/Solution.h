@@ -18,7 +18,7 @@ public:
 	Solution(Solution&);
 	void updateSolution(Solution&);
 	//Destructors
-	Solution::~Solution();
+	~Solution();
 
 	int SolID;
 	NodeIRP * getDepot(int period);
@@ -26,9 +26,9 @@ public:
 	//Solves an vrp for the period and update the solution
 	void solveVRP(int period);
 
-	void buildGraph(vector<Node*> &graph);
+	void buildGraph(vector<NodeIRP*> &graph);
 
-	void buildGraph(vector<Node*> &graph, int t);
+	void buildGraph(vector<NodeIRP*> &graph, int t);
 	static Solution * allocateSolution(const NodeInstanceDB &);
 	void routeSearch(int period);
 	void routeOptimize();

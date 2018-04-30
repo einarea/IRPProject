@@ -12,7 +12,7 @@ class RouteProblem
 {
 public:
 	RouteProblem(const NodeInstanceDB & Instance, vector<Route*> routes);
-	RouteProblem::~RouteProblem();
+	~RouteProblem();
 
 	void addRouteConstraints();
 	void formulateRouteProblem(int objectiveSelection);

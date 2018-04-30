@@ -16,7 +16,7 @@ void Solution::printSolution()
 	printf("Holding cost: %.2f\n", getHoldingCost());
 
 	int j;
-	char * str;
+	const char * str;
 	for (int t : Instance.Periods) {
 		printf("\n\nPeriod %d:", t);
 		for (NodeIRPHolder * node : Nodes) {
@@ -352,22 +352,22 @@ void Solution::solveVRP(int period)
 	model.solveModel(this);
 }
 
-void Solution::buildGraph(vector<Node*> &graph)
+void Solution::buildGraph(vector<NodeIRP*> &graph)
 {
-	for (auto n : Nodes)
-		graph.push_back(new Node(n->getId()));
+	for (NodeIRPHolder * n : Nodes)
+		graph.push_back(new NodeIRP(n->getData()));
 
 	for (auto r : getAllRoutes()) {
 		for (Node* node : r->route) {
 			for (Node::Edge *edge : node->getEdges()) {
 				if (!graph[node->getId()]->hasEdge(edge))
-					graph[node->getId()]->addEdge(edge->getEndNode());
+					graph[node->getId()]->Node::addEdge(edge->getEndNode());
 			}
 		}
 	}
 }
 
-void Solution::buildGraph(vector<Node*>& graph, int t)
+void Solution::buildGraph(vector<NodeIRP*>& graph, int t)
 {
 	//Add nodes from particular period
 	for (NodeIRPHolder * n : Nodes) {
@@ -509,7 +509,7 @@ vector<Route*> Solution::getRoutes(int period)
 
 		} while (u->getId() != 0); //while not depot
 
-		Route * route = new Route(path, Instance);
+		Route * route = new Route(path);
 		route->setPeriod(period);
 		routes.push_back(route);
 	}
@@ -523,10 +523,10 @@ int Solution::solCounter = 0;
 void Solution::print(string filename, int load)
 {
 	solCounter++;
-	vector<Node *> graph;
+	vector<NodeIRP *> graph;
 	for (int t : Instance.Periods) {
 		buildGraph(graph, t);
-		graphAlgorithm::printGraph(graph, Instance, filename + to_string(solCounter) + "t" + to_string(t), load);
+		graphAlgorithm::printGraph(graph, filename + to_string(solCounter) + "t" + to_string(t), load);
 		graph.clear();
 	}
 }
@@ -537,50 +537,16 @@ void Solution::mergeRoutes(int position, Route * route, vector<Route*> &Routes, 
 		mergeRoutes(position + 1, route, Routes, newRoutes);
 	}
 
-	auto newroute = route->generateRoute(Routes[position]);
-
-	//Remove duplicates
-	bool duplicate = false;
-	//Try to make it uniqe or delete it
-	for (int i = 1; i <= 5; i++) {
-		for (auto r : Routes) {
-			if (newroute->isDuplicate(r)) {
-				if (i == 5)
-					duplicate = true;
-				else {
-					int a = rand() % (Routes.size() - 1);
-					newroute = newroute->generateRoute(Routes[a]);
-				}
-				break;
-			}
-		}
-	}
-
-	for (int i = 1; i <= 5; i++) {
-		for (auto r : newRoutes) {
-			if (newroute->isDuplicate(r)) {
-				if (i == 5)
-					duplicate = true;
-				else {
-
-					int a = rand() % (Routes.size() - 1);
-					newroute = newroute->generateRoute(Routes[a]);
-				}
-				break;
-			}
-		}
-	}
-
+    Route * newroute = route->generateRoute(Routes[position], newRoutes);
+	newRoutes.push_back(newroute);
 
 	//newroute->printPlot("Routes/afterRemoval" + to_string(rand() % 100));
-	if (!duplicate) {
-		newRoutes.push_back(newroute);
-	}
+
 }
 
-void Solution::generateRoutes(vector<Route* >&routeHolder)
+void Solution::generateRoutes(vector< Route* >&routeHolder)
 {
-	vector <Route*> routes = getAllRoutes();
+	vector < Route*> routes = getAllRoutes();
 
 	int count = 0;
 	//push back exisiting routes
@@ -597,7 +563,7 @@ void Solution::generateRoutes(vector<Route* >&routeHolder)
 		for (int i = 1; i <= 1; i++) {
 			generation.clear();
 
-			vector<Route*> newRoutes;
+			vector< Route*> newRoutes;
 			//Recursively merge
 			for (int position = 0; position < routes.size() - 1; position++) {
 				mergeRoutes(position + 1, routes[position], routes, newRoutes);
@@ -619,21 +585,6 @@ void Solution::generateRoutes(vector<Route* >&routeHolder)
 			//Remove duplicates
 			bool duplicate = false;
 			//Check old routes
-
-			for (auto newr : newRoutes) {
-				for (auto r : routeHolder) {
-					if (newr->isDuplicate(r))
-						duplicate = true;
-				}
-
-				if (!duplicate) {
-					newr->setId(count);
-					count++;
-					routeHolder.push_back(newr);
-				}
-
-			}
-
 			int nn = 0;
 
 			routes = newRoutes;

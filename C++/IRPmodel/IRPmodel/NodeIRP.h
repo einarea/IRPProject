@@ -28,6 +28,7 @@ public:
 
 	//Copy constructor
 	NodeIRP(const NodeIRP&);
+	NodeIRP(int id);
 	NodeIRP* getNextNode();
 	NodeIRP& operator =(const NodeIRP& cpNode);
 
@@ -49,6 +50,9 @@ public:
 	double Quantity;
 	double Inventory;
 	double TimeServed;
+	int getPosX();
+	int getPosY();
+;
 	vector <EdgeIRP*> getEdges();
 	double getOutflow();
 	double getPosX() const;
