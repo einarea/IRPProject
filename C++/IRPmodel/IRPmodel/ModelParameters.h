@@ -16,7 +16,7 @@ public:
 
 
 	////Model parameters;
-	static const int nVehicles = 5;
+	static const int nVehicles = 3;
 	static const int TRANSCOST_MULTIPLIER = 13;
 	static const int SERVICECOST_MULTIPLIER =100;
 	static const int TRAVELTIME_MULTIPLIER = 1;
