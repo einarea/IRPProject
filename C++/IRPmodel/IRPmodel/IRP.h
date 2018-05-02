@@ -20,7 +20,7 @@ private:
 	XPRBprob prob;
 	XPRSprob oprob;		//Express problem to use with cuts
 	bool MaskOn;
-	void getSubset(vector <int>  subset, int subsetSize, int node, vector <int> & IncludeNodes, int t1, int t2);
+	void getSubset(vector <NodeInstance*>  subset, int subsetSize, int node, vector <NodeInstance*> & IncludeNodes, int t1, int t2);
 
 	//Parameters
 	bool ARC_RELAXED;

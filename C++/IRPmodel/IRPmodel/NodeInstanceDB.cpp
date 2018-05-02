@@ -156,6 +156,26 @@ void NodeInstanceDB::initializeSets()
 }
 
 
+vector<NodeInstance*> NodeInstanceDB::getDifference(vector<NodeInstance*> set1, vector<NodeInstance*> set2) const
+{
+	
+	vector<NodeInstance * > difference;
+	bool include;
+	for (auto i : set1) {
+		include = true;
+		for (auto j : set2) {
+			if (i == j)
+				include = false;
+		}
+
+		if (include)
+			difference.push_back(i);
+	}
+
+	return difference;
+	
+}
+
 string NodeInstanceDB::getNextToken(string &str, string& delimiter) const
 {
 	size_t pos = 0;
@@ -312,6 +332,15 @@ string NodeInstanceDB::getFilename(int nCustomers, int nPeriods, int version)
 {
 	string extension(".txt");
 	return  "Instances/C" + to_string(nCustomers) + "T" + to_string(nPeriods) + "_v" + to_string(version) + extension;
+}
+
+NodeInstance * NodeInstanceDB::getColocatedNode(const NodeInstance * node)
+{
+	for (NodeInstance * n : Nodes)
+		if (node->isColocated(n))
+			return n;
+
+	return 0;
 }
 
 bool NodeInstanceDB::inArcSet(int i, int j) const

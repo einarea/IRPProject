@@ -20,7 +20,6 @@ class NodeInstanceDB
 private:
 	int nPeriods;
 
-
 	//utility functions
 	string getNextToken(string & str, string & delimiter) const;
 
@@ -34,9 +33,12 @@ public:
 	NodeInstanceDB(int nCustomers, int nPeriods);
 	~NodeInstanceDB();
 
+
+	vector<NodeInstance*> getDifference(vector<NodeInstance*> set1, vector<NodeInstance*> set2) const;
 	static NodeInstanceDB * createInstance(int nCustomers, int nPeriods, int version);
 	static NodeInstanceDB * openInstance(int nCustomers, int nPeriods, int version);
 	static string getFilename(int nCustomers, int nPeriods, int version);
+	NodeInstance * getColocatedNode(const NodeInstance*);
 
 	bool inArcSet(NodeInstance * node1, NodeInstance * node2) const;
 	const NodeInstance * getDepot() const;

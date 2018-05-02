@@ -130,7 +130,7 @@ bool NodeInstance::isDelivery() const
 }
 
 
-bool NodeInstance::isColocated(NodeInstance * node)
+bool NodeInstance::isColocated(NodeInstance * node) const
 {
 	if (PosX == node->PosX && PosY == node->PosY)
 		return true;

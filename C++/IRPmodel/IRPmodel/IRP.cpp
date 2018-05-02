@@ -1026,17 +1026,16 @@ void IRP::printSolutionToFile(double lpOptima, double trans, double hold,  int v
 
 
 
-void IRP::getSubset(vector<int> subset, int subsetSize, int nodePos, vector<int> & searchNodes, int t1, int t2)
+void IRP::getSubset(vector<NodeInstance*> subset, int subsetSize, int nodePos, vector<NodeInstance*> & searchNodes, int t1, int t2)
 {
 	subset.push_back(searchNodes[nodePos]);
 
 	if (subset.size() < subsetSize) {
 	
-		vector<int> localSubset = subset;
+		vector<NodeInstance*> localSubset = subset;
 		
 		for (int i = nodePos; i < searchNodes.size() - 1; i++) {
 			getSubset(subset, subsetSize, i+1,  searchNodes, t1, t2);
-		
 		}
 	}
 	else {
@@ -1044,26 +1043,27 @@ void IRP::getSubset(vector<int> subset, int subsetSize, int nodePos, vector<int>
 		XPRBexpr p2;
 		double flow;
 		double denominator;
+		int i;
 
-
-		for (auto i : subset)
-			if(Database.isDelivery(i))
+		for (NodeInstance * node : subset) {
+			i = node->getId();
+			if (node->isDelivery())
 				flow = ExcessConsumption[i][t1][t2];
 			else
 				flow = ExcessProd[i][t1][t2];
 
-		if (subset.size() == 1) {
-			denominator = min(Database.Capacity, Database.getNode(subset[0])->UpperLimit - Database.getNode(subset[0])->LowerLimit);
+			if (subset.size() == 1) {
+				denominator = min(Database.Capacity, (double) node->UpperLimit - node->LowerLimit);
+			}
+			else
+				denominator = Database.Capacity;
 		}
-		else
-			denominator = Database.Capacity;
-
 		if (ceil(flow / denominator) - flow/denominator> ExcessParameter){
 
 			cout << "\nPeriod" << t1 << t2 << "\n";
 			for (auto i : subset) {
 
-				cout << i << " - ";
+				cout << i->getId() << " - ";
 
 			}
 			cout << "\n";
@@ -1073,20 +1073,26 @@ void IRP::getSubset(vector<int> subset, int subsetSize, int nodePos, vector<int>
 			for (auto node : Database.AllNodes)
 				allNodes[node->getId()] = node->getId();
 
-			vector <int> Difference = ModelBase::createDifferenceSet(allNodes, subset);
+			vector <NodeInstance*> Difference = Database.getDifference(Database.AllNodes, subset);
 			//Add minimum flow constraint
-			for (int t = t1; t <= t2; t++)
-				for (auto i : subset)
-					for (auto j : Difference)
-						if (Database.inArcSet(i, j)) {
+			for (int t = t1; t <= t2; t++) {
+				for (auto node1 : subset) {
+					i = node1->getId();
+					for (auto node2 : Difference) {
+						j = node2->getId();
+						if (node1->inArcSet(node2)) {
 							p1 += x[i][j][t];
 						}
-
+					}
+				}
+			}
 			p2 = ceil(flow / denominator);
 			prob.newCtr("MinFlow", p1 >= p2);
 		}
 	}	
 }
+
+
 
 void IRP::addInventoryAndLoadingCtr(XPRBprob & problem)
 {
@@ -1660,7 +1666,7 @@ void IRP::addValidIneq(int ValidIneq)
 	if (ValidIneq == ModelParameters::MinimumFlow) {
 		//Check all subsets with positive excess demand
 
-		vector<vector<vector<int>>> IncludedNodes;
+		vector<vector<vector<NodeInstance*>>> IncludedNodes;
 		IncludedNodes.resize(Database.Periods.size() + 1);
 
 		//For all delivery nodes
@@ -1669,9 +1675,8 @@ void IRP::addValidIneq(int ValidIneq)
 			for (auto t2 : Database.Periods) {
 				if (t1 <= t2)
 					for (auto nodeDel : Database.DeliveryNodes) {
-						i = nodeDel->getId();
 						if (ExcessConsumption[i][t1][t2] >= 0.01)
-							IncludedNodes[t1][t2].push_back(i);
+							IncludedNodes[t1][t2].push_back(nodeDel);
 					}
 
 			}
@@ -1680,7 +1685,7 @@ void IRP::addValidIneq(int ValidIneq)
 		for (auto t1 : Database.Periods)
 			for (auto t2 : Database.Periods) {
 				if (t1 <= t2) {
-					vector<int> subset;
+					vector<NodeInstance *> subset;
 					for (int subsetSize = 3; subsetSize <= ModelParameters::SubsetSizeMinFlow; subsetSize++)
 						for (auto nodePos = 0; nodePos < IncludedNodes[t1][t2].size(); nodePos++)
 							getSubset(subset, subsetSize, nodePos, IncludedNodes[t1][t2], t1, t2);
@@ -1698,7 +1703,7 @@ void IRP::addValidIneq(int ValidIneq)
 			for (auto t2 : Database.Periods) {
 				if (t1 <= t2)
 					for (auto nodePick : Database.PickupNodes) {
-						i = nodePick->getId();
+				
 						if (ExcessProd[i][t1][t2] >= 0.01)
 							IncludedNodes[t1][t2].push_back(i);
 					}
@@ -1710,7 +1715,7 @@ void IRP::addValidIneq(int ValidIneq)
 		for (auto t1 : Database.Periods)
 			for (auto t2 : Database.Periods) {
 				if (t1 <= t2) {
-					vector<int> subset;
+					vector<NodeInstance *> subset;
 					for (int subsetSize = 1; subsetSize <= ModelParameters::SubsetSizeMinFlow; subsetSize++)
 						for (auto nodePos = 0; nodePos < IncludedNodes[t1][t2].size(); nodePos++)
 							getSubset(subset, subsetSize, nodePos, IncludedNodes[t1][t2], t1, t2);
