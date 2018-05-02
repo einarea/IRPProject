@@ -135,8 +135,7 @@ void NodeInstanceDB::writeInstanceToFile(ofstream &instanceFile, string Filename
 
 void NodeInstanceDB::initializeSets()
 {
-	for (auto node : NodeData) {
-		AllNodes.push_back(node);
+	for (auto node : AllNodes) {
 		if (node->getId() != 0) {
 			Nodes.push_back(node);
 			if (node->isDelivery())
@@ -201,7 +200,7 @@ NodeInstanceDB::NodeInstanceDB(string fileName)
 
 
 	//Push back depot
-	NodeData.push_back(new NodeInstance(0, true, 0, 0, nPeriods, 1));
+	AllNodes.push_back(new NodeInstance(0, true, 0, 0, nPeriods, 1));
 	//check file for errors
 	getline(nodeRecords, line);
 
@@ -239,7 +238,7 @@ NodeInstanceDB::NodeInstanceDB(string fileName)
 		int x = stoi(getNextToken(line, delimiter));
 		int y = stoi(getNextToken(line, delimiter));
 		NodeInstance * node = new NodeInstance(nodeID, Del, x, y, nPeriods, InitInventory, HoldingCost, UpperLimit, LowerLimit, Demand);
-		NodeData.push_back(node);
+		AllNodes.push_back(node);
 		nodeID++;
 
 	
@@ -249,9 +248,9 @@ NodeInstanceDB::NodeInstanceDB(string fileName)
 	initializeSets();
 
 	//Initialize capacity
-	int TotalDemand = 0;
+	double TotalDemand = 0;
 	for (int t : Periods) {
-		for (auto node : NodeData) {
+		for (auto node : Nodes) {
 			TotalDemand += node->Demand[t];
 		}
 	}
@@ -265,12 +264,12 @@ NodeInstanceDB::NodeInstanceDB(int nCustomers, int nPer)
 	:
 	nPeriods(nPer)
 {
-	NodeData.push_back(new NodeInstance(0, true, 0, 0, nPer, 1));
+	AllNodes.push_back(new NodeInstance(0, true, 0, 0, nPer, 1));
 
 	for (int i = 1; i <= 2*nCustomers; i = i+2) {
 		auto delNode = new NodeInstance(i, true, nPer, i);
-		NodeData.push_back(delNode);
-		NodeData.push_back(new NodeInstance(i+1, false, delNode->PosX, delNode->PosY, nPer, i+1));
+		AllNodes.push_back(delNode);
+		AllNodes.push_back(new NodeInstance(i+1, false, delNode->PosX, delNode->PosY, nPer, i+1));
 	}
 
 	initializeSets();
@@ -278,7 +277,7 @@ NodeInstanceDB::NodeInstanceDB(int nCustomers, int nPer)
 	//Initialize capacity
 	int TotalDemand = 0;
 	for (int t : Periods) {
-		for (auto node : NodeData) {
+		for (auto node : AllNodes) {
 			TotalDemand += node->Demand[t];
 		}
 	}
@@ -371,12 +370,12 @@ bool NodeInstanceDB::inSimultaneousArcSet(int i, int j) const
 
 vector<NodeInstance*>* NodeInstanceDB::getNodes()
 {
-	return &NodeData;
+	return &AllNodes;
 }
 
 NodeInstance const * NodeInstanceDB::getNode(int id) const
 {
-	for (NodeInstance *n: NodeData) {
+	for (NodeInstance *n: AllNodes) {
 		if (n->getId()==id)
 			return n;
 	}

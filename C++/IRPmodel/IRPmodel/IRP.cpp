@@ -246,6 +246,7 @@ Solution * IRP::solveModel()
 	//XPRSsetcbcutmgr(oprob, cbmng, &(*this));
 	int d = prob.mipOptimise();
 
+	prob.print();
 	double a;
 	//For printing
 
@@ -317,15 +318,15 @@ void IRP::calculateExcess()
 
 				//initialize excess
 				if (t1 == 1) {
-					excess = 1;//nodeDel->LowerLimit - nodeDel->InitInventory;
+					excess = nodeDel->LowerLimit - nodeDel->InitInventory;
 				}
 				else
-					excess = 1;// nodeDel->LowerLimit - nodeDel->UpperLimit;
+					excess = nodeDel->LowerLimit - nodeDel->UpperLimit;
 
 				//calculate excess between period t1 and t2
 				if (t1 <= t2) {
 					for (int t = t1; t <= t2; t++)
-						excess += 1; // nodeDel->Demand[t];
+						excess += nodeDel->Demand[t];
 					if (excess >= 1) ExcessConsumption[i][t1][t2] = excess;
 					else  ExcessConsumption[i][t1][t2] = 0;
 
@@ -995,7 +996,7 @@ bool IRP::initializeParameters() {
 
 	//Initialize max time
 	MaxTime = 480;
-	
+	//initialize cap
 	return true;
 }
 
@@ -1576,7 +1577,7 @@ void IRP::addValidIneq(int ValidIneq)
 						double b = ExcessConsumption[i][t1][t2];
 						if (ceil(minVisit) - minVisit >= ExcessParameter)
 						{
-							prob.newCtr("MinVisitDelivery", p1 >= ceil(minVisit)).print();
+							prob.newCtr("MinVisitDelivery", p1 >= ceil(minVisit));
 						}
 						p1 = 0;
 						minVisit = 0;
@@ -1598,7 +1599,7 @@ void IRP::addValidIneq(int ValidIneq)
 						minVisit = ExcessProd[i][t1][t2] / min(Database.Capacity, nodePick->UpperLimit - nodePick->LowerLimit);
 						if (ceil(minVisit) - minVisit >= ExcessParameter)
 						{
-							prob.newCtr("MinVisitPickup", p1 >= ceil(minVisit)).print();
+							prob.newCtr("MinVisitPickup", p1 >= ceil(minVisit));
 						}
 					}
 				}

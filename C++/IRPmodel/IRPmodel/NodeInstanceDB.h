@@ -25,11 +25,10 @@ private:
 	string getNextToken(string & str, string & delimiter) const;
 
 	//Database vector
-	vector <NodeInstance * > NodeData;
 	void initializeArcSet();
 
 public:
-	int Capacity;
+	double Capacity;
 
 	NodeInstanceDB(string fileName);
 	NodeInstanceDB(int nCustomers, int nPeriods);
