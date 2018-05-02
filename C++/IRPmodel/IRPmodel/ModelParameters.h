@@ -4,8 +4,8 @@ class ModelParameters
 public:
 
 	//Running time
-	static const int MAX_RUNNING_TIME_IRP = 60; //seconds
-	static const int MAX_RUNNING_TIME_VRP = 30; //seconds
+	static const int MAX_RUNNING_TIME_IRP = 20; //seconds
+	static const int MAX_RUNNING_TIME_VRP = 500; //seconds
 
 	//Period selection for shift quantity
 	static const int MAX_SHIFT = 3;
@@ -16,7 +16,7 @@ public:
 
 
 	////Model parameters;
-	static const int nVehicles = 7;
+	static const int nVehicles = 5;
 	static const int TRANSCOST_MULTIPLIER = 13;
 	static const int SERVICECOST_MULTIPLIER =100;
 	static const int TRAVELTIME_MULTIPLIER = 1;

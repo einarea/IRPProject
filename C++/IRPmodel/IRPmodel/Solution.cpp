@@ -335,6 +335,7 @@ void Solution::updateSolution(Solution &cpSol)
 }
 
 
+
 NodeIRP * Solution::getDepot(int period)
 {
 
@@ -573,7 +574,6 @@ void Solution::generateRoutes(vector< Route* >&routeHolder)
 			//Plot merged routes
 			for (auto a : newRoutes) {
 				a->printPlot("Routes/newroute" + to_string(i));
-				jj++;
 			}
 
 			//Plot graph
@@ -863,6 +863,11 @@ void  Solution::solveInventoryProblem()
 	solveInventoryProblem();
 }*/
 
+
+int Solution::getnPeriods()
+{
+	return Instance.nPeriods;
+}
 
 //Returns a copy of the nodes in the solution. Hence any change to a route do not alter the solution.
 vector<Route*> Solution::getAllRoutes()

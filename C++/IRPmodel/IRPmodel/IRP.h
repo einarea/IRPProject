@@ -28,12 +28,16 @@ private:
 
 	void addInventoryAndLoadingCtr(XPRBprob & problem);
 
+
 	//Subtour
 	double EDGE_WEIGHT;
 	double alpha;
 	double ExcessParameter;
 
 	int NumOfCustomers;
+	double getTransportationCost();
+	double getHoldingCost();
+	double getnRoutes();
 	int MaxTime;
 	int Capacity;
 	int NumOfPeriods;
@@ -63,6 +67,7 @@ private:
 	void generateMask(int ** mask);
 	bool initializeVariables();
 	bool initializeParameters();
+
 	bool formulateProblem();
 
 	void printGraph(vector <Node> &);
@@ -71,7 +76,14 @@ private:
 	int getCounter();
 
 public:
-
+	//Solution data
+	double solutionTime = -1;
+	int nNodes = -1;
+	int nVariables = -1;
+	int nConstraints = -1;
+	double bestBound = -1;
+	double bestSol = -1;
+	void printSolutionToFile(double lpOptimat, double trans, double hold, int version);
 	void buildGraph(vector <Node*> &, int, bool includeDepot, double weight = 0.01);
 	vector <Solution *> solutions;
 

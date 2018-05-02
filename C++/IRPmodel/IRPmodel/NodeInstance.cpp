@@ -34,6 +34,7 @@ void NodeInstance::randomQuantities(int randSeed)
 		LowerLimit = ModelParameters::LBDel;
 
 		do {
+			srand(time(0) + randSeed);
 			UpperLimit = rand() % (ModelParameters::UBDelHigh - ModelParameters::UBDelLow) + ModelParameters::UBDelLow;
 
 		} while (UpperLimit - LowerLimit <= maxDemand);

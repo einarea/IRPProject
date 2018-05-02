@@ -13,6 +13,7 @@
 using namespace ::dashoptimization;
 using namespace::std;
 
+
 void XPRS_CC acceptInt(XPRSprob oprob, void * vd, int soltype, int * ifreject, double *cutoff) {
 	IRP * modelInstance;
 	modelInstance = (IRP*)vd;
@@ -58,7 +59,11 @@ void XPRS_CC cbmngtimeIRP(XPRSprob oprob, void * vd,int parent, int newnode, int
 		XPRSinterrupt(oprob, XPRS_STOP_TIMELIMIT);
 	}
 }
+
+
+
 //Global callBack manager
+
 int XPRS_CC cbmng(XPRSprob oprob, void * vd)
 {
 	// subtour callback
@@ -80,6 +85,8 @@ int XPRS_CC cbmng(XPRSprob oprob, void * vd)
 	modelInstance->getProblem()->beginCB(oprob);
 	modelInstance->getProblem()->sync(XPRB_XPRS_SOL);
 	
+	//For printing
+
 	//Load model instance
 	XPRBprob *bprob = modelInstance->getProblem();
 
@@ -226,6 +233,9 @@ Solution * IRP::solveModel()
 	//Set time callback
 	XPRSsetcbnewnode(oprob, cbmngtimeIRP, &(*this));
 
+	//
+	//XPRSsetcboptnode(oprob, cbOptNode, )
+
 	if (ARC_RELAXED) {
 
 		XPRSsetcbpreintsol(oprob, acceptIntQuantity, &(*this));
@@ -233,8 +243,18 @@ Solution * IRP::solveModel()
 	}
 	//XPRSsetcbpreintsol(oprob, acceptInt, &(*this));
 	//prob.print();
+	//XPRSsetcbcutmgr(oprob, cbmng, &(*this));
 	int d = prob.mipOptimise();
 
+	double a;
+	//For printing
+
+	XPRSgetdblattrib(oprob, XPRS_BESTBOUND, &bestBound);
+	XPRSgetdblattrib(oprob, XPRS_MIPBESTOBJVAL, &bestSol);
+	XPRSgetintattrib(oprob, XPRS_COLS, &nVariables);
+	XPRSgetintattrib(oprob, XPRS_ROWS, &nConstraints);
+	solutionTime = (XPRB::getTime() - startTime) / 1000;
+	XPRSgetintattrib(oprob, XPRS_NODES, &nNodes);
 	//prob.print();
 
 	return allocateIRPSolution();
@@ -270,7 +290,8 @@ Solution * IRP::solveLPModel()
 	}
 
 	else
-		prob.lpOptimise();
+	prob.lpOptimise();
+	return allocateIRPSolution();
 }
 
 XPRBprob * IRP::getProblem()
@@ -978,6 +999,26 @@ bool IRP::initializeParameters() {
 	return true;
 }
 
+void IRP::printSolutionToFile(double lpOptima, double trans, double hold,  int version)
+{
+	ofstream instanceFile;
+	instanceFile.open("Results/C" + to_string(Database.getNumNodes() / 2) + "V" + to_string(ModelParameters::nVehicles) + "version " +to_string(version) + ".txt");
+	instanceFile << "Sol. time: \t " << solutionTime << "\n";
+	instanceFile << "IP objective: \t" << bestSol << "\n";
+	instanceFile << "Trans. cost: \t" << getTransportationCost() << "\n";
+	instanceFile << "Holding cost: \t" << getHoldingCost() << "\n";
+	instanceFile << "LP optima: \t" << lpOptima << "\n";
+	instanceFile << "LP trans: \t" << trans << "\n";
+	instanceFile << "LP hold: \t" << hold << "\n";
+	instanceFile << "Dual gap: \t" << to_string((bestSol - bestBound) / bestSol) << "\n";
+	instanceFile << "numNodes: \t" << nNodes << "\n";
+	instanceFile << "Variables: \t" << nVariables <<"\n";
+	instanceFile << "Constraints: \t" << nConstraints << "\n";
+	instanceFile << "nRoutes: \t" << getnRoutes()<<"\n";
+
+	instanceFile.close();
+}
+
 
 
 
@@ -1149,6 +1190,46 @@ void IRP::addInventoryAndLoadingCtr(XPRBprob & problem)
 	}
 
 }
+
+double IRP::getTransportationCost()
+{
+	double transCost = 0;
+	int i, j;
+	for (NodeInstance * node1 : Database.AllNodes) {
+		i = node1->getId();
+		for (NodeInstance * node2 : Database.AllNodes) {
+			if (node1->inArcSet(node2)) {
+				j = node2->getId();
+				for (int t : Database.Periods)
+					transCost += x[i][j][t].getSol() *node1->getTransCost(node2);
+			}
+
+		}
+	}
+
+	return transCost;
+}
+
+double IRP::getHoldingCost()
+{
+	double holdingCost = 0;
+
+	for (NodeInstance * node : Database.Nodes)
+		for (int t : Database.Periods)
+			holdingCost += inventory[node->getId()][t].getSol() * node->HoldingCost;
+
+	return holdingCost;
+}
+
+double IRP::getnRoutes()
+{
+	double nRoutes = 0;
+	for (int t : Database.Periods)
+		nRoutes += y[0][t].getSol();
+
+	return nRoutes;
+}
+
 
 
 
@@ -1828,7 +1909,7 @@ void IRP::useIPSubtourElimination()
 
 	//Enable subtour elimination
 	prob.setCutMode(1); // Enable the cut mode
-	//XPRSsetcbcutmgr(oprob, cbmng, &(*this));
+	XPRSsetcbcutmgr(oprob, cbmng, &(*this));
 	//XPRSsetcbpreintsol(oprob, acceptInt, &(*this));
 }
 
