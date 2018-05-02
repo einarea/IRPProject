@@ -317,7 +317,7 @@ void Route::resize(int size)
 }
 
 //Generate route that is not in routeholder
-Route * Route::generateRoute( Route * r, vector<Route*> & RouteHolder)
+void Route::generateRoute( Route * r, vector<Route*> & RouteHolder)
 {
 	//Target route
 	const Route* OrigRoute = this;
@@ -387,9 +387,7 @@ Route * Route::generateRoute( Route * r, vector<Route*> & RouteHolder)
 
 	//newroute->printPlot("Routes/afterMerge" + to_string(rand()%100));
 
-	
-
-	return new Route();
+	 RouteHolder.push_back(bestRoutes.front());
 }
 
 
@@ -441,6 +439,11 @@ Route & Route::operator=(const Route & cpRoute)
 	}
 
 	return *this;
+}
+
+bool Route::operator==(const Route & r)
+{
+	return isDuplicate(&r);
 }
 
 NodeIRP * Route::operator[](int i)
@@ -525,7 +528,7 @@ vector<NodeIRP*> Route::cheapestRemoval(int subroutesize, double &minCost)
 		u = route[i];
 		k = u->getNextNode();
 		l = route[i + subroutesize];
-		if (u->getState() == Node::TABU_EDGE && l->getState() == Node::TABU_EDGE) {
+		if (!(u->getState() == Node::TABU_EDGE && l->getState() == Node::TABU_EDGE)) {
 			v = l->getNextNode();
 			C_uk = u->getTransCost(k);
 			C_lv = l->getTransCost(v);
@@ -546,7 +549,7 @@ vector<NodeIRP*> Route::cheapestRemoval(int subroutesize, double &minCost)
 }
 
 
-bool Route::isDuplicate(Route * r)
+bool Route::isDuplicate(const Route * r)
 {
 	if (r->route.size() != route.size())
 		return false;

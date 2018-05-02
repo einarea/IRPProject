@@ -14,6 +14,10 @@ public:
 	Route(vector <NodeIRP*> & path);
 	//Copy assignment operator
 	Route& operator =(const Route&);
+	bool operator ==(const Route&);
+	bool operator !=(const Route& r) {
+		return !(*this == r);
+	}
 	NodeIRP * operator [](int i);
 
 
@@ -23,13 +27,13 @@ public:
 	int getPeriod();
 	bool isFeasible();
 	void resize(int size);
-	Route * generateRoute(Route *, vector<Route*> & routeHolder);
+	void generateRoute(Route *, vector<Route*> & routeHolder);
 	void setPeriod(int period);
 	bool coincide(Route* r);
 	void createSeperateRoute(Route *);
 	bool inRoute(Node *);
 	vector<Route*> getSubgraphs(int n) const;
-	bool isDuplicate(Route * r);
+	bool isDuplicate(const Route * r);
 	double getTransCost() const;
 	//int removeNode(NodeIRP*, Route *);
 	//void insertSubRoute(vector<NodeIRP *>, NodeIRP * start, NodeIRP * end);

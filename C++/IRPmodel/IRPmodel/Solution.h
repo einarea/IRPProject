@@ -30,7 +30,7 @@ public:
 
 	void buildGraph(vector<NodeIRP*> &graph, int t);
 	static Solution * allocateSolution(const NodeInstanceDB &);
-	void routeSearch(int period);
+	void routeSearch();
 	void routeOptimize();
 	double **pCapacity;
 	int *** getRouteMatrix();

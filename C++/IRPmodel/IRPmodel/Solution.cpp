@@ -376,7 +376,7 @@ void Solution::buildGraph(vector<NodeIRP*>& graph, int t)
 	}
 }
 
-void Solution::routeSearch(int period)
+void Solution::routeSearch()
 {
 	vector<Route*> RouteHolder;
 	for (int i = 0; i < 5; i++) {
@@ -388,19 +388,18 @@ void Solution::routeSearch(int period)
 		routeProb.formulateRouteProblem(ModelParameters::HIGHEST_TOTALCOST);
 
 		//Periods to lock routes for
-		vector<int> periods;
+		/*vector<int> periods;
 		for (int t : Instance.Periods)
 			if (period != t)
 				periods.push_back(t);
 
-		routeProb.lockRoutes(periods);
-		routeProb.solveProblem();
-		this->printSolution();
+		routeProb.lockRoutes(periods); */
+		routeProb.solveProblem(this);
 
 		//routeSol2->print("Solution/Heurestic" + to_string(i), ModelParameters::X);
-		for (auto route : this->getAllRoutes()) {
+		/*for (auto route : this->getAllRoutes()) {
 			//route->printPlot("Solution/Sol2route" + to_string(route->getId()) + "Num" + to_string(i));
-		}
+		}*/
 	}
 }
 
@@ -537,8 +536,7 @@ void Solution::mergeRoutes(int position, Route * route, vector<Route*> &Routes, 
 		mergeRoutes(position + 1, route, Routes, newRoutes);
 	}
 
-    Route * newroute = route->generateRoute(Routes[position], newRoutes);
-	newRoutes.push_back(newroute);
+    route->generateRoute(Routes[position], newRoutes);
 
 	//newroute->printPlot("Routes/afterRemoval" + to_string(rand() % 100));
 
@@ -556,22 +554,25 @@ void Solution::generateRoutes(vector< Route* >&routeHolder)
 		count++;
 	}
 
-	vector<Route*> generation;
-	int jj = 1;
+
 	if (routes.size() >= 2) {
 
 		for (int i = 1; i <= 1; i++) {
-			generation.clear();
 
 			vector< Route*> newRoutes;
 			//Recursively merge
-			for (int position = 0; position < routes.size() - 1; position++) {
-				mergeRoutes(position + 1, routes[position], routes, newRoutes);
-			}
+			for (auto r : routes)
+				newRoutes.push_back(r);
+
+			for (auto r1 : routes)
+				for (auto r2 : routes)
+					if (r1 != r2)
+						r1->generateRoute(r2, newRoutes);
+
 
 			//Plot merged routes
 			for (auto a : newRoutes) {
-				a->printPlot("Routes/newroute" + to_string(jj) + to_string(i));
+				a->printPlot("Routes/newroute" + to_string(i));
 				jj++;
 			}
 
