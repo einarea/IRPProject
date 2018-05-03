@@ -495,19 +495,16 @@ vector<Route*> Solution::getRoutes(int period)
 		NodeIRP* u = new NodeIRP(*Instance.getNode(0));
 		NodeIRP * origV = edge->getEndNode();
 		v = new NodeIRP(*origV);
-		u->copyEdge(edge, v);
 		//Depth first search 
 		path.push_back(u);
 		u = v;
 		do {
 			path.push_back(u);
-			edge = origV->getEdge();
-			origV = edge->getEndNode();
+			origV = origV->getNextNode();
 			v = new NodeIRP(*origV);
-			u->copyEdge(edge, v);
 			u = v;
 
-		} while (u->getId() != 0); //while not depot
+		} while (!u->isDepot()); //while not depot
 
 		Route * route = new Route(path);
 		route->setPeriod(period);
@@ -572,8 +569,10 @@ void Solution::generateRoutes(vector< Route* >&routeHolder)
 
 
 			//Plot merged routes
+			int k = 0;
 			for (auto a : newRoutes) {
-				a->printPlot("Routes/newroute" + to_string(i));
+				a->printPlot("Routes/newroute" + to_string(k));
+				k++;
 			}
 
 			//Plot graph

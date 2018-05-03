@@ -85,6 +85,7 @@ public:
 	double bestSol = -1;
 	void printSolutionToFile(double lpOptimat, double trans, double hold, int version);
 	void buildGraph(vector <Node*> &, int, bool includeDepot, double weight = 0.01);
+	void buildStrongGraph(vector <NodeStrong*> &, int, bool includeDepot, double weight = 0.01);
 	vector <Solution *> solutions;
 
 	XPRBvar ** inventory;

@@ -59,6 +59,8 @@ public:
 	double getPosY() const;
 	double getHoldCost();
 	const NodeInstance& getData() const;
+
+
 private:
 	const NodeInstance &NodeData;
 	double getDistance(const NodeIRP * node) const;

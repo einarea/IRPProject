@@ -43,6 +43,7 @@ public:
 
 	//modifier functions
 	void setId(int id);
+	bool isDepot();
 	void setState(int s);
 	Edge* addEdge(double value, Node * child);
 	Edge* addEdge(Edge *);
@@ -61,6 +62,7 @@ public:
 	}
 	//Possible state constants
 	static const int TABU_EDGE = 31;
+	static const int REMOVE = 32;
 
 private:
 	int NodeID;

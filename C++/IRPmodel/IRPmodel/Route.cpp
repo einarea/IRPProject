@@ -118,6 +118,49 @@ void Route::insert(NodeIRP * start, NodeIRP * end, Route * subroute)
 	updateRoute();
 }
 
+void Route::removeNode(NodeIRP * remNode)
+{
+	for (NodeIRP * node : route) {
+		if (node->getNextNode() == remNode) {
+			node->deleteEdges();
+			node->Node::addEdge(remNode->getNextNode());
+			delete remNode;
+			updateRoute();
+			return;
+		}
+	
+	}
+
+	exit(111);
+}
+
+void Route::removeNodes()
+{
+	vector<NodeIRP*> remove;
+	NodeIRP* remNode;
+	NodeIRP * connectNode;
+	for (NodeIRP * node : route) {
+		if (node->getState() != Node::REMOVE) {
+			remNode = node->getNextNode();
+			if (remNode->getState() == Node::REMOVE) {
+				node->deleteEdges();
+
+				do {
+					remove.push_back(remNode);
+					remNode = remNode->getNextNode();
+				} while (remNode->getState() == Node::REMOVE);
+
+				node->Node::addEdge(remNode);
+			}
+		}
+	}
+
+	for (NodeIRP * node : remove) {
+		delete node;
+	}
+	updateRoute();
+}
+
 
 
 int Route::getPosition(Node * node)
@@ -133,7 +176,7 @@ int Route::getPosition(Node * node)
 	} while (nodeSearch->getId() != 0);
 }
 
-int Route::getId()
+int Route::getId() const
 {
 	return Id;
 }
@@ -236,11 +279,9 @@ void Route::updateRoute()
 {
 	route.resize(1);
 	auto u = route.front()->getEdge()->getEndNode();
-	auto t = route.back();
-	int position = 1;
+
 	while (u->getId() != 0) {
 		route.push_back(u);
-		position++;
 		u = u->getEdge()->getEndNode();
 	}
 
@@ -265,7 +306,7 @@ vector<NodeIRP*> Route::cheapestInsertion(Route* subroute, double &minCost)
 	double C_lv;
 	double C_uv;
 
-	for (auto u : route) {
+	for (NodeIRP* u : route) {
 		v = u->getEdge()->getEndNode();
 		C_uk = u->getTransCost(k);
 		C_lv = l->getTransCost(v);
@@ -317,77 +358,97 @@ void Route::resize(int size)
 }
 
 //Generate route that is not in routeholder
-void Route::generateRoute( Route * r, vector<Route*> & RouteHolder)
+void Route::generateRoute(const  Route * r, vector<Route*> & RouteHolder)
 {
-	//Target route
-	const Route* OrigRoute = this;
-	list <Route*> bestRoutes;
-	Route* bestRoute = 0;
-	Route* targetRoute = 0;
-	double minCost = 100000;
-	double bestCost = 100000;
-	double origTransCost = OrigRoute->getTransCost();
+
+	Route tempRoute = *new Route(*r);
+	//Make unique routes
+	for (NodeIRP * node1 : route)
+		if (!node1->isDepot()) {
+			for (NodeIRP * node2 : tempRoute.route)
+				if (*node1 == *node2)
+					node2->setState(Node::REMOVE);
+		}
+
+	
+	tempRoute.removeNodes();
+
 	int lowestSubroute = 3;
-	int highestSubroute = r->route.size() - 1;
-	int nRoutes = highestSubroute - lowestSubroute;
 
-	vector<Route*> subgraphs;
-	int i = 0;
-	//For each subgraph of r OG size n, n-1, n-k, insert the subgraph
-	for (int n = highestSubroute; n >= lowestSubroute; n--) {
-		subgraphs = r->getSubgraphs(n);
+	if (lowestSubroute <= tempRoute.route.size()-1) {
+		int highestSubroute = tempRoute.route.size() - 1;
 
-		printPlot("Routes/targetRoute");
-		r->printPlot("Routes/insertionRoute");
-		for (Route * r : subgraphs)
-			r->printPlot("Routes/sub" + to_string(i++));
+			//Target route
+			const Route* OrigRoute = this;
+			list <Route*> bestRoutes;
+			Route* bestRoute = new Route();
+			Route* targetRoute = new Route();
+			double minCost = 100000;
+			double bestCost = 100000;
+			double origTransCost = OrigRoute->getTransCost();
 
 
-		for (auto subgraph : subgraphs) {
-			*targetRoute = *OrigRoute;
+			vector<Route*> subgraphs;
+			int i = 0;
+			//For each subgraph of r OG size n, n-1, n-k, insert the subgraph
+			for (int n = highestSubroute; n >= lowestSubroute; n--) {
+				subgraphs = tempRoute.getSubgraphs(n);
 
-			targetRoute->insertSubgraph(subgraph);
-			minCost = targetRoute->getTransCost() - origTransCost;
-			if (minCost <= bestCost) {
-				*bestRoute = *targetRoute;
-				bestCost = minCost;
-			}
-		}
+				printPlot("Routes/targetRoute");
+				tempRoute.printPlot("Routes/insertionRoute");
+				for (Route * r : subgraphs)
+					r->printPlot("Routes/sub" + to_string(i++));
 
-		//Remove random size of the new route
-		int remove = rand() % n;
-		bestRoute->removeSubroute(remove);
 
-		//Ensure route is time feasible
-		while (!bestRoute->isFeasible())
-			bestRoute->removeSubroute(1);
+				for (auto subgraph : subgraphs) {
+					*targetRoute = *OrigRoute;
 
-		bool Duplicate = false;
-		for (Route * r : RouteHolder)
-			if (bestRoute->isDuplicate(r))
-				Duplicate = true;
+					targetRoute->insertSubgraph(subgraph);
+					minCost = targetRoute->getTransCost() - origTransCost;
+					if (minCost <= bestCost) {
+						*bestRoute = *targetRoute;
+						bestCost = minCost;
+						bestRoute->printPlot("Routes/bestRoute");
+					}
+				}
 
-		if (!Duplicate) {
-			auto pos = bestRoutes.begin();
-			
-			while (pos != bestRoutes.end()) {
-				if ((*pos)->getTransCost() - origTransCost > bestCost) {
+				//Remove random size of the new route
+				bestRoute->removeSubroute(n);
+				bestRoute->printPlot("Routes/bestRoute2");
+
+				//Ensure route is time feasible
+				while (!bestRoute->isFeasible())
+					bestRoute->removeSubroute(1);
+
+				bool Duplicate = false;
+				for (Route * r : RouteHolder) {
+					if (bestRoute->isDuplicate(r))
+						Duplicate = true;
+				}
+
+				if (!Duplicate) {
+					auto pos = bestRoutes.begin();
+					while (pos != bestRoutes.end()) {
+						if ((*pos)->getTransCost() - origTransCost > bestCost) {
+							break;
+						}
+						pos++;
+					}
+
 					bestRoutes.insert(pos, bestRoute);
-					break;
-				};
-				pos++;
+				}
+
+				minCost = 200000;
+				bestCost = 200000;
 			}
-		}
 
-		minCost = 200000;
-		bestCost = 200000;
+
+
+			//newroute->printPlot("Routes/afterMerge" + to_string(rand()%100));
+
+			RouteHolder.push_back(bestRoutes.front());
+		
 	}
-
-
-
-	//newroute->printPlot("Routes/afterMerge" + to_string(rand()%100));
-
-	 RouteHolder.push_back(bestRoutes.front());
 }
 
 
@@ -419,6 +480,29 @@ Route::Route(vector<NodeIRP*>& path)
 	//add edges
 	for (int i = 0; i < route.size() - 1; i++)
 		route[i]->Node::addEdge(route[i + 1]);
+
+	//make loop if depot
+	if(route[0]->isDepot())
+		route[route.size() - 1]->Node::addEdge(route[0]);
+
+}
+
+Route::Route(const Route & cpRoute)
+{
+	vector<NodeIRP*> path;
+
+	for (NodeIRP * node : cpRoute.route) {
+		path.push_back(new NodeIRP(*node));
+		int id = cpRoute.getId();
+	}
+	route = path;
+	//add edges
+	for (int i = 0; i < route.size() - 1; i++)
+		route[i]->Node::addEdge(route[i + 1]);
+
+	//make loop if depot
+	if (route[0]->isDepot())
+		route[route.size() - 1]->Node::addEdge(route[0]);
 }
 
 Route & Route::operator=(const Route & cpRoute)
@@ -433,9 +517,33 @@ Route & Route::operator=(const Route & cpRoute)
 		route[i] = new NodeIRP(*cpRoute.route[i]);
 
 	//Add edges
-	for (int i = 0; i < cpRoute.route.size()-1; i++) {
-		NodeIRP* v = cpRoute.route[i+1]->getNextNode();
-		cpRoute.route[i+1]->Node::addEdge(v);
+	for (int i = 0; i < route.size(); i++) {
+		if(i == route.size()-1)
+			route[i]->Node::addEdge(route[0]);
+		else
+			route[i]->Node::addEdge(route[i+1]);
+	}
+
+	return *this;
+}
+
+Route & Route::operator=(const Route * cpRoute)
+{
+	//Release memory of old route
+	for (NodeIRP * node : route)
+		delete node;
+
+	//Copy nodes
+	route.resize(cpRoute->route.size());
+	for (int i = 0; i < cpRoute->route.size(); i++)
+		route[i] = new NodeIRP(*cpRoute->route[i]);
+
+	//Add edges
+	for (int i = 0; i < route.size(); i++) {
+		if (i == route.size() - 1)
+			route[i]->Node::addEdge(route[0]);
+		else
+			route[i]->Node::addEdge(route[i + 1]);
 	}
 
 	return *this;
@@ -451,20 +559,6 @@ NodeIRP * Route::operator[](int i)
 	return route[i];
 }
 
-/*Route * Route::copyRoute()
-{
-	vector<NodeIRP*> path;
-	path.resize(route.size());
-	auto u = new NodeIRP();
-	for (int i = 0; i < route.size(); i++) {
-		path[i] = u;
-		auto id = route[i]->getEdge()->getEndNode()->getId();
-		auto v = new NodeIRP(*Instance.getNode(id));
-		u->Node::addEdge(v);
-		u = v;
-	}
-	return new Route(path);
-}*/
 
 NodeIRP * Route::front()
 {
@@ -515,7 +609,6 @@ vector<NodeIRP*> Route::cheapestRemoval(int subroutesize, double &minCost)
 	//First and last node in route to insert
 	NodeIRP * k;
 	NodeIRP * l;
-
 
 	double tempCost = 0;
 	NodeIRP *u;

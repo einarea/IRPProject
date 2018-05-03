@@ -261,7 +261,7 @@ void graphAlgorithm::depthFirst(Node::Edge * edge, int &total, int & equal, vect
 }
 
 //Tarjans strongly connected components algorithm, sets value of edges not in strong components to -1.
-void graphAlgorithm::sepByStrongComp(vector<Node*>& graph, vector<vector<Node*>> & result)
+void graphAlgorithm::sepByStrongComp(vector<NodeStrong*>& graph, vector<vector<Node*>> & result)
 {	
 	//Initialize graph
 	for (Node *node : graph) {
@@ -290,7 +290,7 @@ void graphAlgorithm::strongConnect(NodeStrong & node, int &index, stack <NodeStr
 	S.push(&node);
 	node.setOnStack(true);
 	
-	for (NodeStrong::Edge *edge : (node.getEdges())) {
+	for (Node::Edge *edge : (node.getEdges())) {
 		endNode = NodeStrong::getStrongNode(edge->getEndNode());
 		if (endNode->getIndex() == -1) {
 			strongConnect(*endNode, index, S, result);

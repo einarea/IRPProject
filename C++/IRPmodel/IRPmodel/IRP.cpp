@@ -104,7 +104,6 @@ int XPRS_CC cbmng(XPRSprob oprob, void * vd)
 			modelInstance->nSubtourCuts += 1;
 			cutId = modelInstance->nSubtourCuts;
 			bprob->addCuts(&cut, 1);
-			cut.print();
 		}
 	}
 	
@@ -205,12 +204,12 @@ Solution * IRP::solveModel()
 			prob.mipOptimise();
 			//Check graph for subtours in strong components
 			vector <vector<Node*>> result; //matrix to store strong components
-			vector <Node*> graph;		//Graph to store nodes
+			vector <NodeStrong*> graph;		//Graph to store nodes
 
 			for (int t : Database.Periods) {
 				graph.clear();
 				result.clear();
-				buildGraph(graph, t, false, EDGE_WEIGHT); //Do not include depot in graph			
+				buildStrongGraph(graph, t, false, EDGE_WEIGHT); //Do not include depot in graph			
 				//graphAlgorithm::printGraph(graph, "graphSolutions/graph", ModelParameters::X);
 				graphAlgorithm::sepByStrongComp(graph, result);
 				//graphAlgorithm::printGraph(graph, "graphSolutions/graph", ModelParameters::X);
@@ -270,11 +269,11 @@ Solution * IRP::solveLPModel()
 			prob.lpOptimise();
 			//Check graph for subtours in strong components
 			vector <vector<Node*>> result; //matrix to store strong components
-			vector <Node*> graph;		//Graph to store nodes
+			vector <NodeStrong*> graph;		//Graph to store nodes
 
 			for (int t : Database.Periods) {
 				graph.clear();
-				buildGraph(graph, t, true, EDGE_WEIGHT); //Do not include depot in graph			
+				buildStrongGraph(graph, t, true, EDGE_WEIGHT); //Do not include depot in graph			
 				//graphAlgorithm::printGraph(graph, Database, "graphSolutions/graph", ModelParameters::X);
 				graphAlgorithm::sepByStrongComp(graph, result);
 				//graphAlgorithm::printGraph(graph, Database, "graphSolutions/graph", ModelParameters::X);
@@ -450,16 +449,19 @@ void IRP::fillSolution(Solution * sol)
 bool IRP::sepStrongComponents(vector<XPRBcut> & cut)
 {
 	vector <vector<Node*>> result; //matrix to store strong components
-	vector <Node*> graph;		//Graph to store nodes
+	vector <NodeStrong*> graph;		//Graph to store nodes
 
 	bool newCut = false;
 	for (int t : Database.Periods) {
-		buildGraph(graph, t, true, 0.01); //include depot
+		//buildGraph(graph, t, true, 0.01); //include depot
 		//graphAlgorithm::printGraph(graph, *this, "Subtour/LPrelax" + to_string(t), ModelParameters::X);
-		graph.clear();
-		buildGraph(graph, t, false, EDGE_WEIGHT); //Do not include depot in graph
+		//graph.clear();
+		buildStrongGraph(graph, t, false, EDGE_WEIGHT); //Do not include depot in graph
 		//graphAlgorithm::printGraph(graph, *this, "Subtour/DepotGone" + to_string(t), ModelParameters::X);
+		
 		graphAlgorithm::sepByStrongComp(graph, result);
+
+	
 		//graphAlgorithm::printGraph(graph, *this, "Subtour/Separation" + to_string(t), ModelParameters::X);
 		addSubtourCut(result, t, newCut, cut);
 
@@ -498,6 +500,39 @@ void IRP::buildGraph(vector<Node*> &graph, int t, bool Depot, double weight)
 	for (Node *node : graph) {
 		s = node->getId();
 		for (Node *endingNode : graph) {
+			if (Database.inArcSet(s, endingNode->getId())) {
+				edgeValue = x[s][endingNode->getId()][t].getSol();
+				if (edgeValue > weight) {
+					node->addEdge(edgeValue, endingNode);
+				}
+			}
+		}
+	}
+}
+
+void IRP::buildStrongGraph(vector<NodeStrong*>& graph, int t, bool Depot, double weight)
+{
+	int s;
+	double edgeValue;
+	int i, j;
+
+	if (Depot) {
+		NodeStrong * node = new NodeStrong(0);
+		graph.push_back(node);
+	}
+	//Create nodes for each visited customer
+	for (NodeInstance* node : Database.Nodes) {
+		i = node->getId();
+		if (y[i][t].getSol() >= 0.001) {
+			NodeStrong * node = new NodeStrong(i);
+			graph.push_back(node);
+		}
+	}
+	//Not robust, be aware of changing node set logic
+	//Add outgoing edges from each visited node
+	for (NodeStrong *node : graph) {
+		s = node->getId();
+		for (NodeStrong *endingNode : graph) {
 			if (Database.inArcSet(s, endingNode->getId())) {
 				edgeValue = x[s][endingNode->getId()][t].getSol();
 				if (edgeValue > weight) {
@@ -1062,11 +1097,10 @@ void IRP::getSubset(vector<NodeInstance*> subset, int subsetSize, int nodePos, v
 		}
 
 		if (ceil(flow / denominator) - flow/denominator >= ExcessParameter){
-			//cout << "\nPeriod" << t1 << t2 << "\n";
-			for (auto i : subset) {
-
-				//cout << i->getId() << " - ";
-
+			//Add colocated nodes to subset
+			int size = subset.size();
+			if (subset.size() >= 2) {
+				//subset.resize(subset.size() * 2);
 			}
 			//cout << "\n";
 			//Get difference set
@@ -1636,7 +1670,7 @@ void IRP::addValidIneq(int ValidIneq)
 						p3 = 1 - p3;
 						p1 = inventory[i][t1 - 1];
 
-						prob.newCtr("MinInventory", p1 >= p2*p3 + node->LowerLimit);
+						prob.newCtr("MinInventory", p1 >= p2*p3 + node->LowerLimit).print();
 						p1 = 0;
 						p2 = 0;
 						p3 = 0;
@@ -1644,9 +1678,9 @@ void IRP::addValidIneq(int ValidIneq)
 				}
 			}
 		} // End delivery nodes
-		int j;
+
 		for (auto node : Database.PickupNodes) {
-			j = node->getId();
+			i = node->getId();
 			for (int t2 : Database.Periods) {
 				for (int t1 : Database.Periods) {
 					if (t1 <= t2) {

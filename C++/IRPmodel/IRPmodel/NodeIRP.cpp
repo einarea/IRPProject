@@ -155,6 +155,7 @@ const NodeInstance & NodeIRP::getData() const
 
 
 
+
 NodeIRP * NodeIRP::EdgeIRP::getEndNode()
 {
 	Node * node = Node::Edge::getEndNode();

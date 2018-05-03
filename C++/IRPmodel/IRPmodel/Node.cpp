@@ -40,6 +40,11 @@ void Node::setId(int id)
 	NodeID = id;
 }
 
+bool Node::isDepot()
+{
+	return NodeID == 0;
+}
+
 int Node::getState()
 {
 	return State;

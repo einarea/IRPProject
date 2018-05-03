@@ -12,8 +12,11 @@ public:
 	void setId(int id);
 	Route();
 	Route(vector <NodeIRP*> & path);
+	//Copy constructot
+	Route(const Route & r);
 	//Copy assignment operator
-	Route& operator =(const Route&);
+	Route& operator = (const Route&);
+	Route & operator = (const Route * cpRoute);
 	bool operator ==(const Route&);
 	bool operator !=(const Route& r) {
 		return !(*this == r);
@@ -27,7 +30,7 @@ public:
 	int getPeriod();
 	bool isFeasible();
 	void resize(int size);
-	void generateRoute(Route *, vector<Route*> & routeHolder);
+	void generateRoute(const Route *, vector<Route*> & routeHolder);
 	void setPeriod(int period);
 	bool coincide(Route* r);
 	void createSeperateRoute(Route *);
@@ -38,7 +41,6 @@ public:
 	//int removeNode(NodeIRP*, Route *);
 	//void insertSubRoute(vector<NodeIRP *>, NodeIRP * start, NodeIRP * end);
 
-	Route * copyRoute();
 	NodeIRP * front();
 	NodeIRP * back();
 //	vector<NodeIRP::EdgeIRP *> insertSubroute(vector<NodeIRP *> subroute);
@@ -49,8 +51,10 @@ public:
 	
 	void insertSubgraph(Route* subgraph);
 	void insert(NodeIRP * start, NodeIRP * end, Route* subroute);
+	void removeNode(NodeIRP * );
+	void removeNodes();
 	int getPosition(Node * node);
-	int getId();
+	int getId() const;
 	int** getRouteMatrix(int gridSize);
 	void printPlot(string filename) const;
 	void printRoute();
