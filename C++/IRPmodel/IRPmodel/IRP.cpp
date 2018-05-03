@@ -53,7 +53,6 @@ void XPRS_CC cbmngtimeIRP(XPRSprob oprob, void * vd,int parent, int newnode, int
 
 	IRP * modelInstance;
 	modelInstance = (IRP*)vd;
-	cout << (int)floor((XPRB::getTime() - modelInstance->startTime) / 1000) <<"\n";
 	if ((int) floor ((XPRB::getTime() - modelInstance->startTime) / 1000) >= ModelParameters::MAX_RUNNING_TIME_IRP)
 	{
 		XPRSinterrupt(oprob, XPRS_STOP_TIMELIMIT);
@@ -1563,7 +1562,7 @@ vector<IRP::Route const *> IRP::getRoutes()
 void IRP::addValidIneq(int ValidIneq)
 
 {
-	ExcessParameter = 0.9;
+	ExcessParameter = 0.3;
 	int i, j;
 	XPRBexpr p1 = 0;
 	XPRBexpr p2 = 0;
