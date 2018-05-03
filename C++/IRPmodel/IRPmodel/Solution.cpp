@@ -380,7 +380,7 @@ void Solution::buildGraph(vector<NodeIRP*>& graph, int t)
 void Solution::routeSearch()
 {
 	vector<Route*> RouteHolder;
-	for (int i = 0; i < 5; i++) {
+	for (int i = 0; i < 1; i++) {
 		RouteHolder.clear();
 		generateRoutes(RouteHolder);
 		
@@ -557,45 +557,24 @@ void Solution::generateRoutes(vector< Route* >&routeHolder)
 
 		for (int i = 1; i <= 1; i++) {
 
-			vector< Route*> newRoutes;
-			//Recursively merge
-			for (auto r : routes)
-				newRoutes.push_back(r);
-
 			for (auto r1 : routes)
 				for (auto r2 : routes)
 					if (r1 != r2)
-						r1->generateRoute(r2, newRoutes);
+						r1->generateRoute(r2, routeHolder);
 
-
-			//Plot merged routes
-			int k = 0;
-			for (auto a : newRoutes) {
-				a->printPlot("Routes/newroute" + to_string(k));
-				k++;
-			}
-
-			//Plot graph
-
-
-			//Delete 
-
-			//graphAlgorithm::printGraph(graph, Instance, "graphSolutions/routegraph", ModelParameters::X);
-
-			//Remove duplicates
-			bool duplicate = false;
-			//Check old routes
-			int nn = 0;
-
-			routes = newRoutes;
+			routes.clear();
+			routes.resize(0);
+			for (Route * r : routeHolder)
+				routes.push_back(new Route(*r));
 		}
+		//Plot merged routes
+		int k = 0;
 
-	}
-	//print all routes
-	int i = 1;
-	for (auto route : routeHolder) {
-		route->printPlot("Routes/route" + to_string(i));
-		i++;
+		for (auto a : routeHolder) {
+			a->printPlot("Routes/newroute" + to_string(k));
+			k++;
+
+		}
 	}
 }
 
