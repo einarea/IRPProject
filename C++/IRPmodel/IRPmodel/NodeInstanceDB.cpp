@@ -374,7 +374,7 @@ const NodeInstance * NodeInstanceDB::getDepot() const
 
 bool NodeInstanceDB::inExtensiveArcSet(int i, int j) const
 {
-	bool a = (i == j || (i == getNumNodes() + j && j != 0));
+	bool a = (i == j || (i == 1 + j && j != 0));
 	return !a;
 }
 
