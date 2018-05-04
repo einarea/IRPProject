@@ -79,6 +79,7 @@ public:
 	//Solution data
 	double solutionTime = -1;
 	int nNodes = -1;
+	int timeCounter = 0;
 	int nVariables = -1;
 	int nConstraints = -1;
 	double bestBound = -1;
