@@ -373,7 +373,7 @@ void Route::generateRoute(const  Route * r, vector<Route*> & RouteHolder)
 	
 	tempRoute.removeNodes();
 
-	int lowestSubroute = 3;
+	int lowestSubroute = 2;
 
 	if (lowestSubroute <= tempRoute.route.size()-1) {
 		int highestSubroute = tempRoute.route.size() - 1;
@@ -436,6 +436,7 @@ void Route::generateRoute(const  Route * r, vector<Route*> & RouteHolder)
 					}
 
 					bestRoutes.insert(pos, bestRoute);
+					RouteHolder.push_back(bestRoute);
 					bestRoute = new Route();
 				}
 
@@ -447,7 +448,7 @@ void Route::generateRoute(const  Route * r, vector<Route*> & RouteHolder)
 			}
 
 			//newroute->printPlot("Routes/afterMerge" + to_string(rand()%100));
-			RouteHolder.push_back(bestRoutes.front());
+			//RouteHolder.push_back(bestRoutes.front());
 			//for (Route* r : RouteHolder)
 				//r->printPlot("Routes/rr" + to_string(u++));
 		
