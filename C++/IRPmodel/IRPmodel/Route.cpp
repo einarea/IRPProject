@@ -390,7 +390,7 @@ void Route::generateRoute(const  Route * r, vector<Route*> & RouteHolder)
 
 			vector<Route*> subgraphs;
 			int i = 0;
-			int u = 0;
+	
 			//For each subgraph of r OG size n, n-1, n-k, insert the subgraph
 			for (int n = highestSubroute; n >= lowestSubroute; n--) {
 				subgraphs = tempRoute.getSubgraphs(n);
@@ -410,33 +410,38 @@ void Route::generateRoute(const  Route * r, vector<Route*> & RouteHolder)
 						bestCost = minCost;
 					}
 				}
-
+				int u = 1;
 				//Remove random size of the new route
-				bestRoute->removeSubroute(n);
+				tempRoute = *new Route(*bestRoute);
+				for (int i = n-(ceil(0.3*n)); i <= n+(ceil(0.3*n)); i++) {
+					*bestRoute = tempRoute;
+					bestRoute ->removeSubroute(i);
 
-				//Ensure route is time feasible
-				while (!bestRoute->isFeasible())
-					bestRoute->removeSubroute(1);
+					//Ensure route is time feasible
+					while (!bestRoute->isFeasible())
+						bestRoute->removeSubroute(1);
 
-				bool Duplicate = false;
-				for (Route * r : RouteHolder) {
-					if (bestRoute->isDuplicate(r))
-						Duplicate = true;
-				}
-
-				//r->printPlot("Routes/dup");
-
-				if (!Duplicate) {
-					auto pos = bestRoutes.begin();
-					while (pos != bestRoutes.end()) {
-						if ((*pos)->getTransCost() - origTransCost > bestCost) {
-							break;
-						}
-						pos++;
+					bool Duplicate = false;
+					for (Route * r : RouteHolder) {
+						if (bestRoute->isDuplicate(r))
+							Duplicate = true;
 					}
 
-					bestRoutes.insert(pos, bestRoute);
-					RouteHolder.push_back(bestRoute);
+					//r->printPlot("Routes/dup");
+
+					if (!Duplicate) {
+						auto pos = bestRoutes.begin();
+						while (pos != bestRoutes.end()) {
+							if ((*pos)->getTransCost() - origTransCost > bestCost) {
+								break;
+							}
+							pos++;
+						}
+
+						bestRoutes.insert(pos, bestRoute);
+				
+						RouteHolder.push_back(bestRoute);
+					}
 					bestRoute = new Route();
 				}
 

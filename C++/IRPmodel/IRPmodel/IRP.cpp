@@ -36,15 +36,17 @@ void XPRS_CC acceptIntQuantity(XPRSprob oprob, void * vd, int soltype, int * ifr
 
 	modelInstance->getProblem()->beginCB(oprob);
 	modelInstance->getProblem()->sync(XPRB_XPRS_SOL);
-	for (auto node : modelInstance->getDB()->Nodes)
+	for (auto node : modelInstance->getDB()->Nodes) {
 		i = node->getId();
-		for (auto t : modelInstance->getDB()->Periods)
+		for (auto t : modelInstance->getDB()->Periods) {
 			if (modelInstance->inventory[i][t].getSol() - round(modelInstance->inventory[i][t].getSol()) > 0.001) {
 				cout << modelInstance->inventory[i][t].getSol() << "\t";
 				cout << round(modelInstance->inventory[i][t].getSol()) << "\n";
 				*ifreject = 1;
 				break;
 			}
+		}
+	}
 	modelInstance->getProblem()->endCB();
 }
 
@@ -55,12 +57,12 @@ void XPRS_CC cbmngtimeIRP(XPRSprob oprob, void * vd,int parent, int newnode, int
 	modelInstance = (IRP*)vd;
 	//cout << (int)floor((XPRB::getTime() - modelInstance->startTime) / 1000) << "\n";
 
-	if (modelInstance->timeCounter >= 6) {
+	if (modelInstance->timeCounter >= 24) {
 		XPRSinterrupt(oprob, XPRS_STOP_TIMELIMIT);
 	}
 
-
-	if ((int) floor ((XPRB::getTime() - modelInstance->startTime) / 1000) >= ceil(ModelParameters::MAX_RUNNING_TIME_IRP/6))
+	cout << (int)floor((XPRB::getTime() - modelInstance->startTime) / 1000) << "\n";
+	if ((int) floor ((XPRB::getTime() - modelInstance->startTime) / 1000) >= ceil(ModelParameters::MAX_RUNNING_TIME_IRP/24))
 	{
 		modelInstance->startTime = XPRB::getTime();
 		modelInstance->timeCounter++;

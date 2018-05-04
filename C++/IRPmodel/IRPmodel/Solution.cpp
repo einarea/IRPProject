@@ -556,17 +556,14 @@ void Solution::generateRoutes(vector< Route* >&routeHolder)
 	if (routes.size() >= 2) {
 
 		for (int i = 1; i <= 1; i++) {
-
+			int u = 0;
 			for (auto r1 : routes)
 				for (auto r2 : routes)
-					if (r1 != r2)
+					if (r1 != r2) {
 						r1->generateRoute(r2, routeHolder);
-
-			routes.clear();
-			routes.resize(0);
-			for (Route * r : routeHolder)
-				routes.push_back(new Route(*r));
+					}
 		}
+		
 		//Plot merged routes
 		int k = 0;
 
@@ -666,8 +663,13 @@ void Solution::shiftQuantity(int PeriodSelection, int ObjectiveSelection)
 
 	//Solve a VRP for the shift period
 	if (maxShift > 0) {
+
 		shiftSolution->solveVRP(shiftPeriod);
+	//	for (int t : Instance.Periods)
+		//	cout << "Trans cost: " << t << " " << shiftSolution->getTransportationCost(t);
+		//shiftSolution->printSolution();
 		updateSolution(*shiftSolution);
+		//printSolution();
 	}
 }
 

@@ -340,10 +340,13 @@ void VRPmodel::updateSolution(Solution * sol)
 		int i;
 		int j;
 		//Add load variables
+		for (NodeIRPHolder* node1 : sol->Nodes)
+			//Clear old arcs
+			node1->NodePeriods[Period]->deleteEdges();
+
 		for (NodeIRP* node1 : AllNodes) {
 			i = node1->getId();
-			//Clear edges of all nodes
-			node1->deleteEdges();
+	
 			for (NodeIRP* node2 : AllNodes) {
 				if (node1->inArcSet(node2)) {
 					j = node2->getId();
