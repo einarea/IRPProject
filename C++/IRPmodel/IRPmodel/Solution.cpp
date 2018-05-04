@@ -653,7 +653,7 @@ void Solution::shiftQuantity(int PeriodSelection, int ObjectiveSelection)
 				if (origQuantity - newQuantity > maxShift) {
 					maxShift = origQuantity - newQuantity;
 					delete shiftSolution;
-					shiftSolution = tempSol;
+					shiftSolution = new Solution(*tempSol);
 					shiftPeriod = t;
 				}
 				else

@@ -39,7 +39,7 @@ void VRPmodel::solveModel(Solution * prevSol)
 	//Set time callback
 	XPRSsetcbnewnode(oprob, cbmngtime, &(*this));
 
-	prob.print();
+	//prob.print();
 	int d = prob.mipOptimise();
 
 	updateSolution(prevSol);
@@ -347,7 +347,7 @@ void VRPmodel::updateSolution(Solution * sol)
 			for (NodeIRP* node2 : AllNodes) {
 				if (node1->inArcSet(node2)) {
 					j = node2->getId();
-					cout << x[i][j].print()<< "\t";
+				
 					if (x[i][j].getSol() > 0.001)
 						//get solution from VRP
 						node1->addEdge(loadDelivery[i][j].getSol(), loadPickup[i][j].getSol(), node2, x[i][j].getSol());

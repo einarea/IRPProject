@@ -53,7 +53,7 @@ void XPRS_CC cbmngtimeIRP(XPRSprob oprob, void * vd,int parent, int newnode, int
 
 	IRP * modelInstance;
 	modelInstance = (IRP*)vd;
-	//cout << (int)floor((XPRB::getTime() - modelInstance->startTime) / 1000) << "\n";
+	cout << (int)floor((XPRB::getTime() - modelInstance->startTime) / 1000) << "\n";
 	if ((int) floor ((XPRB::getTime() - modelInstance->startTime) / 1000) >= ModelParameters::MAX_RUNNING_TIME_IRP)
 	{
 		XPRSinterrupt(oprob, XPRS_STOP_TIMELIMIT);
@@ -101,7 +101,7 @@ int XPRS_CC cbmng(XPRSprob oprob, void * vd)
 		for (XPRBcut cut : subtourCut)
 		{
 			
-			//cut.print();
+			cut.print();
 			modelInstance->nSubtourCuts += 1;
 			cutId = modelInstance->nSubtourCuts;
 			bprob->addCuts(&cut, 1);
@@ -1957,7 +1957,7 @@ void IRP::useIPSubtourElimination()
 	oprob = prob.getXPRSprob();
 
 	//Enable subtour elimination
-	prob.setCutMode(1); // Enable the cut mode
+	//prob.setCutMode(1); // Enable the cut mode
 	XPRSsetcbcutmgr(oprob, cbmng, &(*this));
 	//XPRSsetcbpreintsol(oprob, acceptInt, &(*this));
 }
