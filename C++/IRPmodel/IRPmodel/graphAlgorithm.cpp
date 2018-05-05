@@ -39,12 +39,16 @@ void graphAlgorithm::printGraph(vector<NodeIRP*>& graph, string filename, int we
 		}
 
 		else {
-			nodePoints.push_back(make_pair(
-				xLoc,
-				yLoc));
-			nodePoints.push_back(make_pair(
-				xLoc + 4,
-				yLoc));
+			if (node->isDelivery()) {
+				nodePoints.push_back(make_pair(
+					xLoc,
+					yLoc));
+			}
+			else {
+				nodePoints.push_back(make_pair(
+					xLoc + 4,
+					yLoc));
+			}
 		}
 	}
 	for (NodeIRP *node : graph) {
@@ -58,10 +62,10 @@ void graphAlgorithm::printGraph(vector<NodeIRP*>& graph, string filename, int we
 			x1 += 4;
 		}
 
-		for (Node::Edge* edge : node->getEdges()) {
+		for (NodeIRP::EdgeIRP* edge : node->getEdges()) {
 			if (edge->getValue() != -1) {
-				x2 = node->getNextNode()->getPosX();
-				y2 = node->getNextNode()->getPosY();
+				x2 = edge->getEndNode()->getPosX();
+				y2 = edge->getEndNode()->getPosY();
 
 				if (!node->getNextNode()->isDelivery())
 					//Move outgoing arc from pickup

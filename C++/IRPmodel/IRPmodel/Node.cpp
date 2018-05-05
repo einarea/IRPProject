@@ -40,7 +40,7 @@ void Node::setId(int id)
 	NodeID = id;
 }
 
-bool Node::isDepot()
+bool Node::isDepot() const
 {
 	return NodeID == 0;
 }

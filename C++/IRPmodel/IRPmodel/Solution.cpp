@@ -305,7 +305,7 @@ Solution::Solution(const NodeInstanceDB & model, vector<NodeIRPHolder*> nodes)
 
 }
 
-Solution::Solution(Solution & cpSol)
+Solution::Solution(const Solution & cpSol)
 	:
 	Instance(cpSol.Instance)
 {
@@ -322,6 +322,22 @@ Solution::Solution(Solution & cpSol)
 				Nodes[i]->NodePeriods[t]->copyEdge(edge, nextNode);
 			}
 		}
+}
+
+Solution & Solution::operator=(const Solution & cpSol)
+{
+	//Delete temp
+	for (NodeIRPHolder* node : Nodes)
+		delete node;
+
+
+	Solution * tempSol = new Solution(cpSol);
+	Nodes.resize(tempSol->Nodes.size());
+
+	for (int i = 0; i <= tempSol->Nodes.size()-1; i++)
+		Nodes[i] = tempSol->Nodes[i];
+
+	return *this;
 }
 
 //Moves ownership of solution
@@ -387,7 +403,7 @@ void Solution::routeSearch()
 		//Solve route problem
 		RouteProblem routeProb(Instance, RouteHolder);
 		routeProb.formulateRouteProblem(ModelParameters::HIGHEST_TOTALCOST);
-
+		routeProb.addChangeCtr();
 		//Periods to lock routes for
 		/*vector<int> periods;
 		for (int t : Instance.Periods)
@@ -489,7 +505,7 @@ vector<Route*> Solution::getRoutes(int period)
 	vector<Route*> routes;
 	vector <NodeIRP*> path;
 	//Perform a search from the depot. Travers edges until next node is depot
-	for (auto edge : getDepot(period)->getEdges()) {
+	for (NodeIRP::EdgeIRP * edge : getDepot(period)->getEdges()) {
 		path.clear();
 
 		NodeIRP* u = new NodeIRP(*Instance.getNode(0));
@@ -528,7 +544,7 @@ void Solution::print(string filename, int load)
 	}
 }
 
-void Solution::mergeRoutes(int position, Route * route, vector<Route*> &Routes, vector<Route*> &newRoutes)
+/*void Solution::mergeRoutes(int position, Route * route, vector<Route*> &Routes, vector<Route*> &newRoutes)
 {
 	if (position < Routes.size() - 1) {
 		mergeRoutes(position + 1, route, Routes, newRoutes);
@@ -538,40 +554,58 @@ void Solution::mergeRoutes(int position, Route * route, vector<Route*> &Routes, 
 
 	//newroute->printPlot("Routes/afterRemoval" + to_string(rand() % 100));
 
+}*/
+bool sort_func(const Route* & lhs, const Route* & rhs)
+{
+	return *lhs < *rhs;
 }
 
-void Solution::generateRoutes(vector< Route* >&routeHolder)
+void Solution::generateRoutes(vector<Route* >&routeHold)
 {
 	vector < Route*> routes = getAllRoutes();
-
+	list <Route> routeHolder;
 	int count = 0;
 	//push back exisiting routes
 	for (auto r : routes) {
-		routeHolder.push_back(r);
+		routeHolder.push_back(*r);
 		r->setId(count);
 		count++;
 	}
 
 
 	if (routes.size() >= 2) {
-
+		//Iterations of merge
 		for (int i = 1; i <= 1; i++) {
 			int u = 0;
-			for (auto r1 : routes)
-				for (auto r2 : routes)
-					if (r1 != r2) {
+			for (Route * r1 : routes)
+				for (Route * r2 : routes)
+					if (r1 != r2 && r1->sameDirection(r2)) {
 						r1->generateRoute(r2, routeHolder);
 					}
 		}
-		
-		//Plot merged routes
-		int k = 0;
 
-		for (auto a : routeHolder) {
-			a->printPlot("Routes/newroute" + to_string(k));
+		routeHolder.sort();
+		int k = 0;
+		for (Route a : routeHolder) {
+			cout << a.constructionCost << "\n";
+			a.printPlot("Routes/bestRoutes" + to_string(k));
 			k++;
 
 		}
+
+		auto pos = routeHolder.begin();
+		int i = 0;
+		do {
+			if (pos->constructionCost > -500000) {
+				routeHold.push_back(new Route(*pos));
+				
+			}
+			pos++;
+			i++;
+		} while (i < 300 && !(pos == routeHolder.end()));
+
+		//Plot merged routes
+
 	}
 }
 
@@ -588,6 +622,15 @@ vector<NodeIRP*> Solution::getVisitedNodes(int period)
 		}
 	}
 	return visitedNodes;
+}
+
+void Solution::plotPeriod(int t, string filename)
+{
+	vector<NodeIRP*> nodes;
+	for (NodeIRPHolder * node : Nodes){
+		nodes.push_back(node->NodePeriods[t]);
+	}
+	graphAlgorithm::printGraph(nodes, filename, ModelParameters::X);
 }
 
 
@@ -671,6 +714,9 @@ void Solution::shiftQuantity(int PeriodSelection, int ObjectiveSelection)
 		updateSolution(*shiftSolution);
 		//printSolution();
 	}
+
+	//Minimize the inventory
+	shiftSolution->solveInventoryProblem();
 }
 
 bool Solution::isRouteFeasible(Route * r)
@@ -818,7 +864,7 @@ void  Solution::solveInventoryProblem()
 {
 	RouteProblem routeProb(Instance, getAllRoutes());
 	routeProb.formulateRouteProblem(ModelParameters::MinimumInventory);
-	routeProb.lockRoutes(Instance.AllPeriods);
+	routeProb.lockRoutes(Instance.Periods);
 	routeProb.solveProblem(this);
 }
 
@@ -854,8 +900,10 @@ vector<Route*> Solution::getAllRoutes()
 {
 	vector<Route*> routes;
 	for (int t : Instance.Periods) {
-		for (Route* r : getRoutes(t))
+		for (Route* r : getRoutes(t)) {
+			r->constructionCost = -100000;
 			routes.push_back(r);
+		}
 	}
 	
 	return routes;

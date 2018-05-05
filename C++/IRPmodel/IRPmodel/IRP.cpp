@@ -57,12 +57,12 @@ void XPRS_CC cbmngtimeIRP(XPRSprob oprob, void * vd,int parent, int newnode, int
 	modelInstance = (IRP*)vd;
 	//cout << (int)floor((XPRB::getTime() - modelInstance->startTime) / 1000) << "\n";
 
-	if (modelInstance->timeCounter >= 24) {
+	if (modelInstance->timeCounter >= 6) {
 		XPRSinterrupt(oprob, XPRS_STOP_TIMELIMIT);
 	}
 
 	cout << (int)floor((XPRB::getTime() - modelInstance->startTime) / 1000) << "\n";
-	if ((int) floor ((XPRB::getTime() - modelInstance->startTime) / 1000) >= ceil(ModelParameters::MAX_RUNNING_TIME_IRP/24))
+	if ((int) floor ((XPRB::getTime() - modelInstance->startTime) / 1000) >= ceil(ModelParameters::MAX_RUNNING_TIME_IRP/6))
 	{
 		modelInstance->startTime = XPRB::getTime();
 		modelInstance->timeCounter++;

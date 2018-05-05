@@ -43,7 +43,7 @@ public:
 
 	//modifier functions
 	void setId(int id);
-	bool isDepot();
+	bool isDepot() const;
 	void setState(int s);
 	Edge* addEdge(double value, Node * child);
 	Edge* addEdge(Edge *);

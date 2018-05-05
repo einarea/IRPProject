@@ -15,7 +15,9 @@ public:
 	//Constructors
 	Solution(const NodeInstanceDB & model, bool integer);
 	Solution(const NodeInstanceDB & model, vector<NodeIRPHolder*> nodes);
-	Solution(Solution&);
+	Solution(const Solution&);
+	Solution& operator = (const Solution&);
+
 	void updateSolution(Solution&);
 	//Destructors
 	~Solution();
@@ -48,7 +50,9 @@ public:
 
 	void mergeRoutes(int position, Route * route, vector<Route*> &Routes, vector<Route*> &newRoutes);
 	void generateRoutes(vector<Route* >&routeHolder);
+	bool Solution::sort_func(const Route* & lhs, const Route* & rhs);
 	vector <NodeIRP *> getVisitedNodes(int period);
+	void plotPeriod(int t, string filename);
 	void sort(vector <NodeIRP>*);
 	bool IntegerSolution;
 	bool isFeasible();

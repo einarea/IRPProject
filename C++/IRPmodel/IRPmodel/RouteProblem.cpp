@@ -273,6 +273,25 @@ void RouteProblem::addInventoryCtr()
 
 }
 
+void RouteProblem::addChangeCtr()
+{
+	XPRBexpr p2;
+	int i, j;
+	int nRoutes= 0;
+	for (int r : Routes) {
+		if (routes[r]->constructionCost < -50000) {
+			nRoutes++;
+			for (int t : Instance.Periods) {
+				{
+					p2 += travelRoute[r][t];
+				}
+			}
+		}
+	}
+
+	routeProblem.newCtr("Change", p2 <= nRoutes - 1);
+}
+
 int RouteProblem::getShiftPeriod()
 {
 	return ShiftPeriod;
@@ -557,6 +576,7 @@ Solution * RouteProblem::solveProblem(Solution * sol)
 		sol = Solution::allocateSolution(Instance);
 	}
 
+	//routeProblem.print();
 	updateSolution(sol);
 	return sol;
 }
