@@ -1969,20 +1969,20 @@ int IRP::getCapacity()
 void IRP::useIPSubtourElimination()
 {
 	EDGE_WEIGHT = 0.5;
-	alpha = 0.1;
+	alpha = 0.3;
 
 	oprob = prob.getXPRSprob();
 
 	//Enable subtour elimination
-	prob.setCutMode(1); // Enable the cut mode
+	//prob.setCutMode(1); // Enable the cut mode
 	XPRSsetcbcutmgr(oprob, cbmng, &(*this));
 	XPRSsetcbpreintsol(oprob, acceptInt, &(*this));
 }
 
 void IRP::useLPSubtourElimination()
 {
-	EDGE_WEIGHT = 0.5;
-	alpha = 0.3;
+	EDGE_WEIGHT = 0.7;
+	alpha = 0.5;
 	LPSubtour = true;
 }
 
