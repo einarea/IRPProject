@@ -7,6 +7,7 @@
 #include "xprs.h"
 #include "Solution.h"
 #include "NodeIRPHolder.h"
+#include <time.h>
 
 
 using namespace ::dashoptimization;
@@ -47,7 +48,7 @@ private:
 	XPRBvar ** pickup;
 	XPRBvar *** loadDelivery;
 	XPRBvar *** loadPickup;
-	XPRBvar ** time;
+	XPRBvar ** timeVar;
 	XPRBvar ** actionDelivery;
 	XPRBvar ** actionPickup;
 	XPRBvar *** simAction;
@@ -100,7 +101,7 @@ public:
 
 	vector<vector<vector<XPRBvar>>> subtourIndices;
 	//Sets
-	int startTime;
+	time_t startTime;
 	vector <int> integers1;
 
 

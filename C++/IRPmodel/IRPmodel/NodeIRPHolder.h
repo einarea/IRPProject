@@ -17,6 +17,7 @@ public:
 	//Constructor and destructor
 	NodeIRPHolder(NodeInstance& instance);
 	NodeIRPHolder(NodeIRPHolder& cpNode);
+	void operator =(const NodeIRPHolder & cpNode);
 	~NodeIRPHolder();
 
 	vector< NodeIRP* > NodePeriods;

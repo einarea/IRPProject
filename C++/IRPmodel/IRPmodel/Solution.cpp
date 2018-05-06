@@ -335,7 +335,13 @@ Solution & Solution::operator=(const Solution & cpSol)
 	Nodes.resize(tempSol->Nodes.size());
 
 	for (int i = 0; i <= tempSol->Nodes.size()-1; i++)
-		Nodes[i] = tempSol->Nodes[i];
+		Nodes[i] = new NodeIRPHolder(*tempSol->Nodes[i]);
+
+	//Add edges
+	for (int i = 0; i < tempSol->Nodes.size(); i++)
+		for (int t : Instance.Periods)
+			for (NodeIRP::EdgeIRP* edge : tempSol->Nodes[i]->NodePeriods[t]->getEdges())
+				Nodes[i]->NodePeriods[t]->copyEdge(edge, Nodes[edge->getEndNode()->getId()]->NodePeriods[t]);
 
 	return *this;
 }
@@ -508,7 +514,7 @@ vector<Route*> Solution::getRoutes(int period)
 	for (NodeIRP::EdgeIRP * edge : getDepot(period)->getEdges()) {
 		path.clear();
 
-		NodeIRP* u = new NodeIRP(*Instance.getNode(0));
+		NodeIRP* u = new NodeIRP(*getDepot(period));
 		NodeIRP * origV = edge->getEndNode();
 		v = new NodeIRP(*origV);
 		//Depth first search 

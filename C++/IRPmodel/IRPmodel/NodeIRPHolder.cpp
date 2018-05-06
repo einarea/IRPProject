@@ -45,6 +45,24 @@ NodeIRPHolder::NodeIRPHolder(NodeIRPHolder & cpNode)
 	}
 }
 
+void NodeIRPHolder::operator=(const NodeIRPHolder & cpNode)
+{
+	//Delete nodeIRP
+	if (NodePeriods.size() > 0) {
+		for (NodeIRP * node : NodePeriods) {
+			delete node;
+		}
+	}
+
+	NodePeriods.resize(cpNode.NodePeriods.size());
+
+	for (int t = 1; t < cpNode.NodePeriods.size(); t++) {
+		//Does not copy the NodeIRP's edges
+		NodePeriods[t] = new NodeIRP(*cpNode.NodePeriods[t]);
+	}
+
+}
+
 NodeIRP * NodeIRPHolder::getNode(int period)
 {
 	return (NodeIRP*) NodePeriods[period];

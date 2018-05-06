@@ -57,15 +57,12 @@ void XPRS_CC cbmngtimeIRP(XPRSprob oprob, void * vd,int parent, int newnode, int
 	modelInstance = (IRP*)vd;
 	//cout << (int)floor((XPRB::getTime() - modelInstance->startTime) / 1000) << "\n";
 
-	if (modelInstance->timeCounter >= 6) {
-		XPRSinterrupt(oprob, XPRS_STOP_TIMELIMIT);
-	}
 
-	cout << (int)floor((XPRB::getTime() - modelInstance->startTime) / 1000) << "\n";
-	if ((int) floor ((XPRB::getTime() - modelInstance->startTime) / 1000) >= ceil(ModelParameters::MAX_RUNNING_TIME_IRP/6))
+	cout << difftime(time(NULL), modelInstance->startTime) << "\n";
+	if (difftime(time(NULL), modelInstance->startTime) >= ceil(ModelParameters::MAX_RUNNING_TIME_IRP))
 	{
-		modelInstance->startTime = XPRB::getTime();
-		modelInstance->timeCounter++;
+		modelInstance->startTime = time(NULL);
+		XPRSinterrupt(oprob, XPRS_STOP_TIMELIMIT);
 	}
 }
 
@@ -236,7 +233,7 @@ Solution * IRP::solveModel()
 	else
 
 	oprob = prob.getXPRSprob();
-	startTime = XPRB::getTime();
+	startTime = time(NULL);
 	
 	//Set time callback
 	XPRSsetcbnewnode(oprob, cbmngtimeIRP, &(*this));
@@ -406,7 +403,7 @@ void IRP::fillSolution(Solution * sol)
 			if (node->isDelivery()) {
 				if (delivery[i][t].getSol() > 0) {
 					sol->Nodes[i]->NodePeriods[t]->Quantity = delivery[i][t].getSol();
-					sol->Nodes[i]->NodePeriods[t]->TimeServed = time[i][t].getSol();
+					sol->Nodes[i]->NodePeriods[t]->TimeServed = timeVar[i][t].getSol();
 				}
 				else
 					sol->Nodes[i]->NodePeriods[t]->Quantity = 0;
@@ -414,7 +411,7 @@ void IRP::fillSolution(Solution * sol)
 			else {
 				if (pickup[i][t].getSol() > 0) {
 					sol->Nodes[i]->NodePeriods[t]->Quantity = pickup[i][t].getSol();
-					sol->Nodes[i]->NodePeriods[t]->TimeServed = time[i][t].getSol();
+					sol->Nodes[i]->NodePeriods[t]->TimeServed = timeVar[i][t].getSol();
 				}
 				else
 					sol->Nodes[i]->NodePeriods[t]->Quantity = 0;
@@ -595,7 +592,7 @@ void IRP::clearVariables()
 		delete[] loadDelivery[i];
 		delete[] loadPickup[i];
 		delete[] y[i];
-		delete[] time[i];
+		delete[] timeVar[i];
 		delete[] inventory[i];
 		delete[] delivery[i];
 		delete[] pickup[i];
@@ -605,7 +602,7 @@ void IRP::clearVariables()
 	delete[] y;
 	delete[] delivery;
 	delete[] pickup;
-	delete time;
+	delete timeVar;
 	delete inventory;
 	delete[] loadDelivery;
 	delete[] loadPickup;
@@ -958,10 +955,10 @@ bool IRP::formulateProblem()
 	}
 
 
-	//Time constraints
+	//timeVar constraints
 	
 	for (int t : Database.Periods) {
-		p1 = time[0][t];
+		p1 = timeVar[0][t];
 		prob.newCtr("Initial time", p1 == 0);
 		p1 = 0;
 	}
@@ -972,7 +969,7 @@ bool IRP::formulateProblem()
 			for (auto node2 : Database.Nodes){
 				j = node2->getId();
 				if (node1->inArcSet(node2)) {
-					p1 = time[i][t] - time[j][t] + node1->getTravelTime(node2)
+					p1 = timeVar[i][t] - timeVar[j][t] + node1->getTravelTime(node2)
 						+ (ModelParameters::maxTime + node1->getTravelTime(node2)) * x[i][j][t];
 
 					p2 = ModelParameters::maxTime + node1->getTravelTime(node2);
@@ -988,7 +985,7 @@ bool IRP::formulateProblem()
 				}
 
 			if (node1->inArcSet(Database.getDepot())) {
-				p1 = time[i][t] + node1->getTravelTime(Database.getDepot()) * x[i][0][t];
+				p1 = timeVar[i][t] + node1->getTravelTime(Database.getDepot()) * x[i][0][t];
 				prob.newCtr("Final time", p1 <= ModelParameters::maxTime);
 				p1 = 0;
 			}
@@ -1468,12 +1465,12 @@ bool IRP::initializeVariables()
 	}
 
 	//Initialize time variables
-	time = new XPRBvar *[Database.AllNodes.size()];
+	timeVar = new XPRBvar *[Database.AllNodes.size()];
 	for (auto node : Database.AllNodes) {
 		i = node->getId();
-		time[i] = new XPRBvar[Database.Periods.size()];
+		timeVar[i] = new XPRBvar[Database.Periods.size()];
 		for (int t : Database.Periods) {
-			time[i][t] = prob.newVar(XPRBnewname("t_%d%d", i, t), XPRB_PL, 0, 1000);
+			timeVar[i][t] = prob.newVar(XPRBnewname("t_%d%d", i, t), XPRB_PL, 0, 1000);
 		}
 
 	}
