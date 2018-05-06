@@ -28,7 +28,7 @@ public:
 
 	//Destructor
 	~Route();
-
+	void insertCheapestNode(vector<const NodeIRP*> nodes);
 	int getPeriod();
 	bool isFeasible();
 	void resize(int size);
@@ -39,7 +39,7 @@ public:
 	int getDirection() const;
 	bool sameDirection(const Route *);
 	void createSeperateRoute(Route *);
-	bool inRoute(Node *);
+	bool inRoute(const Node *);
 	vector<Route*> getSubgraphs(int n) const;
 	bool isDuplicate(const Route * r);
 	double getTransCost() const;

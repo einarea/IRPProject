@@ -8,6 +8,39 @@ Route::~Route()
 		delete node;
 }
 
+void Route::insertCheapestNode(vector<const NodeIRP*> nodes)
+{
+	double minCost = 100000;
+	double tempCost = 100000;
+
+	NodeIRP * start = 0;
+	NodeIRP * end = 0;
+	Route bestNode;
+	vector<NodeIRP*> insertionPoints;
+	vector<NodeIRP *> n;
+	n.resize(1);
+
+	printPlot("Routes/beforeInsertion");
+	for (const NodeIRP * node : nodes) {
+		if (!inRoute(node)) {
+			n[0] = new NodeIRP(*node);
+			Route singleNode(n);
+			insertionPoints = cheapestInsertion(&singleNode, tempCost);
+			if (tempCost < minCost) {
+				bestNode = singleNode;
+				minCost = tempCost;
+				start = insertionPoints.front();
+				end = insertionPoints.back();
+			}
+		}
+	}
+
+	//constuct the new route
+	insert(start, end, new Route(bestNode));
+	printPlot("Routes/afterInsertion");			
+}
+
+
 
 void Route::setPeriod(int period)
 {
@@ -80,7 +113,7 @@ void Route::createSeperateRoute(Route * r)
 	r->updateRoute();
 }
 
-bool Route::inRoute(Node * n)
+bool Route::inRoute(const Node * n)
 {
 	for (auto node : route)
 		if (node->getId() == n->getId())
@@ -410,7 +443,7 @@ void Route::generateRoute(const  Route * r, list<Route> & RouteHolder)
 	
 	tempRoute2.removeNodes();
 	const Route tempRoute = tempRoute2;
-	int lowestSubroute = 1;
+	int lowestSubroute = 2;
 	int highestSubroute = 3;
 	//Only continue if subgraphs are larger or equal to lowest size
 	if (highestSubroute <= tempRoute.route.size() - 1) {

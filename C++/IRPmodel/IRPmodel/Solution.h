@@ -62,6 +62,7 @@ public:
 	bool isRouteFeasible(Route *);
 	double getNumberOfRoutes(int period);
 	double getResidualCapacity(int period);
+	vector<const NodeIRP*> getNodesIRP(int period);
 	//Returns the amount of total product deliveried less the capacity x (number of vehicles used - 1)
 	double getTotalDelivery(int period);
 	//Returns the amount of total product pickup up less the capacity x (number of vehicles used - 1)

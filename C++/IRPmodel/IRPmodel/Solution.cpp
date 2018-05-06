@@ -578,6 +578,33 @@ void Solution::generateRoutes(vector<Route* >&routeHold)
 		count++;
 	}
 
+	bool duplicate = false;
+	vector < vector < const NodeIRP* >> nodePeriods;
+	for (int t : Instance.Periods)
+		nodePeriods.push_back(getNodesIRP(t));
+
+	//insert single node in all routes
+
+	Route newRoute;
+	for (Route * r1 : routes) {
+		int t = r1->getPeriod();
+		newRoute = *r1;
+		newRoute.insertCheapestNode(nodePeriods[t-1]);
+
+		for (Route r : routeHolder)
+			if (newRoute.isDuplicate(&r))
+				duplicate = true;
+		
+		if(!duplicate)
+			routeHolder.push_back(*new Route(newRoute));
+	}
+	int k = 0;
+	for (Route a : routeHolder) {
+		cout << a.constructionCost << "\n";
+		a.printPlot("Routes/bestRoutes" + to_string(k));
+		k++;
+
+	}
 
 	if (routes.size() >= 2) {
 		//Iterations of merge
@@ -749,6 +776,16 @@ double Solution::getResidualCapacity(int period)
 		residual += node->quantity(period);
 	}
 	return residual / getNumberOfRoutes(period);
+}
+
+vector<const NodeIRP*> Solution::getNodesIRP(int period)
+{
+	vector<const NodeIRP*> nodes;
+	for (NodeIRPHolder * n : Nodes)
+		if(n->getId() != 0)
+			nodes.push_back(n->NodePeriods[period]);
+
+	return nodes;
 }
 
 double Solution::getTotalDelivery(int period)
