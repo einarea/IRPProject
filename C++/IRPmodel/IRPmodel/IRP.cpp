@@ -59,7 +59,7 @@ void XPRS_CC cbmngtimeIRP(XPRSprob oprob, void * vd,int parent, int newnode, int
 
 
 	cout << difftime(time(NULL), modelInstance->startTime) << "\n";
-	if (difftime(time(NULL), modelInstance->startTime) >= ceil(ModelParameters::MAX_RUNNING_TIME_IRP))
+	if (difftime(time(NULL), modelInstance->startTime) >= ModelParameters::MAX_RUNNING_TIME_IRP)
 	{
 		modelInstance->startTime = time(NULL);
 		XPRSinterrupt(oprob, XPRS_STOP_TIMELIMIT);
@@ -1963,9 +1963,9 @@ void IRP::useIPSubtourElimination()
 	oprob = prob.getXPRSprob();
 
 	//Enable subtour elimination
-	//prob.setCutMode(1); // Enable the cut mode
+	prob.setCutMode(1); // Enable the cut mode
 	XPRSsetcbcutmgr(oprob, cbmng, &(*this));
-	//XPRSsetcbpreintsol(oprob, acceptInt, &(*this));
+	XPRSsetcbpreintsol(oprob, acceptInt, &(*this));
 }
 
 void IRP::useLPSubtourElimination()
