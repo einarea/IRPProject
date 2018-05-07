@@ -517,9 +517,11 @@ void Route::generateRoute(const  Route * r, list<Route> & RouteHolder)
 
 				//Insert route
 				if (!Duplicate) {
-					RouteHolder.push_back(*new Route(targetRoute));
-
-				}
+						Route r = *new Route(targetRoute);
+						r.State = ModelParameters::MERGE;
+						RouteHolder.push_back(r);
+					}
+					
 			}
 
 			minCost = 200000;
@@ -576,6 +578,9 @@ Route::Route(const Route & cpRoute)
 	}
 	route = path;
 	constructionCost = cpRoute.constructionCost;
+	State = cpRoute.State;
+	Id = cpRoute.Id;
+
 	//add edges
 	for (int i = 0; i < route.size() - 1; i++)
 		route[i]->Node::addEdge(route[i + 1]);
@@ -592,6 +597,8 @@ Route & Route::operator=(const Route & cpRoute)
 		delete node;
 
 	constructionCost = cpRoute.constructionCost;
+	State = cpRoute.State;
+	Id = cpRoute.Id;
 
 	//Copy nodes
 	route.resize(cpRoute.route.size());
@@ -708,7 +715,8 @@ vector<NodeIRP*> Route::cheapestRemoval(int subroutesize, double &minCost)
 		u = route[i];
 		k = u->getNextNode();
 		l = route[i + subroutesize];
-		//if (!(u->getState() == Node::TABU_EDGE && l->getState() == Node::TABU_EDGE)) {
+		//Dont remove the recently added edges
+		if (!(u->getState() == Node::TABU_EDGE && l->getState() == Node::TABU_EDGE)) {
 			v = l->getNextNode();
 			C_uk = u->getTransCost(k);
 			C_lv = l->getTransCost(v);
@@ -722,7 +730,7 @@ vector<NodeIRP*> Route::cheapestRemoval(int subroutesize, double &minCost)
 				Nodes[1] = v;
 			}
 			u = v;
-		//}
+		}
 	}
 
 	return Nodes;

@@ -67,8 +67,8 @@ void graphAlgorithm::printGraph(vector<NodeIRP*>& graph, string filename, int we
 				x2 = edge->getEndNode()->getPosX();
 				y2 = edge->getEndNode()->getPosY();
 
-				if (!node->getNextNode()->isDelivery())
-					//Move outgoing arc from pickup
+				if (!edge->getEndNode()->isDelivery())
+					//Move incoming arc to pickup
 					{
 						x2 += 4;
 					}

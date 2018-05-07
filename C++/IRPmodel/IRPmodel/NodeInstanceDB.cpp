@@ -156,7 +156,25 @@ void NodeInstanceDB::initializeSets()
 }
 
 
-vector<NodeInstance*> NodeInstanceDB::getDifference(vector<NodeInstance*> set1, vector<NodeInstance*> set2) const
+vector<int> NodeInstanceDB::getDifference2(vector<int> set1, vector<NodeInstance*> set2) const
+{
+	vector<int > difference;
+	bool include;
+	for (auto node2 : set2) {
+		include = true;
+		for (int i: set1) {
+			if (i == node2->getId())
+				include = false;
+		}
+
+		if (include)
+			difference.push_back(node2->getId());
+	}
+
+	return difference;
+}
+
+vector< NodeInstance*> NodeInstanceDB::getDifference(vector<NodeInstance *> set1, vector<NodeInstance*> set2) const
 {
 	
 	vector<NodeInstance * > difference;
@@ -275,7 +293,7 @@ NodeInstanceDB::NodeInstanceDB(string fileName)
 		}
 	}
 
-	Capacity = 2 * floor(TotalDemand / (ModelParameters::nVehicles*getnPeriods()));
+	Capacity = floor(TotalDemand / (ModelParameters::nVehicles*getnPeriods()));
 
 }
 
@@ -302,7 +320,7 @@ NodeInstanceDB::NodeInstanceDB(int nCustomers, int nPer)
 		}
 	}
 
-	Capacity = 2 * floor(TotalDemand / (ModelParameters::nVehicles*getnPeriods()));
+	Capacity = floor(TotalDemand / (ModelParameters::nVehicles*getnPeriods()));
 }
 
 

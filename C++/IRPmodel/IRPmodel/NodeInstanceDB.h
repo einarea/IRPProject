@@ -33,7 +33,7 @@ public:
 	NodeInstanceDB(int nCustomers, int nPeriods);
 	~NodeInstanceDB();
 
-
+	vector<int> getDifference2(vector<int> set1, vector<NodeInstance*> set2) const;
 	vector<NodeInstance*> getDifference(vector<NodeInstance*> set1, vector<NodeInstance*> set2) const;
 	static NodeInstanceDB * createInstance(int nCustomers, int nPeriods, int version);
 	static NodeInstanceDB * openInstance(int nCustomers, int nPeriods, int version);

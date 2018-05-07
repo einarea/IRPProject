@@ -15,6 +15,9 @@ public:
 	~RouteProblem();
 
 	void addRouteConstraints();
+	void addRestrictedShiftCtr(double nRoutes, double oldDel, double oldPick);
+	void formulateMIP();
+	vector<NodeIRP*> getNodesInShiftPeriod();
 	void formulateRouteProblem(int objectiveSelection);
 	void initializeRouteParameters();
 	void initializeRouteVariables();
@@ -23,6 +26,7 @@ public:
 	int getShiftPeriod();
 	void shiftQuantityCtr(int quantity);
 	void initializeRoutes();
+	void updateEdges(Solution* sol);
 	void printRouteMatrix();
 	void addRoutesToVector();
 	void updateSolution(Solution * sol);
@@ -34,6 +38,26 @@ public:
 	Solution * solveProblem(Solution * currentSol = 0);
 private:
 	XPRBprob routeProblem;
+
+	//Constraint holders
+	vector<vector<XPRBctr>> loadingCtr;
+	vector<vector <XPRBctr>> ArcCtr;
+	vector<vector<XPRBctr>> VisitCtr;
+
+	bool MIP = false;
+
+	//Set holder for MIP
+	vector<NodeIRP*> AllNodes;
+	vector<NodeIRP*> Nodes;
+	vector<NodeIRP*> DeliveryNodes;
+	vector<NodeIRP *> PickupNodes;
+
+	//Variables
+	XPRBvar ** x;
+	XPRBvar * y;
+	XPRBvar * timeVar;
+	XPRBexpr objective;
+
 
 	//Variables
 	XPRBvar ** inventory;

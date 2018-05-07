@@ -318,7 +318,7 @@ Solution::Solution(const Solution & cpSol)
 	for (int i = 0; i < Nodes.size(); i++)
 		for (int t = 1; t < Nodes[i]->NodePeriods.size(); t++) {
 			for (NodeIRP::EdgeIRP* edge : cpSol.Nodes[i]->NodePeriods[t]->getEdges()) {
-				NodeIRP * nextNode = edge->getEndNode();
+				NodeIRP * nextNode = Nodes[edge->getEndNode()->getId()]->NodePeriods[t];
 				Nodes[i]->NodePeriods[t]->copyEdge(edge, nextNode);
 			}
 		}
@@ -573,8 +573,9 @@ void Solution::generateRoutes(vector<Route* >&routeHold)
 	int count = 0;
 	//push back exisiting routes
 	for (auto r : routes) {
-		routeHolder.push_back(*r);
 		r->setId(count);
+		r->State = ModelParameters::ORIG_ROUTE;
+		routeHolder.push_back(*r);
 		count++;
 	}
 
@@ -584,9 +585,16 @@ void Solution::generateRoutes(vector<Route* >&routeHold)
 		nodePeriods.push_back(getNodesIRP(t));
 
 	//insert single node in all routes
+	int k = 0;
+	for (Route a : routeHolder) {
+		cout << a.constructionCost << "\n";
+		a.printPlot("Routes/bestRoutes" + to_string(k));
+		k++;
 
+	}
 	Route newRoute;
 	for (Route * r1 : routes) {
+		duplicate = false;
 		int t = r1->getPeriod();
 		newRoute = *r1;
 		newRoute.insertCheapestNode(nodePeriods[t-1]);
@@ -595,16 +603,48 @@ void Solution::generateRoutes(vector<Route* >&routeHold)
 			if (newRoute.isDuplicate(&r))
 				duplicate = true;
 		
-		if(!duplicate)
-			routeHolder.push_back(*new Route(newRoute));
+		if (!duplicate) {
+			Route r = *new Route(newRoute);
+			r.State = ModelParameters::SIMPLE_INSERTION;
+			routeHolder.push_back(r);
+		}
 	}
-	int k = 0;
+
+	k = 0;
 	for (Route a : routeHolder) {
 		cout << a.constructionCost << "\n";
 		a.printPlot("Routes/bestRoutes" + to_string(k));
 		k++;
 
 	}
+
+	//insert single node and remove other
+	for (Route * r1 : routes) {
+		duplicate = false;
+		int t = r1->getPeriod();
+		newRoute = *r1;
+		newRoute.insertCheapestNode(nodePeriods[t - 1]);
+		newRoute.removeSubroute(1);
+
+		for (Route r : routeHolder)
+			if (newRoute.isDuplicate(&r))
+				duplicate = true;
+
+		if (!duplicate) {
+			Route r = *new Route(newRoute);
+			r.State = ModelParameters::INSERTION_REMOVAL;
+			routeHolder.push_back(r);
+		}
+	}
+
+	k = 0;
+	for (Route a : routeHolder) {
+		cout << a.constructionCost << "\n";
+		a.printPlot("Routes/bestRoutes" + to_string(k));
+		k++;
+
+	}
+	
 
 	if (routes.size() >= 2) {
 		//Iterations of merge
@@ -618,7 +658,7 @@ void Solution::generateRoutes(vector<Route* >&routeHold)
 		}
 
 		routeHolder.sort();
-		int k = 0;
+
 		for (Route a : routeHolder) {
 			cout << a.constructionCost << "\n";
 			a.printPlot("Routes/bestRoutes" + to_string(k));
@@ -694,7 +734,7 @@ void Solution::clearEdges(int period)
 }
 
 //Returns the period shifted from
-void Solution::shiftQuantity(int PeriodSelection, int ObjectiveSelection)
+void Solution::shiftQuantity(int SELECTION)
 {
 	vector <Route *> routes;
 	Solution * solRoute = 0;
@@ -705,22 +745,24 @@ void Solution::shiftQuantity(int PeriodSelection, int ObjectiveSelection)
 	Solution * shiftSolution = 0;
 	Solution * tempSol;
 
-	for (int t : Instance.Periods) {
-		
-		if (getNumberOfRoutes(t) >= 1) {
-			tempSol = new Solution(*this);
-			RouteProblem routeProb(Instance, getAllRoutes());
-			routeProb.ShiftPeriod = t;
-			routeProb.formulateRouteProblem(ObjectiveSelection);
-			routeProb.lockRoutes(Instance.Periods);
 
-			if (PeriodSelection == ModelParameters::MAX_SHIFT)
+	tempSol = new Solution(*this);
+	RouteProblem routeProb(Instance, getAllRoutes());
+
+	//Alternative 1: Max shift
+	if (SELECTION == ModelParameters::MAX_SHIFT){
+		for (int t : Instance.Periods) {
+
+			if (getNumberOfRoutes(t) >= 1) {
+				routeProb.ShiftPeriod = t;
+				routeProb.formulateRouteProblem(ModelParameters::MAX_SHIFT);
+				routeProb.lockRoutes(Instance.Periods);
+
 				origQuantity = getTotalDelivery(t) + getTotalPickup(t);
+				routeProb.solveProblem(tempSol);
 
-			routeProb.solveProblem(tempSol);
 
-
-			if (PeriodSelection == ModelParameters::MAX_SHIFT) {
+				//Select the period with the greatest shift
 				newQuantity = tempSol->getTotalDelivery(t) + tempSol->getTotalPickup(t);
 
 				if (origQuantity - newQuantity > maxShift) {
@@ -732,24 +774,130 @@ void Solution::shiftQuantity(int PeriodSelection, int ObjectiveSelection)
 				else
 					delete tempSol;
 
+				}
+			}
+
+	}
+	
+
+	//Alternative 2: Restricted shift
+	if (SELECTION == ModelParameters::RESTRICTED_SHIFT) {
+		double oldDel;
+		double oldPick;
+		double deliveryExcess;
+		double pickupExcess;
+		double vehicleExcess;
+		double minExcess = 10000;
+		bool FINISHED = false;
+		vector <int> Periods = Instance.Periods;
+
+		while (FINISHED == false && Periods.size() >= 1) {
+			//Find the period with the lowest excess.
+			for (int t : Periods) {
+				deliveryExcess = max(getTotalDelivery(t) - Instance.Capacity*(getNumberOfRoutes(t) - 1), 0);
+				pickupExcess = max(getTotalPickup(t) - Instance.Capacity*(getNumberOfRoutes(t) - 1), 0);
+				vehicleExcess = max(deliveryExcess, pickupExcess);
+				if (vehicleExcess < minExcess && vehicleExcess >= 1) {
+					minExcess = vehicleExcess;
+					oldDel = getTotalDelivery(t);
+					oldPick = getTotalPickup(t);
+					shiftPeriod = t;
+				}
+			}
+
+			routeProb.ShiftPeriod = shiftPeriod;
+			routeProb.formulateRouteProblem(ModelParameters::MIN_SERVICE);
+			routeProb.lockRoutes(Instance.Periods);
+			//Restrict the shift in the routeproblem
+			routeProb.addRestrictedShiftCtr(getNumberOfRoutes(shiftPeriod), oldDel, oldPick);
+
+			routeProb.solveProblem(tempSol);
+
+			//Check if able to move, if it is -> solve vrp, else find new period without the new period
+			if (tempSol->getTotalDelivery(shiftPeriod) <= Instance.Capacity*(getNumberOfRoutes(shiftPeriod) - 1) &&
+				tempSol->getTotalPickup(shiftPeriod) <= Instance.Capacity*(getNumberOfRoutes(shiftPeriod) - 1)) {
+				shiftSolution = tempSol;
+				FINISHED = true;
+			}
+
+			else {
+				FINISHED = false;
+				for (int t : Periods) {
+					if (t != shiftPeriod)
+						Periods[t] = t;
+				}
+				Periods.resize(Periods.size() - 1);
 			}
 		}
+		//Return if not able to move
+		if (!FINISHED)
+			return;
 	}
-
 
 	//Solve a VRP for the shift period
-	if (maxShift > 0) {
 
-		shiftSolution->solveVRP(shiftPeriod);
-	//	for (int t : Instance.Periods)
-		//	cout << "Trans cost: " << t << " " << shiftSolution->getTransportationCost(t);
-		//shiftSolution->printSolution();
-		updateSolution(*shiftSolution);
-		//printSolution();
-	}
+
+	shiftSolution->solveVRP(shiftPeriod);
+	updateSolution(*shiftSolution);
+	//printSolution();
+	
 
 	//Minimize the inventory
 	shiftSolution->solveInventoryProblem();
+}
+
+void Solution::shiftQuantityMIP()
+{
+	vector <Route *> routes;
+	Solution * solRoute = 0;
+	double origQuantity;
+	double newQuantity;
+	double maxShift = 0;
+	int shiftPeriod;
+	Solution * shiftSolution = 0;
+	Solution * tempSol;
+
+
+	tempSol = new Solution(*this);
+	RouteProblem routeProb(Instance, getAllRoutes());
+
+
+	//Select period to solve mip for
+	double oldDel;
+	double oldPick;
+	double deliveryExcess;
+	double pickupExcess;
+	double vehicleExcess;
+	double minExcess = 10000;
+	bool FINISHED = false;
+	vector <int> Periods = Instance.Periods;
+
+
+		//Find the period with the lowest excess.
+		for (int t : Periods) {
+			deliveryExcess = max(getTotalDelivery(t) - Instance.Capacity*(getNumberOfRoutes(t) - 1), 0);
+			pickupExcess = max(getTotalPickup(t) - Instance.Capacity*(getNumberOfRoutes(t) - 1), 0);
+			vehicleExcess = max(deliveryExcess, pickupExcess);
+			if (vehicleExcess < minExcess && vehicleExcess >= 1) {
+				minExcess = vehicleExcess;
+				oldDel = getTotalDelivery(t);
+				oldPick = getTotalPickup(t);
+				shiftPeriod = t;
+			}
+		}
+
+		routeProb.ShiftPeriod = shiftPeriod;
+		routeProb.formulateRouteProblem(ModelParameters::MIN_SERVICE);
+		routeProb.formulateMIP();
+		vector<int> Periods2;
+		for (int per : Instance.Periods) {
+			if (per != shiftPeriod) Periods2.push_back(per);
+		}
+		routeProb.lockRoutes(Periods2);
+		routeProb.solveProblem(tempSol);
+		
+	
+		updateSolution(*tempSol);
 }
 
 bool Solution::isRouteFeasible(Route * r)

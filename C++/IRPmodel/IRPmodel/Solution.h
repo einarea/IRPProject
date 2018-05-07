@@ -58,7 +58,8 @@ public:
 	bool isFeasible();
 	void clearRoutes();
 	void clearEdges(int period);
-	void shiftQuantity(int PeriodSelection, int ObjectiveSelection);
+	void shiftQuantity(int SELECTION);
+	void shiftQuantityMIP();
 	bool isRouteFeasible(Route *);
 	double getNumberOfRoutes(int period);
 	double getResidualCapacity(int period);

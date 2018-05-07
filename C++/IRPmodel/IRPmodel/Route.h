@@ -73,6 +73,7 @@ public:
 
 	//Graph 
 	vector <NodeIRP*> route;
+	int State;
 private:
 	int Id;
 	int Period;
