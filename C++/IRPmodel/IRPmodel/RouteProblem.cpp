@@ -293,9 +293,70 @@ void RouteProblem::addChangeCtr()
 	routeProblem.newCtr("Change", p2 <= nRoutes - 1);
 }
 
+void RouteProblem::printRouteType()
+{
+	for(int r : Routes)
+		for (int t : Instance.Periods) {
+			if (travelRoute[r][t].getSol() >= 0.01) {
+				switch (routes[r]->State) {
+				case ModelParameters::ORIG_ROUTE: {
+
+				}
+				}
+			}
+		}
+}
+
 int RouteProblem::getShiftPeriod()
 {
 	return ShiftPeriod;
+}
+
+void RouteProblem::formulateMinVisitProblem()
+{
+	//Initialize variables
+	delta = new XPRBvar[Instance.Nodes.size()];
+	for(auto node : Instance.Nodes)
+		delta[node->getId()] = routeProblem.newVar(XPRBnewname("delta_%d", node->getId()), XPRB_BV, 0, 1);
+
+	//Add constraints
+	XPRBexpr p1 = 0;
+	int i;
+	for (auto nodeDel : Instance.DeliveryNodes) {
+		i = nodeDel->getId();
+		p1 = delivery[i][ShiftPeriod] - min(Instance.Capacity, nodeDel->UpperLimit - nodeDel->LowerLimit)*delta[i];
+
+		routeProblem.newCtr("Logical visit", p1 <= 0);
+	}
+
+	p1 = 0;
+
+	for (auto nodePick : Instance.PickupNodes) {
+		i = nodePick->getId();
+		p1 = pickup[i][ShiftPeriod] - min(Instance.Capacity, nodePick->UpperLimit - nodePick->LowerLimit)*delta[i];
+
+		routeProblem.newCtr("Logical visit", p1 <= 0);
+	}
+
+	p1 = 0;
+
+	//Set objective
+	for (auto node : Instance.Nodes) {
+		i = node->getId();
+		p1 += delta[i];
+	}
+	//Add small value to minimize quantity
+	for (auto node : Instance.DeliveryNodes) {
+		i = node->getId();
+		p1 += 0.0001 * delivery[i][ShiftPeriod];
+	}
+
+	for (auto node : Instance.PickupNodes) {
+		i = node->getId();
+		p1 += 0.0001 * pickup[i][ShiftPeriod];
+	}
+
+	routeProblem.setObj(p1);
 }
 
 /*void RouteProblem::shiftQuantityCtr(int quantityPic, int period)
@@ -485,7 +546,7 @@ void RouteProblem::addRouteConstraints()
 			p1 += travelRoute[r][t];
 		}
 
-		routeProblem.newCtr("Vehicle limit", p1 <= ModelParameters::nVehicles);
+		routeProblem.newCtr("Vehicle limit", p1 <= ModelParameters::nVehicles + ModelParameters::VehiclePenalty*extraVehicle);
 		p1 = 0;
 	}
 
@@ -501,7 +562,7 @@ void RouteProblem::addRestrictedShiftCtr(double nRoutes, double oldDel, double o
 		p1 += delivery[i][ShiftPeriod];
 	}
 
-	routeProblem.newCtr("Delivery minimum", p1 >= floor(oldDel/Instance.Capacity)*Instance.Capacity - ModelParameters::SLACK/100*Instance.Capacity).print();
+	routeProblem.newCtr("Delivery minimum", p1 >= floor(oldDel/Instance.Capacity)*Instance.Capacity - ModelParameters::SLACK/100*Instance.Capacity);
 	p1 = 0;
 	
 
@@ -510,7 +571,7 @@ void RouteProblem::addRestrictedShiftCtr(double nRoutes, double oldDel, double o
 		p1 += pickup[i][ShiftPeriod];
 	}
 	
-	routeProblem.newCtr("Pickup minimum", p1 >= floor(oldPick / Instance.Capacity)*Instance.Capacity - ModelParameters::SLACK).print();
+	routeProblem.newCtr("Pickup minimum", p1 >= floor(oldPick / Instance.Capacity)*Instance.Capacity - ModelParameters::SLACK/100*Instance.Capacity);
 	p1 = 0;
 }
 

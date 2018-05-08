@@ -32,7 +32,7 @@ public:
 
 	void buildGraph(vector<NodeIRP*> &graph, int t);
 	static Solution * allocateSolution(const NodeInstanceDB &);
-	void routeSearch();
+	void routeSearch(int REQUIRE_CHANGE = ModelParameters::NO_CHANGE);
 	void routeOptimize();
 	double **pCapacity;
 	int *** getRouteMatrix();
@@ -47,7 +47,7 @@ public:
 
 	//void buildGraph(vector<Node*> &graph, int t);
 	void print(string filname, int weight);
-
+	int getPeriodWithMinExcess(const vector <int>& Periods);
 	void mergeRoutes(int position, Route * route, vector<Route*> &Routes, vector<Route*> &newRoutes);
 	void generateRoutes(vector<Route* >&routeHolder);
 	bool Solution::sort_func(const Route* & lhs, const Route* & rhs);

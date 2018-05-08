@@ -91,6 +91,18 @@ bool NodeInstanceDB::isDelivery(int id) const
 		return false;
 }
 
+void NodeInstanceDB::initializeCapacity()
+{
+	double TotalDemand = 0;
+	for (int t : Periods) {
+		for (auto node : Nodes) {
+			TotalDemand += node->Demand[t];
+		}
+	}
+
+	Capacity = floor(TotalDemand / (ModelParameters::nVehicles*getnPeriods()));
+}
+
 int NodeInstanceDB::getnPeriods() const
 {
 	return nPeriods;
@@ -225,7 +237,7 @@ NodeInstanceDB::NodeInstanceDB(string fileName)
 	if (!nodeRecords)
 	{
 		cerr << "Customer records file could not be opened" << endl;
-		exit(1);
+		exit(103);
 	}
 
 	string line;
@@ -286,14 +298,9 @@ NodeInstanceDB::NodeInstanceDB(string fileName)
 	initializeSets();
 
 	//Initialize capacity
-	double TotalDemand = 0;
-	for (int t : Periods) {
-		for (auto node : Nodes) {
-			TotalDemand += node->Demand[t];
-		}
-	}
 
-	Capacity = floor(TotalDemand / (ModelParameters::nVehicles*getnPeriods()));
+	initializeCapacity();
+
 
 }
 
@@ -313,14 +320,7 @@ NodeInstanceDB::NodeInstanceDB(int nCustomers, int nPer)
 	initializeSets();
 
 	//Initialize capacity
-	int TotalDemand = 0;
-	for (int t : Periods) {
-		for (auto node : AllNodes) {
-			TotalDemand += node->Demand[t];
-		}
-	}
-
-	Capacity = floor(TotalDemand / (ModelParameters::nVehicles*getnPeriods()));
+	initializeCapacity();
 }
 
 
@@ -386,7 +386,7 @@ const NodeInstance * NodeInstanceDB::getDepot() const
 		if (node->getId() == 0)
 			return node;
 
-	exit(111);
+	exit(102);
 }
 
 

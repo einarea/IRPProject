@@ -1974,7 +1974,7 @@ void IRP::useIPSubtourElimination()
 	oprob = prob.getXPRSprob();
 
 	//Enable subtour elimination
-	//prob.setCutMode(1); // Enable the cut mode
+	prob.setCutMode(1); // Enable the cut mode
 	XPRSsetcbcutmgr(oprob, cbmng, &(*this));
 	XPRSsetcbpreintsol(oprob, acceptInt, &(*this));
 }

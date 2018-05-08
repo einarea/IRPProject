@@ -4,18 +4,21 @@ class ModelParameters
 public:
 
 	//Running time
-	static const int MAX_RUNNING_TIME_IRP = 3600; //seconds
+	static const int MAX_RUNNING_TIME_IRP = 90; //seconds
 	static const int MAX_RUNNING_TIME_VRP = 30; //seconds
 
-	//Period selection for shift quantity
+	//Selection for shift quantity
 	static const int MAX_SHIFT = 3;
 	static const int RESTRICTED_SHIFT = 4;
+	static const int MINIMIZE_VISITS = 5;
 	static const int SLACK = 10; //Slack in restricted shift constraint, % of capacity
 
 	//TabuList 
 	static const int TabuLength = 2;
 
-
+	//Selection for route search
+	static const int REQUIRE_CHANGE = 31;
+	static const int NO_CHANGE = 46;
 
 	////Model parameters;
 	static const int nVehicles = 3;

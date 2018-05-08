@@ -61,7 +61,7 @@ int Route::getDirection() const
 {
 	//vector product
 	if (route.front() != route.back()->getNextNode())
-		exit(111);
+		exit(104);
 
 	NodeIRP * u = route.front();
 	NodeIRP *	v = u->getNextNode();
@@ -127,7 +127,7 @@ vector<Route*> Route::getSubgraphs(int n) const
 {
 	if (n > route.size() - 1){
 		cout << "subgraph longer than route";
-		exit(111);
+		exit(105);
 	}
 
 	vector<NodeIRP*> tempSubgraph;
@@ -198,7 +198,7 @@ void Route::removeNode(NodeIRP * remNode)
 	
 	}
 
-	exit(111);
+	exit(106);
 }
 
 void Route::removeNodes()
@@ -444,7 +444,7 @@ void Route::generateRoute(const  Route * r, list<Route> & RouteHolder)
 	tempRoute2.removeNodes();
 	const Route tempRoute = tempRoute2;
 	int lowestSubroute = 2;
-	int highestSubroute = 3;
+	int highestSubroute = 4;
 	//Only continue if subgraphs are larger or equal to lowest size
 	if (highestSubroute <= tempRoute.route.size() - 1) {
 		

@@ -18,12 +18,14 @@ public:
 	void addRestrictedShiftCtr(double nRoutes, double oldDel, double oldPick);
 	void formulateMIP();
 	vector<NodeIRP*> getNodesInShiftPeriod();
-	void formulateRouteProblem(int objectiveSelection);
+	void formulateRouteProblem(int objectiveSelection = ModelParameters::HIGHEST_TOTALCOST);
 	void initializeRouteParameters();
 	void initializeRouteVariables();
 	void addInventoryCtr();
 	void addChangeCtr();
+	void printRouteType();
 	int getShiftPeriod();
+	void formulateMinVisitProblem();
 	void shiftQuantityCtr(int quantity);
 	void initializeRoutes();
 	void updateEdges(Solution* sol);
@@ -54,10 +56,13 @@ private:
 
 	//Variables
 	XPRBvar ** x;
+	XPRBvar extraVehicle;
 	XPRBvar * y;
 	XPRBvar * timeVar;
 	XPRBexpr objective;
 
+	//For min visit
+	XPRBvar * delta;
 
 	//Variables
 	XPRBvar ** inventory;

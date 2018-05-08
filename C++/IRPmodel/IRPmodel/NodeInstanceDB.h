@@ -56,6 +56,7 @@ public:
 	int getY(const NodeInstance & node) const;
 	int getNumNodes() const;
 	bool isDelivery(int id) const;
+	void initializeCapacity();
 
 	int getnPeriods() const;
 	vector <NodeInstance *> * getNodes();
