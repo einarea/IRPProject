@@ -5,7 +5,8 @@ public:
 
 	//Running time
 	static const int MAX_RUNNING_TIME_IRP = 90; //seconds
-	static const int MAX_RUNNING_TIME_VRP = 30; //seconds
+	static const int MAX_RUNNING_TIME_VRP = 60; //seconds
+	static const int MAX_ROUTE_TIME_ROUTE_PROBLEM = 90; //seconds
 
 	//Selection for shift quantity
 	static const int MAX_SHIFT = 3;
@@ -98,10 +99,7 @@ public:
 	static const int MIN_SERVICE = 33;
 	static const int CLOCKWISE = 54;
 	static const int COUNTER_CLOCKWISE = 53;
-	static const int ORIG_ROUTE = 65;
-	static const int SIMPLE_INSERTION = 66;
-	static const int INSERTION_REMOVAL = 67;
-	static const int MERGE = 68;
+
 
 	ModelParameters();
 	~ModelParameters();

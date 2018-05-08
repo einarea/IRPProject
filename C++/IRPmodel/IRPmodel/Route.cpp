@@ -335,10 +335,8 @@ double Route::removeSubroute(int size)
 
 		//Delete edges and add edges
 
-		Nodes.front()->deleteEdges();
-		Nodes.front()->Node::addEdge(Nodes.back());
-
-		updateRoute();
+		removeSubgraph(Nodes);
+	
 
 	}
 	return minCost;
@@ -409,6 +407,24 @@ int Route::getPeriod()
 	return Period;
 }
 
+//Connect the nodes in a route and delete the rest, must be nodes in the route
+void Route::removeSubgraph(vector<NodeIRP*> nodes)
+{
+	//delete subgraph
+	NodeIRP * u = nodes.front();
+	NodeIRP * v = 0;  
+	v = u->getNextNode();
+	while (*v != *nodes.back()){
+		u = v;
+		v = u->getNextNode();
+		delete u;
+	}
+
+	nodes.front()->deleteEdges();
+	nodes.front()->Node::addEdge(nodes.back());
+	updateRoute();
+}
+
 bool Route::isFeasible()
 {
 	double totalTime = 0;
@@ -432,21 +448,24 @@ void Route::generateRoute(const  Route * r, list<Route> & RouteHolder)
 	//Copy insertion route
 	Route tempRoute2(*r);
 
+	int counter = 0;
 	//Make unique routes
 	for (const NodeIRP * node1 : route)
 		if (!node1->isDepot()) {
 			for (NodeIRP * node2 : tempRoute2.route)
-				if (*node1 == *node2)
+				if (*node1 == *node2) {
 					node2->setState(Node::REMOVE);
+					counter++;
+				}
 		}
 
 	
 	tempRoute2.removeNodes();
 	const Route tempRoute = tempRoute2;
-	int lowestSubroute = 2;
+	int lowestSubroute = 3;
 	int highestSubroute = 4;
-	//Only continue if subgraphs are larger or equal to lowest size
-	if (highestSubroute <= tempRoute.route.size() - 1) {
+	//Only continue if subgraphs are larger or equal to lowest size and not to modified route
+ 	if (lowestSubroute <= tempRoute.route.size() - 1 && counter < 0.8*r->route.size()) {
 		
 		//Target route
 		const Route OrigRoute = *this;
@@ -465,7 +484,7 @@ void Route::generateRoute(const  Route * r, list<Route> & RouteHolder)
 		int u = 0;
 		//OrigRoute.printPlot("Routes/target" + to_string(u));
 		//For each subgraph of r OG size n, n-1, n-k, insert the subgraph
-		for (int n = highestSubroute; n >= lowestSubroute; n--) {
+		for (int n = min(highestSubroute, tempRoute.route.size()-1); n >= lowestSubroute; n--) {
 
 			//Subgraphs are copies, the temp route is not affected by changes to subgraphs
 			subgraphs = tempRoute.getSubgraphs(n);
@@ -488,9 +507,9 @@ void Route::generateRoute(const  Route * r, list<Route> & RouteHolder)
 				}
 			}
 
-			origTransCost = targetRoute.getTransCost();
+			origTransCost = bestRoute.getTransCost();
 			int a = max(1, n - ceil(0.3*n));
-			int b = min(n+ceil(0.3*n), max(targetRoute.route.size() - 2, 0));
+			int b = min(n+ceil(0.3*n), max(bestRoute.route.size() - 2, 0));
 			for (int nRem = a ; nRem <= b; nRem++) {
 				targetRoute = bestRoute;
 				removalCost = targetRoute.removeSubroute(nRem);
@@ -518,7 +537,7 @@ void Route::generateRoute(const  Route * r, list<Route> & RouteHolder)
 				//Insert route
 				if (!Duplicate) {
 						Route r = *new Route(targetRoute);
-						r.State = ModelParameters::MERGE;
+						r.State = MERGE;
 						RouteHolder.push_back(r);
 					}
 					

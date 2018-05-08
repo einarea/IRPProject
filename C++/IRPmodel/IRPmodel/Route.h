@@ -7,8 +7,19 @@
 
 class Route
 {
+
+
 	static int counter;
 public:
+
+	//How route was constructed
+	static const int VRP = 65;
+	static const int SIMPLE_INSERTION = 66;
+	static const int INSERTION_REMOVAL = 67;
+	static const int LEAST_SERVED_REMOVAL = 68;
+	static const int LEAST_SERVED_INSERTION = 69;
+	static const int MERGE = 70;
+
 	void setId(int id);
 	Route();
 	Route(vector <NodeIRP*> & path);
@@ -30,6 +41,7 @@ public:
 	~Route();
 	void insertCheapestNode(vector<const NodeIRP*> nodes);
 	int getPeriod();
+	void removeSubgraph(vector <NodeIRP*>);
 	bool isFeasible();
 	void resize(int size);
 	void generateRoute(const Route *, list<Route> & routeHolder);

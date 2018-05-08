@@ -23,7 +23,7 @@ public:
 	~Solution();
 
 	int SolID;
-	NodeIRP * getDepot(int period);
+	NodeIRP * getDepot(int period) const;
 
 	//Solves an vrp for the period and update the solution
 	void solveVRP(int period);
@@ -46,12 +46,16 @@ public:
 	//The set of routes for each period
 
 	//void buildGraph(vector<Node*> &graph, int t);
+	const NodeIRP* getLeastServed(int period) const;
+	const NodeIRP* getLeastServed(vector<NodeIRP*>, int period) const;
+	Route* removeNodeFromPeriod(int period, const NodeIRP* remNode);
 	void print(string filname, int weight);
 	int getPeriodWithMinExcess(const vector <int>& Periods);
 	void mergeRoutes(int position, Route * route, vector<Route*> &Routes, vector<Route*> &newRoutes);
 	void generateRoutes(vector<Route* >&routeHolder);
 	bool Solution::sort_func(const Route* & lhs, const Route* & rhs);
 	vector <NodeIRP *> getVisitedNodes(int period);
+	vector <NodeIRP*> getNotVisitedNodes(int period);
 	void plotPeriod(int t, string filename);
 	void sort(vector <NodeIRP>*);
 	bool IntegerSolution;
@@ -75,7 +79,7 @@ public:
 	//Returns average delivery per node
 	double getDelivery(int period);
 	double getPickup(int period);
-	vector <Route *> getRoutes(int period);
+	vector <Route *> getRoutes(int period) const;
 	NodeIRPHolder * getNode(int id);
 	int newRoute(vector <Node*> & route, int period);
 
@@ -87,6 +91,9 @@ public:
 	double getHoldingCost();
 	double getHoldingCost(int period);
 	double getTransportationCost(int period);
+	Route * insertNodeInPeriod(int period, const NodeIRP * insNode);
+	bool isVisited(const NodeIRP * node, int period);
+
 
 	//Operators
 	void removeVisit(Route * route, int selection = 1);

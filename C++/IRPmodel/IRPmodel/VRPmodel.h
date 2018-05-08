@@ -18,7 +18,9 @@ public:
 	~VRPmodel();
 	void updateSolution(Solution * sol);
 	void addRoutesToIRP(int t, Solution * sol);
-	inline int getStartTime() const;
+
+	time_t StartTime;
+	time_t SolutionTime;
 
 private:
 	void clearVariables();
@@ -30,7 +32,7 @@ private:
 	XPRBvar *y;
 	XPRBvar **loadDelivery;
 	XPRBvar **loadPickup;
-	XPRBvar *time;
+	XPRBvar *timeVar;
 	XPRBvar extraVehicle;
 	XPRBvar **pCapacity; //Penalty capacity
 
@@ -44,7 +46,6 @@ private:
 	int MaxTime;
 	int nVehicles;
 
-	int startTime;
 	XPRSprob oprob;
 
 	//Linear expreassions;

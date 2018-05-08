@@ -4,12 +4,12 @@
 
 
 //Time callback
-void XPRS_CC cbmngtime(XPRSprob oprob, void * vd, int parent, int newnode, int branch) {
+void XPRS_CC cbmngtimeVRP(XPRSprob oprob, void * vd, int parent, int newnode, int branch) {
 
 	VRPmodel * modelInstance;
 	modelInstance = (VRPmodel*)vd;
 
-	if ((XPRB::getTime() - modelInstance->getStartTime()) / 1000 >= ModelParameters::MAX_RUNNING_TIME_VRP)
+	if (difftime(time(NULL), modelInstance->StartTime) >= ModelParameters::MAX_RUNNING_TIME_VRP)
 	{
 		XPRSinterrupt(oprob, XPRS_STOP_TIMELIMIT);
 	}
@@ -34,10 +34,10 @@ void VRPmodel::solveModel(Solution * prevSol)
 {
 
 	oprob = prob.getXPRSprob();
-	startTime = XPRB::getTime();
+	StartTime = time(NULL);
 
 	//Set time callback
-	XPRSsetcbnewnode(oprob, cbmngtime, &(*this));
+	XPRSsetcbnewnode(oprob, cbmngtimeVRP, &(*this));
 
 	//prob.print();
 	int d = prob.mipOptimise();
@@ -115,10 +115,10 @@ bool VRPmodel::initializeVariables()
 
 
 	//Time variables
-	time = new XPRBvar[Database.AllNodes.size()];
+	timeVar = new XPRBvar[Database.AllNodes.size()];
 	for (NodeIRP * node1 : AllNodes) {
 		i = node1->getId();
-		time[i] = prob.newVar(XPRBnewname("time_%d", i), XPRB_PL, 0, MaxTime);
+		timeVar[i] = prob.newVar(XPRBnewname("time_%d", i), XPRB_PL, 0, MaxTime);
 	}
 
 	return true;
@@ -275,7 +275,7 @@ bool VRPmodel::formulateProblem()
 	}
 
 	//Time constraints
-	p1 = time[0];
+	p1 = timeVar[0];
 	prob.newCtr("Initial time", p1 == 0);
 	p1 = 0;
 
@@ -285,7 +285,7 @@ bool VRPmodel::formulateProblem()
 		for (NodeIRP* node2 : Nodes) {
 			if (node1->inArcSet(node2)) {
 				j = node2->getId();
-				p1 = time[i] - time[j] + node1->getTravelTime(node2);
+				p1 = timeVar[i] - timeVar[j] + node1->getTravelTime(node2);
 					+ (ModelParameters::maxTime + node1->getTravelTime(node2)) * x[i][j];
 
 				p2 = ModelParameters::maxTime + node1->getTravelTime(node2);
@@ -293,7 +293,7 @@ bool VRPmodel::formulateProblem()
 				p1 = 0;
 				p2 = 0;
 
-				p1 = time[i] + node1->getTravelTime(node2) * x[i][j];
+				p1 = timeVar[i] + node1->getTravelTime(node2) * x[i][j];
 			
 				//prob.newCtr("Final time", p1 <= ModelParameters::maxTime );
 				p1 = 0;
@@ -302,7 +302,7 @@ bool VRPmodel::formulateProblem()
 		}
 
 		if (node1->inArcSet(Database.getDepot())) {
-			p1 = time[i] + node1->getTravelTime(Database.getDepot()) * x[i][0];
+			p1 = timeVar[i] + node1->getTravelTime(Database.getDepot()) * x[i][0];
 			prob.newCtr("Final time", p1 <= ModelParameters::maxTime);
 			p1 = 0;
 		}	
@@ -363,16 +363,12 @@ void VRPmodel::updateSolution(Solution * sol)
 		//Add time variables
 		for (auto node : Nodes) {
 			i = node->getId();
-			node->TimeServed = time[i].getSol();
+			node->TimeServed = timeVar[i].getSol();
 		}
 	}
 
 }
 
-int VRPmodel::getStartTime() const
-{
-	return startTime;
-}
 
 void VRPmodel::clearVariables()
 {

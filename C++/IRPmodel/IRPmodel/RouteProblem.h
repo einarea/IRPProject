@@ -36,6 +36,8 @@ public:
 
 
 	int ShiftPeriod;
+	time_t StartTime;
+	time_t SolutionTime;
 
 	Solution * solveProblem(Solution * currentSol = 0);
 private:

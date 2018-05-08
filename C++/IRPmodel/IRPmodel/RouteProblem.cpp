@@ -2,6 +2,17 @@
 #include "RouteProblem.h"
 
 
+//Time callback
+void XPRS_CC cbmngtimeRoute(XPRSprob oprob, void * vd, int parent, int newnode, int branch) {
+
+	RouteProblem * model;
+	model = (RouteProblem*)vd;
+
+	if (difftime(time(NULL),  model->StartTime) >= ModelParameters::MAX_RUNNING_TIME_VRP)
+	{
+		XPRSinterrupt(oprob, XPRS_STOP_TIMELIMIT);
+	}
+}
 
 
 RouteProblem::~RouteProblem()
@@ -280,7 +291,7 @@ void RouteProblem::addChangeCtr()
 	int i, j;
 	int nRoutes= 0;
 	for (int r : Routes) {
-		if (routes[r]->State == ModelParameters::ORIG_ROUTE) {
+		if (routes[r]->State == Route::VRP) {
 			nRoutes++;
 			for (int t : Instance.Periods) {
 				{
@@ -295,12 +306,39 @@ void RouteProblem::addChangeCtr()
 
 void RouteProblem::printRouteType()
 {
-	for(int r : Routes)
+	for (int r : Routes)
 		for (int t : Instance.Periods) {
 			if (travelRoute[r][t].getSol() >= 0.01) {
+				cout << "Route " << r << ", period " << t << ": ";
 				switch (routes[r]->State) {
-				case ModelParameters::ORIG_ROUTE: {
+				case Route::VRP: {
+					cout << "VRP\n";
+					break;
+				}
+				case Route::SIMPLE_INSERTION: {
+					cout << "Insertion\n";
+					break;
+				}
+				case Route::INSERTION_REMOVAL: {
+					cout << "Insertion and removal\n";
+					break;
+				}
+				case Route::MERGE: {
+					cout << "Merge\n";
+					break;
+				}
+				case Route::LEAST_SERVED_INSERTION: {
+					cout << "Least served insertion\n";
+					break;
+				}
+				case Route::LEAST_SERVED_REMOVAL: {
+					cout << "Least served removal";
+					break;
+				}
 
+				default: {
+					cout << "Error\n";
+					break;
 				}
 				}
 			}
@@ -977,11 +1015,19 @@ Solution * RouteProblem::solveProblem(Solution * sol)
 {
 
 	//routeProblem.print();
+	StartTime = time(NULL);
+	//Set time callback
+
+	XPRSsetcbnewnode(routeProblem.getXPRSprob(), cbmngtimeRoute, &(*this));
 	routeProblem.mipOptimise();
+
+	SolutionTime = time(NULL) - StartTime;
 	//If no solution, allocate a new solution
 	if (sol == 0) {
 		sol = Solution::allocateSolution(Instance);
 	}
+
+
 
 
 
