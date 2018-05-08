@@ -409,7 +409,10 @@ void Solution::routeSearch()
 		//Solve route problem
 		RouteProblem routeProb(Instance, RouteHolder);
 		routeProb.formulateRouteProblem(ModelParameters::HIGHEST_TOTALCOST);
-		routeProb.addChangeCtr();
+
+		//Require one change
+		//routeProb.addChangeCtr();
+
 		//Periods to lock routes for
 		/*vector<int> periods;
 		for (int t : Instance.Periods)
@@ -418,11 +421,6 @@ void Solution::routeSearch()
 
 		routeProb.lockRoutes(periods); */
 		routeProb.solveProblem(this);
-
-		//routeSol2->print("Solution/Heurestic" + to_string(i), ModelParameters::X);
-		/*for (auto route : this->getAllRoutes()) {
-			//route->printPlot("Solution/Sol2route" + to_string(route->getId()) + "Num" + to_string(i));
-		}*/
 	}
 }
 
@@ -586,12 +584,13 @@ void Solution::generateRoutes(vector<Route* >&routeHold)
 
 	//insert single node in all routes
 	int k = 0;
-	for (Route a : routeHolder) {
+
+	/*for (Route a : routeHolder) {
 		cout << a.constructionCost << "\n";
 		a.printPlot("Routes/bestRoutes" + to_string(k));
 		k++;
+	} */
 
-	}
 	Route newRoute;
 	for (Route * r1 : routes) {
 		duplicate = false;
@@ -611,12 +610,6 @@ void Solution::generateRoutes(vector<Route* >&routeHold)
 	}
 
 	k = 0;
-	for (Route a : routeHolder) {
-		cout << a.constructionCost << "\n";
-		a.printPlot("Routes/bestRoutes" + to_string(k));
-		k++;
-
-	}
 
 	//insert single node and remove other
 	for (Route * r1 : routes) {
@@ -637,13 +630,12 @@ void Solution::generateRoutes(vector<Route* >&routeHold)
 		}
 	}
 
-	k = 0;
-	for (Route a : routeHolder) {
+	/*for (Route a : routeHolder) {
 		cout << a.constructionCost << "\n";
 		a.printPlot("Routes/bestRoutes" + to_string(k));
 		k++;
 
-	}
+	}*/
 	
 
 	if (routes.size() >= 2) {
@@ -658,13 +650,6 @@ void Solution::generateRoutes(vector<Route* >&routeHold)
 		}
 
 		routeHolder.sort();
-
-		for (Route a : routeHolder) {
-			cout << a.constructionCost << "\n";
-			a.printPlot("Routes/bestRoutes" + to_string(k));
-			k++;
-
-		}
 
 		auto pos = routeHolder.begin();
 		int i = 0;
