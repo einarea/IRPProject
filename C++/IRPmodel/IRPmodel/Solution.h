@@ -5,6 +5,7 @@
 #include "Route.h"
 #include "RouteProblem.h"
 #include "VRPmodel.h"
+#include <list>
 
 
 //Class to store solution of an IRP problem
@@ -106,6 +107,7 @@ public:
 
 private:
 	static int solCounter;
+	list<int> TabuPeriods;
 	//Integer solutions
 	const NodeInstanceDB & Instance;
 	vector<NodeIRP*> selectPair(Route *, int Selection);

@@ -291,7 +291,7 @@ void RouteProblem::addChangeCtr()
 	int i, j;
 	int nRoutes= 0;
 	for (int r : Routes) {
-		if (routes[r]->State == Route::VRP) {
+		if (routes[r]->State == Route::ORIG) {
 			nRoutes++;
 			for (int t : Instance.Periods) {
 				{
@@ -311,8 +311,8 @@ void RouteProblem::printRouteType()
 			if (travelRoute[r][t].getSol() >= 0.01) {
 				cout << "Route " << r << ", period " << t << ": ";
 				switch (routes[r]->State) {
-				case Route::VRP: {
-					cout << "VRP\n";
+				case Route::ORIG: {
+					cout << "ORIG\n";
 					break;
 				}
 				case Route::SIMPLE_INSERTION: {
@@ -584,7 +584,7 @@ void RouteProblem::addRouteConstraints()
 			p1 += travelRoute[r][t];
 		}
 
-		routeProblem.newCtr("Vehicle limit", p1 <= ModelParameters::nVehicles + ModelParameters::VehiclePenalty*extraVehicle);
+		routeProblem.newCtr("Vehicle limit", p1 <= ModelParameters::nVehicles + extraVehicle);
 		p1 = 0;
 	}
 
@@ -1019,6 +1019,7 @@ Solution * RouteProblem::solveProblem(Solution * sol)
 	//Set time callback
 
 	XPRSsetcbnewnode(routeProblem.getXPRSprob(), cbmngtimeRoute, &(*this));
+	//routeProblem.print();
 	routeProblem.mipOptimise();
 
 	SolutionTime = time(NULL) - StartTime;

@@ -341,7 +341,8 @@ Solution::Solution(const NodeInstanceDB & model, vector<NodeIRPHolder*> nodes)
 
 Solution::Solution(const Solution & cpSol)
 	:
-	Instance(cpSol.Instance)
+	Instance(cpSol.Instance),
+	TabuPeriods(cpSol.TabuPeriods)
 {
 	Nodes.resize(cpSol.Nodes.size());
 	for (auto node : cpSol.Nodes) {
@@ -377,6 +378,7 @@ Solution & Solution::operator=(const Solution & cpSol)
 			for (NodeIRP::EdgeIRP* edge : tempSol->Nodes[i]->NodePeriods[t]->getEdges())
 				Nodes[i]->NodePeriods[t]->copyEdge(edge, Nodes[edge->getEndNode()->getId()]->NodePeriods[t]);
 
+	this->TabuPeriods = cpSol.TabuPeriods;
 	return *this;
 }
 
@@ -384,8 +386,8 @@ Solution & Solution::operator=(const Solution & cpSol)
 void Solution::updateSolution(Solution &cpSol)
 {
 	//Release memory
-	for (NodeIRPHolder* node : cpSol.Nodes) {
-		delete Nodes[node->getId()];
+	Solution * tempSol = new Solution(cpSol);
+	for (NodeIRPHolder* node : tempSol->Nodes) {
 		Nodes[node->getId()] = node;
 	}
 }
@@ -608,8 +610,14 @@ Route* Solution::removeNodeFromPeriod(int period, NodeIRP const * remNode)
 	for (Route *r : getRoutes(period)) {
 		for (int i = 0; i < r->route.size(); i++)
 			if (*r->route[i] == *remNode) {
-				r->route[i - 1]->Node::addEdge(1, r->route[i + 1]);
+				r->route[i - 1]->deleteEdges();
+				if(i+1>= r->route.size())
+					r->route[i - 1]->Node::addEdge(1, r->route[0]);
+				else
+					r->route[i - 1]->Node::addEdge(1, r->route[i + 1]);
+				delete r->route[i];
 				r->State = Route::LEAST_SERVED_REMOVAL;
+				r->updateRoute();
 				return r;
 			}
 		delete r;
@@ -677,10 +685,15 @@ void Solution::generateRoutes(vector<Route* >&routeHold)
 	//push back exisiting routes
 	for (auto r : routes) {
 		r->setId(count);
-		r->State = Route::VRP;
+		r->State = Route::ORIG;
 		routeHolder.push_back(*r);
 		origRoutes.push_back(*r);
 		count++;
+	}
+
+	int k = 0;
+	for (Route r : origRoutes) {
+		r.printPlot("Routes/orig" + to_string(k++));
 	}
 
 	//Insert least served node in next period to the cheapest route in previous period
@@ -692,24 +705,30 @@ void Solution::generateRoutes(vector<Route* >&routeHold)
 		if (t > 1) {
 			
 			node = getLeastServed(t);
-			newRoute = *removeNodeFromPeriod(t, node);
-			for (Route r : routeHolder)
-				if (newRoute.isDuplicate(&r))
-					duplicate = true;
+			if (node != nullptr) {
+				newRoute = *removeNodeFromPeriod(t, node);
+				for (Route r : routeHolder)
+					if (newRoute.isDuplicate(&r))
+						duplicate = true;
 
-			if (!duplicate) {
-				Route r = *new Route(newRoute);
-				routeHolder.push_back(r);
+				newRoute.printPlot("Routes/removal" + to_string(k++));
+
+				if (!duplicate) {
+					Route r = *new Route(newRoute);
+					routeHolder.push_back(r);
+				}
 			}
 
 			vector<NodeIRP*> nodes = getNotVisitedNodes(t-1);
 		
 				node = getLeastServed(nodes, t);
-				if (nodes.size() >= 1) {
+				if (node != nullptr) {
 				duplicate = false;
 				ptr = insertNodeInPeriod(t - 1, node);
 				if (ptr != nullptr) {
 					newRoute = *ptr;
+					newRoute.State = Route::LEAST_SERVED_INSERTION;
+					newRoute.printPlot("Routes/insertion" + to_string(k++));
 					for (Route r : routeHolder)
 						if (newRoute.isDuplicate(&r))
 							duplicate = true;
@@ -735,7 +754,7 @@ void Solution::generateRoutes(vector<Route* >&routeHold)
 			int u = 0;
 			for (Route * r1 : routes)
 				for (Route * r2 : routes)
-					if (r1 != r2 && r1->sameDirection(r2) && r1->State==Route::VRP && r2->State == Route::VRP) {
+					if (r1 != r2 && r1->sameDirection(r2) && r1->State==Route::ORIG && r2->State == Route::ORIG) {
 						r1->generateRoute(r2, routeHolder);
 					}
 		}
@@ -803,8 +822,8 @@ void Solution::generateRoutes(vector<Route* >&routeHold)
 		for (Route r : routeHolder) {
 			string filename = "Routes/";
 			switch (r.State) {
-			case Route::VRP: {
-				filename = filename + "VRP"+to_string(r.getId());
+			case Route::ORIG: {
+				filename = filename + "ORIG"+to_string(r.getId());
 				break;
 			}
 			case Route::SIMPLE_INSERTION: {
@@ -913,39 +932,37 @@ void Solution::shiftQuantity(int SELECTION)
 	double maxShift = 0;
 	int shiftPeriod;
 	Solution * shiftSolution = 0;
-	Solution * tempSol;
+	Solution tempSol(*this);
 
 
-	tempSol = new Solution(*this);
-	RouteProblem routeProb(Instance, getAllRoutes());
 
 	//Alternative 1: Max shift
 	if (SELECTION == ModelParameters::MAX_SHIFT){
 		for (int t : Instance.Periods) {
 
+			RouteProblem routeProb(Instance, getAllRoutes());
+
 			if (getNumberOfRoutes(t) >= 1) {
 				routeProb.ShiftPeriod = t;
-				routeProb.formulateRouteProblem(ModelParameters::MAX_SHIFT);
+				routeProb.formulateRouteProblem(ModelParameters::MIN_SERVICE);
 				routeProb.lockRoutes(Instance.Periods);
 
 				origQuantity = getTotalDelivery(t) + getTotalPickup(t);
-				routeProb.solveProblem(tempSol);
+				routeProb.solveProblem(&tempSol);
 
 
 				//Select the period with the greatest shift
-				newQuantity = tempSol->getTotalDelivery(t) + tempSol->getTotalPickup(t);
+				newQuantity = tempSol.getTotalDelivery(t) + tempSol.getTotalPickup(t);
 
 				if (origQuantity - newQuantity > maxShift) {
 					maxShift = origQuantity - newQuantity;
 					delete shiftSolution;
-					shiftSolution = new Solution(*tempSol);
+					shiftSolution = new Solution(tempSol);
 					shiftPeriod = t;
 				}
-				else
-					delete tempSol;
 
-				}
 			}
+		}
 
 	}
 	
@@ -957,7 +974,7 @@ void Solution::shiftQuantity(int SELECTION)
 		bool FINISHED = false;
 
 		while (FINISHED == false && Periods.size() >= 1) {
-			bool FINISHED = false;
+			RouteProblem routeProb(Instance, getAllRoutes());
 			shiftPeriod = getPeriodWithMinExcess(Periods);
 			double oldDel = getTotalDelivery(shiftPeriod);
 			double oldPick = getTotalPickup(shiftPeriod);
@@ -968,19 +985,20 @@ void Solution::shiftQuantity(int SELECTION)
 
 			//Restrict the shift in the routeproblem
 			routeProb.addRestrictedShiftCtr(getNumberOfRoutes(shiftPeriod), oldDel, oldPick);
-			routeProb.solveProblem(tempSol);
+			routeProb.solveProblem(&tempSol);
 
 			//Check if able to move, if it is -> solve vrp, else find new period without the current shift period
-			if (tempSol->getTotalDelivery(shiftPeriod) <= Instance.Capacity*(getNumberOfRoutes(shiftPeriod) - 1) &&
-				tempSol->getTotalPickup(shiftPeriod) <= Instance.Capacity*(getNumberOfRoutes(shiftPeriod) - 1)) {
-				shiftSolution = tempSol;
+			if (tempSol.getTotalDelivery(shiftPeriod) <= Instance.Capacity*(getNumberOfRoutes(shiftPeriod) - 1) &&
+				tempSol.getTotalPickup(shiftPeriod) <= Instance.Capacity*(getNumberOfRoutes(shiftPeriod) - 1)) {
+				shiftSolution = new Solution(tempSol);
 				FINISHED = true;
 			}
 
 			else {
+				int pos = 0;
 				for (int t : Periods) {
 					if (t != shiftPeriod)
-						Periods[t] = t;
+						Periods[pos++] = t;
 				}
 				Periods.resize(Periods.size() - 1);
 			}
@@ -992,7 +1010,9 @@ void Solution::shiftQuantity(int SELECTION)
 
 	if (SELECTION == ModelParameters::MINIMIZE_VISITS) {
 
+		RouteProblem routeProb(Instance, getAllRoutes());
 		routeProb.ShiftPeriod = getPeriodWithMinExcess(Instance.Periods);
+		shiftPeriod = routeProb.ShiftPeriod;
 		routeProb.formulateRouteProblem();
 		routeProb.lockRoutes(Instance.Periods);
 		routeProb.formulateMinVisitProblem();
@@ -1003,22 +1023,40 @@ void Solution::shiftQuantity(int SELECTION)
 	//Solve a VRP for the shift period
 
 
-	shiftSolution->solveVRP(routeProb.ShiftPeriod);
+	shiftSolution->solveVRP(shiftPeriod);
 	updateSolution(*shiftSolution);
 	//printSolution();
 	
 
 	//Minimize the inventory
-	shiftSolution->solveInventoryProblem();
+	solveInventoryProblem();
 }
 
 void Solution::shiftQuantityMIP()
 {
-	Solution * tempSol = new Solution(*this);
+	Solution tempSol(*this);
 	RouteProblem routeProb(Instance, getAllRoutes());
 
+	bool tabuInd;
+	vector<int> Periods;
+	for (int t : Instance.Periods) {
+		tabuInd = false;
+		for (int tabu : TabuPeriods)
+			if (t == tabu) {
+				tabuInd = true;
+			}
+		if (!tabuInd) {
+			Periods.push_back(t);
+		}
+	}
 
-	routeProb.ShiftPeriod = getPeriodWithMinExcess(Instance.Periods);
+	routeProb.ShiftPeriod = getPeriodWithMinExcess(Periods);
+
+	if (TabuPeriods.size() >= 2)
+		TabuPeriods.pop_back();
+
+	//Update tabu periods
+	TabuPeriods.push_front(routeProb.ShiftPeriod);
 
 	routeProb.formulateRouteProblem(ModelParameters::MIN_SERVICE);
 	routeProb.formulateMIP();
@@ -1027,9 +1065,10 @@ void Solution::shiftQuantityMIP()
 		if (per != routeProb.ShiftPeriod) Periods2.push_back(per);
 	}
 	routeProb.lockRoutes(Periods2);
-	routeProb.solveProblem(tempSol);
-		
-	updateSolution(*tempSol);
+	routeProb.solveProblem(&tempSol);
+	
+	tempSol.printSolution();
+	updateSolution(tempSol);
 }
 
 bool Solution::isRouteFeasible(Route * r)

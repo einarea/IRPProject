@@ -13,7 +13,7 @@ class Route
 public:
 
 	//How route was constructed
-	static const int VRP = 65;
+	static const int ORIG = 65;
 	static const int SIMPLE_INSERTION = 66;
 	static const int INSERTION_REMOVAL = 67;
 	static const int LEAST_SERVED_REMOVAL = 68;
