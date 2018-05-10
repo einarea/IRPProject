@@ -709,15 +709,18 @@ void Solution::generateRoutes(vector<Route* >&routeHold)
 			node = getLeastServed(t);
 			if (node != nullptr) {
 				newRoute = *removeNodeFromPeriod(t, node);
-				for (Route r : routeHolder)
-					if (newRoute.isDuplicate(&r))
-						duplicate = true;
+				if (newRoute.getSize() >= 2) {
+					for (Route r : routeHolder)
+						if (newRoute.isDuplicate(&r))
+							duplicate = true;
 
-				newRoute.printPlot("Routes/removal" + to_string(k++));
+					newRoute.printPlot("Routes/removal" + to_string(k++));
 
-				if (!duplicate) {
-					Route *r = new Route(newRoute);
-					routeHold.push_back(r);
+
+					if (!duplicate) {
+						Route *r = new Route(newRoute);
+						routeHold.push_back(r);
+					}
 				}
 			}
 
@@ -907,7 +910,7 @@ bool Solution::isFeasible()
 {
 	//Check if too many vehicles
 	for (int t : Instance.Periods) {
-		if (getNumberOfRoutes(t) > ModelParameters::nVehicles) {
+		if (getNumberOfRoutes(t) > ModelParameters::nVehicles+0.5) {
 			return false;
 		}
 	}

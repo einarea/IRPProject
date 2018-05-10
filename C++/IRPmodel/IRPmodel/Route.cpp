@@ -442,6 +442,11 @@ void Route::resize(int size)
 	route.resize(size);
 }
 
+int Route::getSize()
+{
+	return route.size();
+}
+
 //Generate, cannot take routes that visit the same customer. Use selectRoutes first
 void Route::generateRoute(const  Route * r, list<Route> & RouteHolder)
 {
