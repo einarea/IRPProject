@@ -411,6 +411,7 @@ void Solution::solveVRP(int period)
 	model.solveModel(this);
 }
 
+
 void Solution::buildGraph(vector<NodeIRP*> &graph)
 {
 	for (NodeIRPHolder * n : Nodes)
@@ -687,6 +688,7 @@ void Solution::generateRoutes(vector<Route* >&routeHold)
 		r->setId(count);
 		r->State = Route::ORIG;
 		routeHolder.push_back(*r);
+		routeHold.push_back(new Route(*r));
 		origRoutes.push_back(*r);
 		count++;
 	}
@@ -714,8 +716,8 @@ void Solution::generateRoutes(vector<Route* >&routeHold)
 				newRoute.printPlot("Routes/removal" + to_string(k++));
 
 				if (!duplicate) {
-					Route r = *new Route(newRoute);
-					routeHolder.push_back(r);
+					Route *r = new Route(newRoute);
+					routeHold.push_back(r);
 				}
 			}
 
@@ -734,8 +736,8 @@ void Solution::generateRoutes(vector<Route* >&routeHold)
 							duplicate = true;
 
 					if (!duplicate) {
-						Route r = *new Route(newRoute);
-						routeHolder.push_back(r);
+						Route * r = new Route(newRoute);
+						routeHold.push_back(r);
 					}
 				}
 			}
@@ -750,15 +752,30 @@ void Solution::generateRoutes(vector<Route* >&routeHold)
 
 	if (routes.size() >= 2) {
 		//Iterations of merge
+
 		for (int i = 1; i <= 1; i++) {
 			int u = 0;
 			for (Route * r1 : routes)
 				for (Route * r2 : routes)
 					if (r1 != r2 && r1->sameDirection(r2) && r1->State==Route::ORIG && r2->State == Route::ORIG) {
-						r1->generateRoute(r2, routeHolder);
+						r1->generateRoute(r2, origRoutes);
 					}
 		}
 
+		origRoutes.sort();
+
+		auto pos = origRoutes.begin();
+		int i = 0;
+		do {
+			if (pos->State != Route::ORIG) {
+				Route * r = new Route(*pos);
+				r->State = Route::MERGE;
+				routeHold.push_back(r);
+
+			}
+			pos++;
+			i++;
+		} while (i < 100 && !(pos == origRoutes.end()));
 
 	//insert single node in all routes
 	int k = 0;
@@ -775,9 +792,9 @@ void Solution::generateRoutes(vector<Route* >&routeHold)
 				duplicate = true;
 		
 		if (!duplicate) {
-			Route r = *new Route(newRoute);
-			r.State = Route::SIMPLE_INSERTION;
-			routeHolder.push_back(r);
+			Route * r = new Route(newRoute);
+			r->State = Route::SIMPLE_INSERTION;
+			routeHold.push_back(r);
 		}
 	}
 
@@ -796,54 +813,44 @@ void Solution::generateRoutes(vector<Route* >&routeHold)
 				duplicate = true;
 
 		if (!duplicate) {
-			Route r = *new Route(newRoute);
-			r.State = Route::INSERTION_REMOVAL;
-			routeHolder.push_back(r);
+			Route * r = new Route(newRoute);
+			r->State = Route::INSERTION_REMOVAL;
+			routeHold.push_back(r);
 		}
 	}
 	
 
 
 
-		routeHolder.sort();
 
-		auto pos = routeHolder.begin();
-		int i = 0;
-		do {
-			if (pos->constructionCost > -500000) {
-				routeHold.push_back(new Route(*pos));
-				
-			}
-			pos++;
-			i++;
-		} while (i < 300 && !(pos == routeHolder.end()));
 
 		//Plot merged routes
-		for (Route r : routeHolder) {
+		
+		for (Route *r : routeHold) {
 			string filename = "Routes/";
-			switch (r.State) {
+			switch (r->State) {
 			case Route::ORIG: {
-				filename = filename + "ORIG"+to_string(r.getId());
+				filename = filename + "ORIG"+to_string(k++);
 				break;
 			}
 			case Route::SIMPLE_INSERTION: {
-				filename = filename + "Insertion"+to_string(r.getId());
+				filename = filename + "Insertion"+to_string(k++);
 				break;
 			}
 			case Route::INSERTION_REMOVAL: {
-				filename = filename + "InsAndRem"+ to_string(r.getId());
+				filename = filename + "InsAndRem"+ to_string(k++);
 				break;
 			}
 			case Route::MERGE: {
-				filename = filename + "Merge"+ to_string(r.getId());
+				filename = filename + "Merge"+ to_string(k++);
 				break;
 			}
 			case Route::LEAST_SERVED_INSERTION: {
-				filename = filename + "Least served insertion" + to_string(r.getId());
+				filename = filename + "Least served insertion" + to_string(k++);
 				break;
 			}
 			case Route::LEAST_SERVED_REMOVAL: {
-				filename = filename + "Least served removal" + to_string(r.getId());
+				filename = filename + "Least served removal" + to_string(k++);
 				break;
 			}
 		
@@ -852,7 +859,7 @@ void Solution::generateRoutes(vector<Route* >&routeHold)
 				break;
 			}
 			}
-			r.printPlot(filename);
+			r->printPlot(filename);
 		}
 	}
 }
@@ -904,13 +911,6 @@ bool Solution::isFeasible()
 			return false;
 		}
 	}
-
-	//Check if each route is feasible
-	for (int t : Instance.Periods)
-		for (Route* r : getRoutes(t)) {
-			if (!isRouteFeasible(r))
-				return false;
-		}
 	return true;
 }
 

@@ -29,6 +29,7 @@ public:
 	//Solves an vrp for the period and update the solution
 	void solveVRP(int period);
 
+	vector<Route *> selectRoutesToMerge(vector < const Route *> Routes);
 	void buildGraph(vector<NodeIRP*> &graph);
 
 	void buildGraph(vector<NodeIRP*> &graph, int t);

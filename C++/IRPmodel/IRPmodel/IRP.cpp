@@ -1567,7 +1567,7 @@ void IRP::addVisitConstraint(double ** Visit, int selection)
 				}
 			}
 		}
-		VisitCtr = prob.newCtr("MinVisits", p1 >= ceil(visits*0.2));
+		VisitCtr = prob.newCtr("MinVisits", p1 >= ceil(visits*0.25));
 		VisitCtr.print();
 		cout << "\n";
 	}

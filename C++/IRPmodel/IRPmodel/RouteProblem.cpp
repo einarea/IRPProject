@@ -332,7 +332,7 @@ void RouteProblem::printRouteType()
 					break;
 				}
 				case Route::LEAST_SERVED_REMOVAL: {
-					cout << "Least served removal";
+					cout << "Least served removal\n";
 					break;
 				}
 

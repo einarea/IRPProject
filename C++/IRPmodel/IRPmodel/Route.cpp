@@ -442,7 +442,7 @@ void Route::resize(int size)
 	route.resize(size);
 }
 
-//Generate route that is not in routeholder
+//Generate, cannot take routes that visit the same customer. Use selectRoutes first
 void Route::generateRoute(const  Route * r, list<Route> & RouteHolder)
 {
 	//Copy insertion route
@@ -459,14 +459,14 @@ void Route::generateRoute(const  Route * r, list<Route> & RouteHolder)
 				}
 		}
 
-	
+
 	tempRoute2.removeNodes();
 	const Route tempRoute = tempRoute2;
 	int lowestSubroute = 3;
-	int highestSubroute = 4;
+	int highestSubroute = 5;
 	//Only continue if subgraphs are larger or equal to lowest size and not to modified route
- 	if (lowestSubroute <= tempRoute.route.size() - 1 && counter < 0.8*r->route.size()) {
-		
+	if (lowestSubroute <= tempRoute.route.size() - 1 && counter < 0.3*r->route.size()) {
+
 		//Target route
 		const Route OrigRoute = *this;
 		list <Route*> bestRoutes;
@@ -482,9 +482,9 @@ void Route::generateRoute(const  Route * r, list<Route> & RouteHolder)
 		int i = 0;
 
 		int u = 0;
-		//OrigRoute.printPlot("Routes/target" + to_string(u));
+		OrigRoute.printPlot("Routes/target" + to_string(u));
 		//For each subgraph of r OG size n, n-1, n-k, insert the subgraph
-		for (int n = min(highestSubroute, tempRoute.route.size()-1); n >= lowestSubroute; n--) {
+		for (int n = min(highestSubroute, tempRoute.route.size() - 1); n >= lowestSubroute; n--) {
 
 			//Subgraphs are copies, the temp route is not affected by changes to subgraphs
 			subgraphs = tempRoute.getSubgraphs(n);
@@ -508,21 +508,22 @@ void Route::generateRoute(const  Route * r, list<Route> & RouteHolder)
 			}
 
 			origTransCost = bestRoute.getTransCost();
+			bestRoute.printPlot("Routes/bestinsertion" + to_string(u++));
 			int a = max(1, n - ceil(0.3*n));
-			int b = min(n+ceil(0.3*n), max(bestRoute.route.size() - 2, 0));
-			for (int nRem = a ; nRem <= b; nRem++) {
+			int b = min(n + ceil(0.3*n), max(bestRoute.route.size() - 2, 0));
+			for (int nRem = a; a <= b; a++) {
 				targetRoute = bestRoute;
 				removalCost = targetRoute.removeSubroute(nRem);
 				targetRoute.constructionCost = bestCost + removalCost;
-			
-			//bestRoute.printPlot("Routes/bestinsertion" + to_string(u++))
-			/*for (int j = n - ceil(0.3*n); j <= n + ceil(0.3*n); j++) {
-			for (int i = 1; i <= j; i++) {
-				removalCost = targetRoute.removeSubroute(1);
-				targetRoute.constructionCost = bestCost + removalCost;
-				//targetRoute.printPlot("Routes/remove" + to_string(u++));
-			}*/
-			
+
+				targetRoute.printPlot("Routes/bestremoval" + to_string(u++));
+				/*for (int j = n - ceil(0.3*n); j <= n + ceil(0.3*n); j++) {
+				for (int i = 1; i <= j; i++) {
+					removalCost = targetRoute.removeSubroute(1);
+					targetRoute.constructionCost = bestCost + removalCost;
+					//targetRoute.printPlot("Routes/remove" + to_string(u++));
+				}*/
+
 				//Ensure route is time feasible
 				while (!targetRoute.isFeasible())
 					targetRoute.removeSubroute(1);
@@ -536,11 +537,11 @@ void Route::generateRoute(const  Route * r, list<Route> & RouteHolder)
 
 				//Insert route
 				if (!Duplicate) {
-						Route r = *new Route(targetRoute);
-						r.State = MERGE;
-						RouteHolder.push_back(r);
-					}
-					
+					Route r = *new Route(targetRoute);
+					r.State = MERGE;
+					RouteHolder.push_back(r);
+				}
+
 			}
 
 			minCost = 200000;
@@ -549,10 +550,11 @@ void Route::generateRoute(const  Route * r, list<Route> & RouteHolder)
 
 
 
-			//newroute->printPlot("Routes/afterMerge" + to_string(rand()%100));
-			//RouteHolder.push_back(bestRoutes.front());
-			//for (Route* r : RouteHolder)
-				//r->printPlot("Routes/rr" + to_string(u++));
+		//newroute->printPlot("Routes/afterMerge" + to_string(rand()%100));
+		//RouteHolder.push_back(bestRoutes.front());
+		//for (Route* r : RouteHolder)
+			//r->printPlot("Routes/rr" + to_string(u++));
+
 	}
 }
 
