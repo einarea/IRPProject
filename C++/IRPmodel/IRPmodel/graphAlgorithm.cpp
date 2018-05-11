@@ -206,7 +206,7 @@ void graphAlgorithm::printToLatex(string * Columns, string * Rows, double ** dat
 int graphAlgorithm::getColor(double value)
 {
 
-	int i = floor(value * 8.9);
+	int i = (int) floor(value * 8.9);
 	if (i < 0) i = 0;
 	return i;
 }

@@ -67,6 +67,9 @@ void RouteProblem::formulateRouteProblem(int minimizeSelection)
 			for (int t : Instance.Periods)
 				obj += node->HoldingCost * inventory[i][t];
 		}
+
+		obj += ModelParameters::VehiclePenalty * extraVehicle;
+
 		routeProblem.setObj(routeProblem.newCtr("OBJ", obj));  /* Set the objective function */
 
 	}
@@ -147,6 +150,8 @@ void RouteProblem::initializeRouteVariables()
 		}
 	} // end initializing of load
 
+	//Initialize extra vehicle
+	extraVehicle = routeProblem.newVar(XPRBnewname("extraVehicle"), XPRB_PL, 0, 2 * ModelParameters::nVehicles);
 	  //Initialize inventory
 	inventory = new XPRBvar *[Instance.AllNodes.size()];
 

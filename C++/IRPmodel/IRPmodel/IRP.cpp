@@ -262,8 +262,8 @@ Solution * IRP::solveModel()
 	//XPRSsetcbcutmgr(oprob, cbmng, &(*this));
 	int d = prob.mipOptimise();
 
-	vector<XPRBcut> ass;
-	bool a = sepStrongComponents(ass);
+	//vector<XPRBcut> ass;
+	//bool a = sepStrongComponents(ass);
 	//prob.print();
 	//For printing
 
@@ -1549,7 +1549,6 @@ void IRP::addVisitConstraint(double ** Visit, int selection)
 
 	cout << "\n";
 	if (VisitCtr.isValid()) {
-
 		prob.delCtr(VisitCtr);
 	}
 
@@ -1567,7 +1566,7 @@ void IRP::addVisitConstraint(double ** Visit, int selection)
 				}
 			}
 		}
-		VisitCtr = prob.newCtr("MinVisits", p1 >= ceil(visits*0.25));
+		VisitCtr = prob.newCtr("MinVisits", p1 >= ceil(visits*0.4));
 		VisitCtr.print();
 		cout << "\n";
 	}
@@ -1586,7 +1585,7 @@ void IRP::addVisitConstraint(double ** Visit, int selection)
 		}
 
 		//add constraint
-		VisitCtr = prob.newCtr("MinVisits", p1 + p2 >= ceil(Database.Nodes.size()*Database.Periods.size()*0.1));
+		VisitCtr = prob.newCtr("MinVisits", p1 + p2 >= ceil(Database.Nodes.size()*Database.Periods.size()*0.25));
 		p1 = 0;
 		VisitCtr.print();
 		cout << "\n";
@@ -1787,34 +1786,6 @@ void IRP::addValidIneq(int ValidIneq)
 }//End valid inequalitites
 
 
-//Returns the difference in visits from sol2 to sol1
-double ** IRP::getVisitDifference(Solution * sol1, Solution * sol2)
-{
-	int i;
-	double ** changedMatrix;
-	double ** newVisitedMatrix = sol1->getVisitedMatrix();
-	double ** prevVisitedMatrix = sol2->getVisitedMatrix();
-	cout << "\n";
-	cout << "\nChangeMatrix: 1 added visit, -1 removed visit\n";
-	changedMatrix = new double *[getNumOfNodes() + 1];
-	for (auto node : Database.Nodes) {
-		i = node->getId();
-		cout << "\n";
-		changedMatrix[i] = new double[Database.AllPeriods.size()];
-		for (auto j : Database.Periods) {
-			double a = newVisitedMatrix[i][j];
-			double b = prevVisitedMatrix[i][j];
-			changedMatrix[i][j] = newVisitedMatrix[i][j] - prevVisitedMatrix[i][j];
-			cout << changedMatrix[i][j] << "\t";
-		}
-	}
-
-	delete newVisitedMatrix;
-	delete prevVisitedMatrix;
-
-	return changedMatrix;
-}
-
 
 void IRP::updateTabuMatrix(double ** changeMatrix)
 {
@@ -1960,6 +1931,40 @@ void IRP::addHoldingCostCtr(double holdingCost)
 	prob.setObj(prob.newCtr("OBJ", p1));
 	prob.print();
 }
+
+void IRP::addRouteCtr(vector<Route*> routes)
+{
+	for (XPRBctr ctr : RouteCtr)
+		if(ctr.isValid())
+			prob.delCtr(ctr);
+
+	if (RouteChangeCtr.isValid())
+		prob.delCtr(RouteChangeCtr);
+
+	XPRBexpr p1 = 0;
+	XPRBexpr p2 = 0;
+	changeRoute = new XPRBvar[routes.size()];
+	int rr = 0;
+	for (Route * r : routes){
+		changeRoute[rr] = prob.newVar(XPRBnewname("changeRoute%d", rr), XPRB_BV, 0, 1);
+		for (NodeIRP* node : r->route) {
+			if (!node->isDepot()) {
+				p1 += y[node->getId()][r->getPeriod()];
+			}
+		}
+
+		//Require change to route
+		RouteCtr.push_back(prob.newCtr(XPRBnewname("Route change"), p1 - (r->getSize()-2) <= 1-changeRoute[rr]));
+		p1 = 0;
+		p2 += changeRoute[rr];
+		r++;
+	}
+
+	RouteChangeCtr = prob.newCtr(XPRBnewname("Logical"), p2 >= floor(routes.size()*ModelParameters::ROUTE_LOCK/100));
+
+	//What percentage of routes that need change
+
+}		
 
 int IRP::getCapacity()
 {

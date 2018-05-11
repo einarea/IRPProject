@@ -7,6 +7,8 @@ public:
 	static const int MAX_RUNNING_TIME_IRP = 60; //seconds
 	static const int MAX_RUNNING_TIME_VRP = 60; //seconds
 	static const int MAX_ROUTE_TIME_ROUTE_PROBLEM = 90; //seconds
+	static const int INTENSIFICATION_MAX_TIME = 600; //seconds
+	static const int ROUTE_LOCK = 80;
 
 	//Selection for shift quantity
 	static const int MAX_SHIFT = 3;

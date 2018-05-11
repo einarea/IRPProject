@@ -52,6 +52,9 @@ private:
 	XPRBvar ** actionDelivery;
 	XPRBvar ** actionPickup;
 	XPRBvar *** simAction;
+	XPRBvar *changeRoute;
+	XPRBctr RouteChangeCtr;
+	vector<XPRBctr> RouteCtr;
 	double epsilon = 0.001;
 
 	XPRBctr ** TabuMatrix;
@@ -133,13 +136,12 @@ public:
 	int newRoute(vector <Node*> &path);
 	void addValidIneq(int ValidInequality);
 
-	//Solution information
-	double ** getVisitDifference(Solution * sol1, Solution * sol2);
 
 	//Route functions
 	void updateTabuMatrix(double ** changeMatrix);
 	int getNumOfNodes();
 	void addHoldingCostCtr(double holdingCost);
+	void addRouteCtr(vector<Route*> routes);
 	void printMatrix();
 	int getCapacity();
 	void useIPSubtourElimination();

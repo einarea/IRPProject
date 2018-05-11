@@ -63,7 +63,7 @@ void Solution::printSolution()
 	}
 }
 
-double Solution::getTransportationCost()
+double Solution::getTransportationCost() const
 {
 	double TravelCost = 0;
 	for (int t : Instance.Periods)
@@ -71,7 +71,7 @@ double Solution::getTransportationCost()
 	return TravelCost;
 }
 
-double Solution::getHoldingCost()
+double Solution::getHoldingCost() const
 {
 	double HoldingCost = 0;
 
@@ -83,7 +83,7 @@ double Solution::getHoldingCost()
 	return HoldingCost;
 }
 
-double Solution::getHoldingCost(int period)
+double Solution::getHoldingCost(int period) const
 {
 	double HoldingCost = 0;
 	for (NodeIRPHolder * n : Nodes) {
@@ -95,7 +95,7 @@ double Solution::getHoldingCost(int period)
 }
 
 
-double Solution::getTransportationCost(int t)
+double Solution::getTransportationCost(int t) const
 {
 	double TravelCost = 0;
 	double TravelCost2 = 0;
@@ -313,9 +313,8 @@ void Solution::createSubroute(vector<NodeIRP*> nodes)
 }
 
 
-Solution::Solution(const NodeInstanceDB & model, bool integer = false)
+Solution::Solution(const NodeInstanceDB & model)
 	:
-	IntegerSolution(integer),
 	Instance(model)
 {
 	//Initializa node hold
@@ -380,6 +379,26 @@ Solution & Solution::operator=(const Solution & cpSol)
 
 	this->TabuPeriods = cpSol.TabuPeriods;
 	return *this;
+}
+
+bool Solution::operator==(const Solution & sol)
+{
+	if (sol.getTransportationCost() == getTransportationCost() && sol.getHoldingCost() == getHoldingCost())
+		return true;
+	else
+		return false;
+	/*bool duplicate;
+	for (Route * r : getAllRoutes()){
+		duplicate = false;
+		for (Route * r2 : sol.getAllRoutes())
+			if (r->isDuplicate(r2))
+				duplicate = true;
+
+		if (!duplicate)
+			return false;
+	}
+
+	return true; */
 }
 
 //Moves ownership of solution
@@ -538,9 +557,40 @@ int Solution::SolutionCounter = 0;
 Solution * Solution::allocateSolution(const NodeInstanceDB &Instance)
 {
 	SolutionCounter++;
-	Solution * sol = new Solution(Instance, true);
+	Solution * sol = new Solution(Instance);
 	sol->SolID = SolutionCounter;
 	return sol;
+}
+
+
+//Returns the difference in visits from sol2 to sol1
+double ** Solution::getVisitDifference(const Solution &sol1, const Solution & sol2)
+{
+	int i;
+	double ** changedMatrix;
+	double ** newVisitedMatrix = sol1.getVisitedMatrix();
+	double ** prevVisitedMatrix = sol2.getVisitedMatrix();
+	cout << "\n";
+	cout << "\nChangeMatrix: 1 added visit, -1 removed visit\n";
+	changedMatrix = new double *[sol1.Instance.AllNodes.size()];
+	for (NodeIRPHolder * node : sol1.Nodes) {
+		i = node->getId();
+		if (i != 0) {
+			cout << "\n";
+			changedMatrix[i] = new double[sol1.Instance.AllPeriods.size()];
+			for (auto j : sol1.Instance.Periods) {
+				double a = newVisitedMatrix[i][j];
+				double b = prevVisitedMatrix[i][j];
+				changedMatrix[i][j] = newVisitedMatrix[i][j] - prevVisitedMatrix[i][j];
+				cout << changedMatrix[i][j] << "\t";
+			}
+		}
+	}
+
+	delete newVisitedMatrix;
+	delete prevVisitedMatrix;
+
+	return changedMatrix;
 }
 
 vector<Route*> Solution::getRoutes(int period) const
@@ -597,9 +647,9 @@ const NodeIRP * Solution::getLeastServed(vector<NodeIRP*> nodes, int period) con
 	NodeIRP * minNode = nullptr;
 	double minService = Instance.Capacity;
 	for (NodeIRP * node : nodes)
-			if (Nodes[node->getId()]->quantity(period) < minService && Nodes[node->getId()]->quantity(period) >= 0.01) {
-				minNode = node;
-				minService = node->Quantity;
+			if (Nodes[node->getId()]->quantity(period) < minService && Nodes[node->getId()]->quantity(period) >= 0.1) {
+				minNode = Nodes[node->getId()]->NodePeriods[period];
+				minService = Nodes[node->getId()]->quantity(period);
 			}
 
 	return minNode;
@@ -905,8 +955,15 @@ void Solution::plotPeriod(int t, string filename)
 	graphAlgorithm::printGraph(nodes, filename, ModelParameters::X);
 }
 
+void Solution::plot(string filename)
+{
+	for (int t : Instance.Periods) {
+		plotPeriod(t, filename + "_period_" + to_string(t));
+	}
+}
 
-bool Solution::isFeasible()
+
+bool Solution::isFeasible() const
 {
 	//Check if too many vehicles
 	for (int t : Instance.Periods) {
@@ -1085,7 +1142,7 @@ bool Solution::isRouteFeasible(Route * r)
 	return true;
 }
 
-double Solution::getNumberOfRoutes(int period)
+double Solution::getNumberOfRoutes(int period) const
 {
 	NodeIRPHolder * depot = getNode(0);
 	return depot->getOutflow(period);
@@ -1136,7 +1193,7 @@ double Solution::getNodeVisits(int period)
 	return getDeliveryNodeVisits(period) + getPickupNodeVisits(period);
 }
 
-double ** Solution::getVisitedMatrix()
+double ** Solution::getVisitedMatrix() const
 {
 	double ** VisitedMatrix;
 	cout << "\n\nVisitMatrix: 1 = visited, 0 = not visited";
@@ -1210,7 +1267,7 @@ double Solution::getPickup(int period)
 }
 
 
-NodeIRPHolder * Solution::getNode(int id)
+NodeIRPHolder * Solution::getNode(int id) const
 {
 	for (NodeIRPHolder * n : Nodes) {
 		if (n->getId() == id)
@@ -1261,7 +1318,7 @@ int Solution::getnPeriods()
 }
 
 //Returns a copy of the nodes in the solution. Hence any change to a route do not alter the solution.
-vector<Route*> Solution::getAllRoutes()
+vector<Route*> Solution::getAllRoutes() const
 {
 	vector<Route*> routes;
 	for (int t : Instance.Periods) {
@@ -1274,7 +1331,7 @@ vector<Route*> Solution::getAllRoutes()
 	return routes;
 }
 
-double Solution::getObjective()
+double Solution::getObjective() const
 {
 	return getHoldingCost() + getTransportationCost();
 }

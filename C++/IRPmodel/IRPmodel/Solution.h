@@ -14,10 +14,11 @@ class Solution
 public:
 	static int SolutionCounter; 
 	//Constructors
-	Solution(const NodeInstanceDB & model, bool integer);
+	Solution(const NodeInstanceDB & model);
 	Solution(const NodeInstanceDB & model, vector<NodeIRPHolder*> nodes);
 	Solution(const Solution&);
 	Solution& operator = (const Solution&);
+	bool operator ==(const Solution&);
 
 	void updateSolution(Solution&);
 	//Destructors
@@ -59,15 +60,16 @@ public:
 	vector <NodeIRP *> getVisitedNodes(int period);
 	vector <NodeIRP*> getNotVisitedNodes(int period);
 	void plotPeriod(int t, string filename);
+	void plot(string filename);
 	void sort(vector <NodeIRP>*);
-	bool IntegerSolution;
-	bool isFeasible();
+	static double ** Solution::getVisitDifference(const Solution & sol1, const Solution & sol2);
+	bool isFeasible() const;
 	void clearRoutes();
 	void clearEdges(int period);
 	void shiftQuantity(int SELECTION);
 	void shiftQuantityMIP();
 	bool isRouteFeasible(Route *);
-	double getNumberOfRoutes(int period);
+	double getNumberOfRoutes(int period) const;
 	double getResidualCapacity(int period);
 	vector<const NodeIRP*> getNodesIRP(int period);
 	//Returns the amount of total product deliveried less the capacity x (number of vehicles used - 1)
@@ -75,24 +77,24 @@ public:
 	//Returns the amount of total product pickup up less the capacity x (number of vehicles used - 1)
 	double getTotalPickup(int period);
 	double getNodeVisits(int period);
-	double ** getVisitedMatrix();
+	double ** getVisitedMatrix() const;
 	double getDeliveryNodeVisits(int period);
 	double getPickupNodeVisits(int period);
 	//Returns average delivery per node
 	double getDelivery(int period);
 	double getPickup(int period);
 	vector <Route *> getRoutes(int period) const;
-	NodeIRPHolder * getNode(int id);
+	NodeIRPHolder * getNode(int id) const;
 	int newRoute(vector <Node*> & route, int period);
 
 	int getnPeriods();
-	vector<Route*> getAllRoutes();
-	double getObjective();
+	vector<Route*> getAllRoutes() const;
+	double getObjective() const;
 	void printSolution();
-	double getTransportationCost();
-	double getHoldingCost();
-	double getHoldingCost(int period);
-	double getTransportationCost(int period);
+	double getTransportationCost() const;
+	double getHoldingCost() const;
+	double getHoldingCost(int period) const;
+	double getTransportationCost(int period) const;
 	Route * insertNodeInPeriod(int period, const NodeIRP * insNode);
 	bool isVisited(const NodeIRP * node, int period);
 

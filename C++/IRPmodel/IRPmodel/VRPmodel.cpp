@@ -42,6 +42,7 @@ void VRPmodel::solveModel(Solution * prevSol)
 	//prob.print();
 	int d = prob.mipOptimise();
 
+	cout<<extraVehicle.getSol();
 	updateSolution(prevSol);
 }
 
@@ -372,7 +373,7 @@ void VRPmodel::updateSolution(Solution * sol)
 
 void VRPmodel::clearVariables()
 {
-	int i, j;
+	int i;
 	for (auto node1 : AllNodes) {
 		i = node1->getId();
 		delete[] x[i];
