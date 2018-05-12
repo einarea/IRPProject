@@ -20,7 +20,8 @@ public:
 	void addRoutesToIRP(int t, Solution * sol);
 
 	time_t StartTime;
-	time_t SolutionTime;
+	double SolutionTime;
+	time_t lastSolutionFound;
 
 private:
 	void clearVariables();
@@ -34,7 +35,6 @@ private:
 	XPRBvar **loadPickup;
 	XPRBvar *timeVar;
 	XPRBvar extraVehicle;
-	XPRBvar **pCapacity; //Penalty capacity
 
 	//Sets
 	vector<NodeIRP*> AllNodes;

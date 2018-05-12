@@ -13,6 +13,11 @@
 using namespace ::dashoptimization;
 using namespace::std;
 
+void  XPRS_CC integerSolutionIRP(XPRSprob oprob, void * vd, int soltype, int * ifreject, double *cutoff) {
+	IRP * modelInstance;
+	modelInstance = (IRP*)vd;
+	modelInstance->lastSolutionFound = time(NULL);
+}
 
 void XPRS_CC acceptInt(XPRSprob oprob, void * vd, int soltype, int * ifreject, double *cutoff) {
 	IRP * modelInstance;
@@ -33,6 +38,9 @@ void XPRS_CC acceptInt(XPRSprob oprob, void * vd, int soltype, int * ifreject, d
 		}
 	}
 	modelInstance->getProblem()->endCB();
+
+	if (!addedCuts)
+		modelInstance->lastSolutionFound = time(NULL);
 }
 
 void XPRS_CC acceptIntQuantity(XPRSprob oprob, void * vd, int soltype, int * ifreject, double *cutoff) {
@@ -54,6 +62,8 @@ void XPRS_CC acceptIntQuantity(XPRSprob oprob, void * vd, int soltype, int * ifr
 				*ifreject = 1;
 				break;
 			}
+			else
+				modelInstance->lastSolutionFound = time(NULL);
 		}
 	}
 	modelInstance->getProblem()->endCB();
@@ -66,11 +76,9 @@ void XPRS_CC cbmngtimeIRP(XPRSprob oprob, void * vd,int parent, int newnode, int
 	modelInstance = (IRP*)vd;
 	//cout << (int)floor((XPRB::getTime() - modelInstance->startTime) / 1000) << "\n";
 
-
 	//cout << difftime(time(NULL), modelInstance->startTime) << "\n";
-	if (difftime(time(NULL), modelInstance->startTime) >= ModelParameters::MAX_RUNNING_TIME_IRP)
+	if (difftime(time(NULL), modelInstance->startTime) >= ModelParameters::MAX_RUNNING_TIME_IRP || difftime(time(NULL), modelInstance->lastSolutionFound)>=ModelParameters::TERMINATE_IF_NO_NEW_SOLUTION)
 	{
-		modelInstance->startTime = time(NULL);
 		XPRSinterrupt(oprob, XPRS_STOP_TIMELIMIT);
 	}
 }
@@ -113,6 +121,7 @@ int XPRS_CC cbmng(XPRSprob oprob, void * vd)
 		XPRSgetintattrib(oprob, XPRS_NODES, &node);
 		XPRSgetdblattrib(oprob, XPRS_LPOBJVAL, &objval);
 
+		modelInstance->getProblem()->setCutMode(1); // Enable the cut mode
 		for (XPRBcut cut : subtourCut)
 		{
 			
@@ -121,6 +130,7 @@ int XPRS_CC cbmng(XPRSprob oprob, void * vd)
 			cutId = modelInstance->nSubtourCuts;
 			bprob->addCuts(&cut, 1);
 		}
+		modelInstance->getProblem()->setCutMode(0);
 	}
 	
 	//Unload LP relaxation
@@ -254,12 +264,15 @@ Solution * IRP::solveModel()
 
 	if (ARC_RELAXED) {
 
-		//XPRSsetcbpreintsol(oprob, acceptIntQuantity, &(*this));
+		XPRSsetcbpreintsol(oprob, acceptIntQuantity, &(*this));
 	
 	}
+	else
+		XPRSsetcbpreintsol(oprob, integerSolutionIRP, &(*this));
 	//XPRSsetcbpreintsol(oprob, acceptInt, &(*this));
 	//prob.print();
 	//XPRSsetcbcutmgr(oprob, cbmng, &(*this));
+	//prob.print();
 	int d = prob.mipOptimise();
 
 	//vector<XPRBcut> ass;
@@ -271,7 +284,7 @@ Solution * IRP::solveModel()
 	XPRSgetdblattrib(oprob, XPRS_MIPBESTOBJVAL, &bestSol);
 	XPRSgetintattrib(oprob, XPRS_COLS, &nVariables);
 	XPRSgetintattrib(oprob, XPRS_ROWS, &nConstraints);
-	solutionTime = (XPRB::getTime() - startTime) / 1000;
+	solutionTime = difftime(time(NULL), startTime);
 	XPRSgetintattrib(oprob, XPRS_NODES, &nNodes);
 	//prob.print();
 
@@ -841,6 +854,10 @@ bool IRP::formulateProblem()
 		}
 	} // End transportation costs
 
+	//Add penalty cost for extra vehicle
+	for (int t : Database.Periods)
+		objective += ModelParameters::VehiclePenalty * extraVehicle[t];
+
 	//Holding costs
 	for (auto node : Database.Nodes) {
 		i = node->getId();
@@ -951,7 +968,7 @@ bool IRP::formulateProblem()
 	//Depot
 	for (int t : Database.Periods) {
 		p1 = y[0][t];
-		prob.newCtr("Max vehicles", p1 <= ModelParameters::nVehicles);
+		prob.newCtr("Max vehicles", p1 <= ModelParameters::nVehicles + extraVehicle[t]);
 		p1 = 0;
 	}
 
@@ -1442,6 +1459,11 @@ bool IRP::initializeVariables()
 		}
 	}
 
+	//Initialize extra vehicle
+	extraVehicle = new XPRBvar [Database.AllPeriods.size()];
+	for (int t : Database.Periods) {
+		extraVehicle[t] = prob.newVar(XPRBnewname("extravehicle_%d", t), XPRB_PL, 0, 2*ModelParameters::nVehicles);
+	}
 
 	inventory = new XPRBvar *[Database.AllNodes.size()];
 
@@ -1823,9 +1845,9 @@ void IRP::updateTabuMatrix(double ** changeMatrix)
 
 			//Do while no change tabued
 	
-				//If visit, lock that visit with 25% chance.
+				//If visit, lock that visit with 20% chance.
 				if (CountMatrix[i][t] >= 1) {
-					if (rand() % 100 + 1 <= 25) {
+					if (rand() % 100 + 1 <= 15) {
 						TabuMatrix[i][t] = prob.newCtr(y[i][t] >= 1);
 						counter += 1;
 						cout << "*\t";
@@ -1835,7 +1857,7 @@ void IRP::updateTabuMatrix(double ** changeMatrix)
 				}
 				else if (CountMatrix[i][t] == 0) cout << "\t";
 
-				//Else if visit removed, lock that visit with 25% chance.
+				//Else if visit removed, lock that visit with 20% chance.
 				else if (CountMatrix[i][t] <= -1) {
 					/*if (t == 1) {
 					if (rand() % 100 + 1 <= 50) {
@@ -1848,7 +1870,7 @@ void IRP::updateTabuMatrix(double ** changeMatrix)
 
 					}
 					else*/
-					if (rand() % 100 + 1 <= 25) {
+					if (rand() % 100 + 1 <= 15) {
 						TabuMatrix[i][t] = prob.newCtr(y[i][t] <= 0);
 						counter += 1;
 						cout << "*\t";
@@ -1975,11 +1997,10 @@ void IRP::useIPSubtourElimination()
 {
 	EDGE_WEIGHT = 0.5;
 	alpha = 0.3;
-
+	//prob.setCutMode(1);
 	oprob = prob.getXPRSprob();
 
 	//Enable subtour elimination
-	prob.setCutMode(1); // Enable the cut mode
 	XPRSsetcbcutmgr(oprob, cbmng, &(*this));
 	XPRSsetcbpreintsol(oprob, acceptInt, &(*this));
 }

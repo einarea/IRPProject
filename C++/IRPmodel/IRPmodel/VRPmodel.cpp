@@ -9,10 +9,16 @@ void XPRS_CC cbmngtimeVRP(XPRSprob oprob, void * vd, int parent, int newnode, in
 	VRPmodel * modelInstance;
 	modelInstance = (VRPmodel*)vd;
 
-	if (difftime(time(NULL), modelInstance->StartTime) >= ModelParameters::MAX_RUNNING_TIME_VRP)
+	if (difftime(time(NULL), modelInstance->StartTime) >= ModelParameters::MAX_RUNNING_TIME_VRP || difftime(time(NULL), modelInstance->lastSolutionFound) >= ModelParameters::TERMINATE_IF_NO_NEW_SOLUTION)
 	{
 		XPRSinterrupt(oprob, XPRS_STOP_TIMELIMIT);
 	}
+}
+
+void XPRS_CC integerSolution(XPRSprob oprob, void * vd, int soltype, int * ifreject, double *cutoff) {
+	VRPmodel * modelInstance;
+	modelInstance = (VRPmodel*)vd;
+	modelInstance->lastSolutionFound = time(NULL);
 }
 
 VRPmodel::VRPmodel(const NodeInstanceDB & db, vector<NodeIRP*> nodes, int period)
@@ -38,9 +44,13 @@ void VRPmodel::solveModel(Solution * prevSol)
 
 	//Set time callback
 	XPRSsetcbnewnode(oprob, cbmngtimeVRP, &(*this));
+	//Set integer solution callback
+	XPRSsetcbpreintsol(oprob, integerSolution, &(*this));
 
 	//prob.print();
 	int d = prob.mipOptimise();
+
+	SolutionTime = difftime(time(NULL), StartTime);
 
 	cout<<extraVehicle.getSol();
 	updateSolution(prevSol);
@@ -76,7 +86,6 @@ bool VRPmodel::initializeVariables()
 	//Initialize routing variables, load and penalty variables
 	loadDelivery = new XPRBvar *[Database.AllNodes.size()];
 	loadPickup = new XPRBvar *[Database.AllNodes.size()];
-	pCapacity = new XPRBvar *[Database.AllNodes.size()];
 
 	x = new XPRBvar * [Database.AllNodes.size()];
 	int i; 
@@ -85,7 +94,6 @@ bool VRPmodel::initializeVariables()
 		i = node1->getId();
 		x[i] = new XPRBvar[Database.AllNodes.size()];
 
-		pCapacity[i] = new XPRBvar[Database.AllNodes.size()];
 		loadDelivery[i] = new XPRBvar[Database.AllNodes.size()];
 		loadPickup[i] = new XPRBvar[Database.AllNodes.size()];
 
@@ -380,8 +388,9 @@ void VRPmodel::clearVariables()
 		delete[] loadDelivery[i];
 		delete[] loadPickup[i];
 	}
-	
+
 	delete[] x;
+	delete [] timeVar;
 	delete[] y;
 	delete[] loadDelivery;
 	delete[] loadPickup;

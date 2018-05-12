@@ -43,7 +43,9 @@ private:
 	int Capacity;
 	int NumOfPeriods;
 
+
 	//Variables	
+	XPRBvar * extraVehicle;
 	XPRBvar ** delivery;
 	XPRBvar ** pickup;
 	XPRBvar *** loadDelivery;
@@ -80,6 +82,9 @@ private:
 	int getCounter();
 
 public:
+
+	//Clocks
+	time_t lastSolutionFound;
 	//Solution data
 	double solutionTime = -1;
 	int nNodes = -1;

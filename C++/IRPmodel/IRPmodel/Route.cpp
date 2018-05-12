@@ -19,13 +19,16 @@ void Route::insertCheapestNode(vector<const NodeIRP*> nodes)
 	vector<NodeIRP*> insertionPoints;
 	vector<NodeIRP *> n;
 	n.resize(1);
-
-	printPlot("Routes/beforeInsertion");
+	cout << "\n" << "node: " << "hello \n";
+	cout << nodes.size();
+	//printPlot("Routes/beforeInsertion");
 	for (const NodeIRP * node : nodes) {
 		if (!inRoute(node)) {
 			n[0] = new NodeIRP(*node);
 			Route singleNode(n);
+			cout << "\n" << "node: " << node->getId() << "\n";
 			insertionPoints = cheapestInsertion(&singleNode, tempCost);
+			cout << "\n" << "nowewrfde: " << node->getId() << "\n";
 			if (tempCost < minCost) {
 				bestNode = singleNode;
 				minCost = tempCost;
@@ -35,9 +38,10 @@ void Route::insertCheapestNode(vector<const NodeIRP*> nodes)
 		}
 	}
 
+	cout << "\n" << "node: " << "helloend \n";
 	//constuct the new route
 	insert(start, end, new Route(bestNode));
-	printPlot("Routes/afterInsertion");			
+	//printPlot("Routes/afterInsertion");			
 }
 
 
@@ -76,12 +80,12 @@ int Route::getDirection() const
 
 	double degrees = atan2(x1*y2 - y1*x2, x1*x2 + y1*y2) * 180 / 3.14159;
 	if (degrees >= 0) {
-		printPlot("Routes/r_clockwise");
+		//printPlot("Routes/r_clockwise");
 		return ModelParameters::CLOCKWISE;
 	
 	}
 	else {
-		printPlot("Routes/r_counterclockwise");
+		//printPlot("Routes/r_counterclockwise");
 		return ModelParameters::COUNTER_CLOCKWISE;
 		
 	}
@@ -487,7 +491,7 @@ void Route::generateRoute(const  Route * r, list<Route> & RouteHolder)
 		int i = 0;
 
 		int u = 0;
-		OrigRoute.printPlot("Routes/target" + to_string(u));
+		//OrigRoute.printPlot("Routes/target" + to_string(u));
 		//For each subgraph of r OG size n, n-1, n-k, insert the subgraph
 		for (int n = min(highestSubroute, tempRoute.route.size() - 1); n >= lowestSubroute; n--) {
 
@@ -513,7 +517,7 @@ void Route::generateRoute(const  Route * r, list<Route> & RouteHolder)
 			}
 
 			origTransCost = bestRoute.getTransCost();
-			bestRoute.printPlot("Routes/bestinsertion" + to_string(u++));
+			//bestRoute.printPlot("Routes/bestinsertion" + to_string(u++));
 			int a = max(1, n - ceil(0.3*n));
 			int b = min(n + ceil(0.3*n), max(bestRoute.route.size() - 2, 0));
 			for (int nRem = a; a <= b; a++) {
@@ -521,7 +525,7 @@ void Route::generateRoute(const  Route * r, list<Route> & RouteHolder)
 				removalCost = targetRoute.removeSubroute(nRem);
 				targetRoute.constructionCost = bestCost + removalCost;
 
-				targetRoute.printPlot("Routes/bestremoval" + to_string(u++));
+				//targetRoute.printPlot("Routes/bestremoval" + to_string(u++));
 				/*for (int j = n - ceil(0.3*n); j <= n + ceil(0.3*n); j++) {
 				for (int i = 1; i <= j; i++) {
 					removalCost = targetRoute.removeSubroute(1);

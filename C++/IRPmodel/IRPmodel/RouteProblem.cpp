@@ -1120,6 +1120,17 @@ void RouteProblem::fillLoad(vector <NodeIRPHolder*> &nodeHolder) {
 					else
 						j = route[n + 1]->getId();
 
+					if (j != 0) {
+						while (nodeHolder[route[n + 1]->getId()]->NodePeriods[t]->Quantity < 0.01 && j != 0) {
+							n++;
+							if (n == route.size() - 1) {
+								j = 0;
+								break;
+							}
+							else
+								j = route[n + 1]->getId();
+						}
+					}
 					//Fill load
 					loadDel = loadDelivery[i][j][t].getSol();
 					loadPick = loadPickup[i][j][t].getSol();
