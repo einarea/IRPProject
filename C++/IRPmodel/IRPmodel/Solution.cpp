@@ -130,7 +130,7 @@ Route * Solution::insertNodeInPeriod(int period, const NodeIRP * insNode)
 	vector<const NodeIRP*> nodes;
 	nodes.push_back(insNode);
 	for (Route * r : getRoutes(period)) {
-		cout<< r->getTransCost() <<"\n";
+
 		origCost = r->getTransCost();
 		r->insertCheapestNode(nodes);
 		if (r->getTransCost() - origCost < minCost) {
@@ -626,6 +626,18 @@ vector<Route*> Solution::getRoutes(int period) const
 	return routes;
 }
 
+//Returns infeasible period or -1
+int Solution::getInfeasiblePeriod()
+{
+	for (int t : Instance.Periods) {
+		if (getNumberOfRoutes(t) > ModelParameters::nVehicles + 0.5) {
+			return t;
+		}
+	}
+
+	return -1;
+}
+
 //Count number of solution
 int Solution::solCounter = 0;
 
@@ -752,7 +764,6 @@ void Solution::generateRoutes(vector<Route* >&routeHold)
 		//r.printPlot("Routes/orig" + to_string(k++));
 	}
 
-	cout << "Remove least\n";
 	//Insert least served node in next period to the cheapest route in previous period
 	const NodeIRP * node;
 	bool duplicate = false;
@@ -778,17 +789,16 @@ void Solution::generateRoutes(vector<Route* >&routeHold)
 					}
 				}
 			}
-			cout << "Insert least\n";
+
 			vector<NodeIRP*> nodes = getNotVisitedNodes(t-1);
-			cout << nodes.size();
-			cout << "getvisited\n";
+
 				node = getLeastServed(nodes, t);
-				cout << "getleastServed\n";
+
 				if (node != nullptr) {
 					cout << node->Quantity;
 					duplicate = false;
 					ptr = insertNodeInPeriod(t - 1, node);
-					cout << "insertInPeriod\n";
+
 					if (ptr != nullptr) {
 						newRoute = *ptr;
 						newRoute.State = Route::LEAST_SERVED_INSERTION;
@@ -1090,7 +1100,7 @@ void Solution::shiftQuantity(int SELECTION)
 		routeProb.formulateRouteProblem();
 		routeProb.lockRoutes(Instance.Periods);
 		routeProb.formulateMinVisitProblem();
-		shiftSolution = routeProb.solveProblem();
+		shiftSolution = routeProb.solveProblem(&tempSol);
 	}
 
 
@@ -1106,7 +1116,7 @@ void Solution::shiftQuantity(int SELECTION)
 	solveInventoryProblem();
 }
 
-void Solution::shiftQuantityMIP()
+void Solution::shiftQuantityMIP(int shiftPer)
 {
 	Solution tempSol(*this);
 	RouteProblem routeProb(Instance, getAllRoutes());
@@ -1123,8 +1133,11 @@ void Solution::shiftQuantityMIP()
 			Periods.push_back(t);
 		}
 	}
-
-	routeProb.ShiftPeriod = getPeriodWithMinExcess(Periods);
+	
+	if (shiftPer == -1)
+		routeProb.ShiftPeriod = getPeriodWithMinExcess(Periods);
+	else
+		routeProb.ShiftPeriod = shiftPer;
 
 	if (TabuPeriods.size() >= 2)
 		TabuPeriods.pop_back();

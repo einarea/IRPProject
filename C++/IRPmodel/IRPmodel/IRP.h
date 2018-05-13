@@ -54,12 +54,12 @@ private:
 	XPRBvar ** actionDelivery;
 	XPRBvar ** actionPickup;
 	XPRBvar *** simAction;
-	XPRBvar *changeRoute;
+	vector<XPRBvar>changeRoute;
 	XPRBctr RouteChangeCtr;
 	vector<XPRBctr> RouteCtr;
 	double epsilon = 0.001;
 
-	XPRBctr ** TabuMatrix;
+	vector<vector<XPRBctr>> TabuMatrix;
 	double ** CountMatrix;
 
 	XPRBexpr objective;
@@ -87,6 +87,7 @@ public:
 	time_t lastSolutionFound;
 	//Solution data
 	double solutionTime = -1;
+	bool SubtourElimination = false;
 	int nNodes = -1;
 	int timeCounter = 0;
 	int nVariables = -1;

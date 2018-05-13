@@ -1087,8 +1087,6 @@ void RouteProblem::fillNodes(vector <NodeIRPHolder*> &nodeHolder)
 			if (node->getId() != 0) {
 				if (node->isDelivery()) {
 					node->NodePeriods[t]->Quantity = delivery[i][t].getSol();
-					double a = delivery[i][t].getSol();
-					int b = 0;
 				}
 				else
 					node->NodePeriods[t]->Quantity = pickup[i][t].getSol();
@@ -1132,11 +1130,18 @@ void RouteProblem::fillLoad(vector <NodeIRPHolder*> &nodeHolder) {
 						}
 					}
 					//Fill load
-					loadDel = loadDelivery[i][j][t].getSol();
-					loadPick = loadPickup[i][j][t].getSol();
-					nodeHolder[i]->NodePeriods[t]->addEdge(loadDel, loadPick, nodeHolder[j]->NodePeriods[t], 1);
+					if (i != j) {
+						loadDel = loadDelivery[i][j][t].getSol();
+						loadPick = loadPickup[i][j][t].getSol();
+						nodeHolder[i]->NodePeriods[t]->addEdge(loadDel, loadPick, nodeHolder[j]->NodePeriods[t], 1);
+					}
+
 				}
 
+			//Fill time
+				for (int n = 1; n < route.size(); n++) {
+					nodeHolder[route[n]->getId()]->NodePeriods[t]->TimeServed = nodeHolder[route[n - 1]->getId()]->NodePeriods[t]->TimeServed + route[n - 1]->getTravelTime(route[n]);
+				}
 			}
 
 		}

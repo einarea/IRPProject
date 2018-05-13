@@ -48,11 +48,10 @@ void VRPmodel::solveModel(Solution * prevSol)
 	XPRSsetcbpreintsol(oprob, integerSolution, &(*this));
 
 	//prob.print();
-	int d = prob.mipOptimise();
-
+	prob.mipOptimise();
+	//prob.print();
 	SolutionTime = difftime(time(NULL), StartTime);
 
-	cout<<extraVehicle.getSol();
 	updateSolution(prevSol);
 }
 
@@ -127,7 +126,7 @@ bool VRPmodel::initializeVariables()
 	timeVar = new XPRBvar[Database.AllNodes.size()];
 	for (NodeIRP * node1 : AllNodes) {
 		i = node1->getId();
-		timeVar[i] = prob.newVar(XPRBnewname("time_%d", i), XPRB_PL, 0, MaxTime);
+		timeVar[i] = prob.newVar(XPRBnewname("time_%d", i), XPRB_PL, 0, ModelParameters::maxTime);
 	}
 
 	return true;
@@ -294,11 +293,12 @@ bool VRPmodel::formulateProblem()
 		for (NodeIRP* node2 : Nodes) {
 			if (node1->inArcSet(node2)) {
 				j = node2->getId();
-				p1 = timeVar[i] - timeVar[j] + node1->getTravelTime(node2);
+				p1 = timeVar[i] - timeVar[j] + node1->getTravelTime(node2)
 					+ (ModelParameters::maxTime + node1->getTravelTime(node2)) * x[i][j];
 
 				p2 = ModelParameters::maxTime + node1->getTravelTime(node2);
 				prob.newCtr("Time flow", p1 <= p2);
+				cout << "\n";
 				p1 = 0;
 				p2 = 0;
 
@@ -372,6 +372,7 @@ void VRPmodel::updateSolution(Solution * sol)
 		//Add time variables
 		for (auto node : Nodes) {
 			i = node->getId();
+			cout << timeVar[i].getSol();
 			node->TimeServed = timeVar[i].getSol();
 		}
 	}

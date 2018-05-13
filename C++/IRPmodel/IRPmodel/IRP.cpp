@@ -50,18 +50,21 @@ void XPRS_CC acceptIntQuantity(XPRSprob oprob, void * vd, int soltype, int * ifr
 	modelInstance = (IRP*)vd;
 	vector<XPRBcut> subtourCut;
 	int i;
+	bool subtours = false;
+
 
 	modelInstance->getProblem()->beginCB(oprob);
 	modelInstance->getProblem()->sync(XPRB_XPRS_SOL);
 	for (auto node : modelInstance->getDB()->Nodes) {
 		i = node->getId();
 		for (auto t : modelInstance->getDB()->Periods) {
-			if (modelInstance->inventory[i][t].getSol() - round(modelInstance->inventory[i][t].getSol()) > 0.001) {
-				cout << modelInstance->inventory[i][t].getSol() << "\t";
-				cout << round(modelInstance->inventory[i][t].getSol()) << "\n";
+			if (modelInstance->SubtourElimination)
+				subtours = modelInstance->sepStrongComponents(subtourCut);
+			if (modelInstance->inventory[i][t].getSol() - round(modelInstance->inventory[i][t].getSol()) > 0.001 || subtours)
+				{
 				*ifreject = 1;
 				break;
-			}
+				}
 			else
 				modelInstance->lastSolutionFound = time(NULL);
 		}
@@ -77,7 +80,8 @@ void XPRS_CC cbmngtimeIRP(XPRSprob oprob, void * vd,int parent, int newnode, int
 	//cout << (int)floor((XPRB::getTime() - modelInstance->startTime) / 1000) << "\n";
 
 	//cout << difftime(time(NULL), modelInstance->startTime) << "\n";
-	if (difftime(time(NULL), modelInstance->startTime) >= ModelParameters::MAX_RUNNING_TIME_IRP || difftime(time(NULL), modelInstance->lastSolutionFound)>=ModelParameters::TERMINATE_IF_NO_NEW_SOLUTION)
+	if (difftime(time(NULL), modelInstance->startTime) >= ModelParameters::MAX_RUNNING_TIME_IRP ||
+		(modelInstance->lastSolutionFound!= 0 && difftime(time(NULL), modelInstance->lastSolutionFound)>=ModelParameters::TERMINATE_IF_NO_NEW_SOLUTION))
 	{
 		XPRSinterrupt(oprob, XPRS_STOP_TIMELIMIT);
 	}
@@ -128,6 +132,7 @@ int XPRS_CC cbmng(XPRSprob oprob, void * vd)
 		
 			modelInstance->nSubtourCuts += 1;
 			cutId = modelInstance->nSubtourCuts;
+			//cut.print();
 			bprob->addCuts(&cut, 1);
 		}
 		modelInstance->getProblem()->setCutMode(0);
@@ -199,14 +204,14 @@ IRP::IRP(const NodeInstanceDB& db, bool ArcRel, bool maskOn, int ** VisitMask)
 
 	int i, j;
 	//initialize tabu matrix and countMatrix
-	TabuMatrix = new XPRBctr *[getNumOfNodes() + 1];
+	TabuMatrix.resize(Database.AllNodes.size());
 	CountMatrix = new double *[getNumOfNodes() + 1];
 	for (auto node : Database.Nodes) {
 		i = node->getId();
-		TabuMatrix[i] = new XPRBctr[getNumOfPeriods() + 1];
+		TabuMatrix[i].resize(Database.AllPeriods.size());
 		CountMatrix[i] = new double[getNumOfPeriods() + 1];
 		for (auto t : Database.Periods) {
-			TabuMatrix[i][t] = 0;
+			//TabuMatrix[i][t] = 0;
 			CountMatrix[i][t] = 0;
 		}
 	}
@@ -287,8 +292,8 @@ Solution * IRP::solveModel()
 	solutionTime = difftime(time(NULL), startTime);
 	XPRSgetintattrib(oprob, XPRS_NODES, &nNodes);
 	//prob.print();
-
-	return allocateIRPSolution();
+	Solution * sol = allocateIRPSolution();
+	return sol;
 }
 
 Solution * IRP::solveLPModel()
@@ -1823,7 +1828,6 @@ void IRP::updateTabuMatrix(double ** changeMatrix)
 			//Clear the tabu matrix
 			if (TabuMatrix[i][t].isValid()) {
 				prob.delCtr(TabuMatrix[i][t]);
-				TabuMatrix[i][t] = 0;
 			}
 
 			//Update count matrix
@@ -1847,8 +1851,9 @@ void IRP::updateTabuMatrix(double ** changeMatrix)
 	
 				//If visit, lock that visit with 20% chance.
 				if (CountMatrix[i][t] >= 1) {
-					if (rand() % 100 + 1 <= 15) {
-						TabuMatrix[i][t] = prob.newCtr(y[i][t] >= 1);
+					//if (rand() % 100 + 1 <= 10){
+					if(fmod(i, 7) - floor(i/7) <= 0.2){
+						TabuMatrix[i][t] = prob.newCtr(XPRBnewname("ReqVisit"), y[i][t] >= 1);
 						counter += 1;
 						cout << "*\t";
 					}
@@ -1870,8 +1875,9 @@ void IRP::updateTabuMatrix(double ** changeMatrix)
 
 					}
 					else*/
-					if (rand() % 100 + 1 <= 15) {
-						TabuMatrix[i][t] = prob.newCtr(y[i][t] <= 0);
+					//if (rand() % 100 + 1 <= 10) {
+					if (fmod(i, 7) - floor(i / 7) <= 0.2){
+						TabuMatrix[i][t] = prob.newCtr(XPRBnewname("ReqNotVisit"), y[i][t] <= 0);
 						counter += 1;
 						cout << "*\t";
 					}
@@ -1965,10 +1971,11 @@ void IRP::addRouteCtr(vector<Route*> routes)
 
 	XPRBexpr p1 = 0;
 	XPRBexpr p2 = 0;
-	changeRoute = new XPRBvar[routes.size()];
+	changeRoute.clear();
+	changeRoute.resize(routes.size());
 	int rr = 0;
 	for (Route * r : routes){
-		changeRoute[rr] = prob.newVar(XPRBnewname("changeRoute%d", rr), XPRB_BV, 0, 1);
+		changeRoute[rr] = prob.newVar(XPRBnewname("changeRoute_%d", rr), XPRB_BV, 0, 1);
 		for (NodeIRP* node : r->route) {
 			if (!node->isDepot()) {
 				p1 += y[node->getId()][r->getPeriod()];
@@ -1979,7 +1986,7 @@ void IRP::addRouteCtr(vector<Route*> routes)
 		RouteCtr.push_back(prob.newCtr(XPRBnewname("Route change"), p1 - (r->getSize()-2) <= 1-changeRoute[rr]));
 		p1 = 0;
 		p2 += changeRoute[rr];
-		r++;
+		rr++;
 	}
 
 	RouteChangeCtr = prob.newCtr(XPRBnewname("Logical"), p2 >= floor(routes.size()*ModelParameters::ROUTE_LOCK/100));
@@ -1999,7 +2006,7 @@ void IRP::useIPSubtourElimination()
 	alpha = 0.3;
 	//prob.setCutMode(1);
 	oprob = prob.getXPRSprob();
-
+	SubtourElimination = true;
 	//Enable subtour elimination
 	XPRSsetcbcutmgr(oprob, cbmng, &(*this));
 	XPRSsetcbpreintsol(oprob, acceptInt, &(*this));

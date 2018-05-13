@@ -67,7 +67,7 @@ public:
 	void clearRoutes();
 	void clearEdges(int period);
 	void shiftQuantity(int SELECTION);
-	void shiftQuantityMIP();
+	void shiftQuantityMIP(int shiftPer = -1);
 	bool isRouteFeasible(Route *);
 	double getNumberOfRoutes(int period) const;
 	double getResidualCapacity(int period);
@@ -84,6 +84,7 @@ public:
 	double getDelivery(int period);
 	double getPickup(int period);
 	vector <Route *> getRoutes(int period) const;
+	int getInfeasiblePeriod();
 	NodeIRPHolder * getNode(int id) const;
 	int newRoute(vector <Node*> & route, int period);
 

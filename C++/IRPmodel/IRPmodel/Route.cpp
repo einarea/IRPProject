@@ -19,16 +19,16 @@ void Route::insertCheapestNode(vector<const NodeIRP*> nodes)
 	vector<NodeIRP*> insertionPoints;
 	vector<NodeIRP *> n;
 	n.resize(1);
-	cout << "\n" << "node: " << "hello \n";
+
 	cout << nodes.size();
 	//printPlot("Routes/beforeInsertion");
 	for (const NodeIRP * node : nodes) {
 		if (!inRoute(node)) {
 			n[0] = new NodeIRP(*node);
 			Route singleNode(n);
-			cout << "\n" << "node: " << node->getId() << "\n";
+
 			insertionPoints = cheapestInsertion(&singleNode, tempCost);
-			cout << "\n" << "nowewrfde: " << node->getId() << "\n";
+
 			if (tempCost < minCost) {
 				bestNode = singleNode;
 				minCost = tempCost;
@@ -38,7 +38,6 @@ void Route::insertCheapestNode(vector<const NodeIRP*> nodes)
 		}
 	}
 
-	cout << "\n" << "node: " << "helloend \n";
 	//constuct the new route
 	insert(start, end, new Route(bestNode));
 	//printPlot("Routes/afterInsertion");			
