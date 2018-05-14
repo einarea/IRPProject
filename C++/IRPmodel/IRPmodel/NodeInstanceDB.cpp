@@ -65,12 +65,12 @@ int NodeInstanceDB::getDemand(const NodeInstance & node1, int period) const
 }
 
 
-int NodeInstanceDB::getX(const NodeInstance& node) const
+double NodeInstanceDB::getX(const NodeInstance& node) const
 {
 	return node.getXpos();
 }
 
-int NodeInstanceDB::getY(const NodeInstance& node) const
+double NodeInstanceDB::getY(const NodeInstance& node) const
 {
 	return node.getYpos();
 }
@@ -79,7 +79,7 @@ int NodeInstanceDB::getY(const NodeInstance& node) const
 int NodeInstanceDB::getNumNodes() const
 {
 	//Do not count depot
-	return Nodes.size() - 1;
+	return (int) Nodes.size() - 1;
 }
 
 bool NodeInstanceDB::isDelivery(int id) const

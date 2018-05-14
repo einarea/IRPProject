@@ -169,6 +169,7 @@
     <ClInclude Include="Route.h" />
     <ClInclude Include="RouteProblem.h" />
     <ClInclude Include="Solution.h" />
+    <ClInclude Include="SolutionInfo.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="VRP.h" />
@@ -196,6 +197,7 @@
     <ClCompile Include="Route.cpp" />
     <ClCompile Include="RouteProblem.cpp" />
     <ClCompile Include="Solution.cpp" />
+    <ClCompile Include="SolutionInfo.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

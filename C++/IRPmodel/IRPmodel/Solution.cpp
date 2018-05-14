@@ -180,7 +180,7 @@ vector<NodeIRP*> Solution::selectPair(Route * r, int Selection)
 		pair.resize(2);
 		NodeIRP * tempNode = 0;
 
-		int minCost = 1000000;
+		double minCost = 1000000;
 
 		int i = 1;
 		NodeIRP * u;
@@ -704,6 +704,9 @@ void Solution::print(string filename, int load)
 
 int Solution::getPeriodWithMinExcess(const vector<int>& Periods)
 {
+	if (Periods.size() == 0)
+		exit(123);
+
 	int shiftPeriod = -1;
 	double oldDel;
 	double oldPick;
@@ -723,6 +726,23 @@ int Solution::getPeriodWithMinExcess(const vector<int>& Periods)
 			shiftPeriod = t;
 		}
 	}
+	if (shiftPeriod == -1)
+	{
+		for (int t : Periods) {
+			deliveryExcess = max(getTotalDelivery(t) - Instance.Capacity*(getNumberOfRoutes(t) - 2), 0);
+			pickupExcess = max(getTotalPickup(t) - Instance.Capacity*(getNumberOfRoutes(t) - 2), 0);
+			vehicleExcess = max(deliveryExcess, pickupExcess);
+
+			if (vehicleExcess < minExcess && vehicleExcess >= 1) {
+				minExcess = vehicleExcess;
+				shiftPeriod = t;
+			}
+		}
+	}
+
+	//Failsafe
+	if (shiftPeriod == -1)
+		shiftPeriod = rand() % (Periods.back() - Periods.front()) + Periods.front();
 
 	return shiftPeriod;
 }
@@ -783,7 +803,7 @@ void Solution::generateRoutes(vector<Route* >&routeHold)
 					//newRoute.printPlot("Routes/removal" + to_string(k++));
 
 
-					if (!duplicate) {
+					if (!duplicate && newRoute.isFeasible()) {
 						Route *r = new Route(newRoute);
 						routeHold.push_back(r);
 					}
@@ -807,7 +827,7 @@ void Solution::generateRoutes(vector<Route* >&routeHold)
 							if (newRoute.isDuplicate(&r))
 								duplicate = true;
 
-						if (!duplicate) {
+						if (!duplicate && newRoute.isFeasible()) {
 							Route * r = new Route(newRoute);
 							routeHold.push_back(r);
 						}
@@ -843,7 +863,9 @@ void Solution::generateRoutes(vector<Route* >&routeHold)
 			if (pos->State != Route::ORIG) {
 				Route * r = new Route(*pos);
 				r->State = Route::MERGE;
-				routeHold.push_back(r);
+				if (r->isFeasible()) {
+					routeHold.push_back(r);
+				}
 
 			}
 			pos++;
@@ -865,7 +887,7 @@ void Solution::generateRoutes(vector<Route* >&routeHold)
 			if (newRoute.isDuplicate(&r))
 				duplicate = true;
 		
-		if (!duplicate) {
+		if (!duplicate &&  newRoute.isFeasible()) {
 			Route * r = new Route(newRoute);
 			r->State = Route::SIMPLE_INSERTION;
 			routeHold.push_back(r);
@@ -887,7 +909,7 @@ void Solution::generateRoutes(vector<Route* >&routeHold)
 			if (newRoute.isDuplicate(&r))
 				duplicate = true;
 
-		if (!duplicate) {
+		if (!duplicate &&  newRoute.isFeasible()) {
 			Route * r = new Route(newRoute);
 			r->State = Route::INSERTION_REMOVAL;
 			routeHold.push_back(r);
@@ -1153,8 +1175,6 @@ void Solution::shiftQuantityMIP(int shiftPer)
 	}
 	routeProb.lockRoutes(Periods2);
 	routeProb.solveProblem(&tempSol);
-	
-	tempSol.printSolution();
 	updateSolution(tempSol);
 }
 

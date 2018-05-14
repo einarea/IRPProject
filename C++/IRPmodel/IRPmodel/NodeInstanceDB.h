@@ -52,8 +52,8 @@ public:
 	int getDemand(const NodeInstance &node1, int period) const;
 	int getDistance(const NodeInstance & node1, const NodeInstance &node2) const;
 	int getDistance(int i, int j) const; 
-	int getX(const NodeInstance & node) const;
-	int getY(const NodeInstance & node) const;
+	double getX(const NodeInstance & node) const;
+	double getY(const NodeInstance & node) const;
 	int getNumNodes() const;
 	bool isDelivery(int id) const;
 	void initializeCapacity();

@@ -109,6 +109,8 @@ public:
 	void insertSubrouteInRoute(Route* subroute, int period);
 	void createSubroute(vector<NodeIRP*> nodes);
 
+	double SolutionTime;
+
 private:
 	static int solCounter;
 	list<int> TabuPeriods;

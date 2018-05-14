@@ -8,7 +8,7 @@ void XPRS_CC cbmngtimeRoute(XPRSprob oprob, void * vd, int parent, int newnode, 
 	RouteProblem * model;
 	model = (RouteProblem*)vd;
 
-	if (difftime(time(NULL),  model->StartTime) >= ModelParameters::MAX_RUNNING_TIME_VRP)
+	if (difftime(time(NULL),  model->StartTime) >= ModelParameters::MAX_TIME_ROUTE_PROBLEM)
 	{
 		XPRSinterrupt(oprob, XPRS_STOP_TIMELIMIT);
 	}
@@ -1027,14 +1027,14 @@ Solution * RouteProblem::solveProblem(Solution * sol)
 	//routeProblem.print();
 	routeProblem.mipOptimise();
 
-	SolutionTime = time(NULL) - StartTime;
+	SolutionTime = difftime(time(NULL), StartTime);
 	//If no solution, allocate a new solution
 	if (sol == 0) {
 		sol = Solution::allocateSolution(Instance);
 	}
 
-
-
+	//routeProblem.print();
+	sol->SolutionTime = SolutionTime;
 
 
 	//routeProblem.print();

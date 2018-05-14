@@ -4,12 +4,16 @@ class ModelParameters
 public:
 
 	//Running time
-	static const int MAX_RUNNING_TIME_IRP = 180;//seconds
+	static const int MAX_RUNNING_TIME_IRP = 60;//seconds
 	static const int MAX_RUNNING_TIME_VRP = 60; //seconds
-	static const int MAX_ROUTE_TIME_ROUTE_PROBLEM = 90; //seconds
+	static const int MAX_TIME_ROUTE_PROBLEM = 90; //seconds
 	static const int INTENSIFICATION_MAX_TIME = 600; //seconds
 	static const int TERMINATE_IF_NO_NEW_SOLUTION = 120; //seconds
+	static const int HEURESTIC_TIME = 3600; // seconds
 	static const int ROUTE_LOCK = 70;
+
+	//Valid inequalitues
+	static const int ExcessParameter = 30; //Pecentage excess above vehicle capacity. Only those with more are added
 
 	//Selection for shift quantity
 	static const int MAX_SHIFT = 3;
@@ -17,8 +21,12 @@ public:
 	static const int MINIMIZE_VISITS = 5;
 	static const int SLACK = 10; //Slack in restricted shift constraint, % of capacity
 
-	//TabuList 
-	static const int TabuLength = 2;
+	//Diversication holding cost
+	static const int HOLDING_COST_INCREMENT = 5; //Used by addHoldingCostCtr, Holding cost allowed to increase in percentage, removed from objective function.
+
+	//Diversication tabuList 
+	static const int TabuLength = 2;  //Number of diversication iterations locked
+	static const int TABU_LOCK = 20; //Percentage of changes to lock randomly.
 
 	//Selection for route search
 	static const int REQUIRE_CHANGE = 31;
@@ -102,6 +110,14 @@ public:
 	static const int MIN_SERVICE = 33;
 	static const int CLOCKWISE = 54;
 	static const int COUNTER_CLOCKWISE = 53;
+
+	//STATE OF SOLUTION
+	static const int ROUTE_SEARCH = 76;
+	static const int SHIFT_QUANTITY = 77;
+	static const int IRP_REL = 78;
+	static const int VRP = 79;
+	static const int INTENSIFICATAION_END = 80;
+	static const int FINAL_SOL = 81;
 
 
 	ModelParameters();

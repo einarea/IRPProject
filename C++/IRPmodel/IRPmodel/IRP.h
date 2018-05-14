@@ -33,7 +33,6 @@ private:
 	//Subtour
 	double EDGE_WEIGHT;
 	double alpha;
-	double ExcessParameter;
 
 	int NumOfCustomers;
 	double getTransportationCost();

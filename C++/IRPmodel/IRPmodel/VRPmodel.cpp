@@ -51,7 +51,7 @@ void VRPmodel::solveModel(Solution * prevSol)
 	prob.mipOptimise();
 	//prob.print();
 	SolutionTime = difftime(time(NULL), StartTime);
-
+	prevSol->SolutionTime = SolutionTime;
 	updateSolution(prevSol);
 }
 

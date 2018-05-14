@@ -278,8 +278,9 @@ Solution * IRP::solveModel()
 	//prob.print();
 	//XPRSsetcbcutmgr(oprob, cbmng, &(*this));
 	//prob.print();
-	int d = prob.mipOptimise();
+	prob.mipOptimise();
 
+	solutionTime = difftime(time(NULL), startTime);
 	//vector<XPRBcut> ass;
 	//bool a = sepStrongComponents(ass);
 	//prob.print();
@@ -293,6 +294,7 @@ Solution * IRP::solveModel()
 	XPRSgetintattrib(oprob, XPRS_NODES, &nNodes);
 	//prob.print();
 	Solution * sol = allocateIRPSolution();
+	sol->SolutionTime = solutionTime;
 	return sol;
 }
 
@@ -1136,7 +1138,7 @@ void IRP::getSubset(vector<NodeInstance*> subset, int subsetSize, int nodePos, v
 				denominator = Database.Capacity;
 		}
 
-		if (ceil(flow / denominator) - flow/denominator >= ExcessParameter){
+		if (ceil(flow / denominator) - flow/denominator >= ModelParameters::ExcessParameter/100){
 			//Add colocated nodes to subset
 			int size = subset.size();
 			if (subset.size() >= 2) {
@@ -1321,8 +1323,8 @@ double IRP::getnRoutes()
 
 bool IRP::initializeSets()
 {
-	NumOfCustomers = Database.Nodes.size();				//Number of customers
-	NumOfPeriods = Database.getnPeriods();
+	NumOfCustomers = (int) Database.Nodes.size();				//Number of customers
+	NumOfPeriods = (int) Database.getnPeriods();
 
 	
 
@@ -1640,7 +1642,6 @@ vector<IRP::Route const *> IRP::getRoutes()
 void IRP::addValidIneq(int ValidIneq)
 
 {
-	ExcessParameter = 0.3;
 	int i, j;
 	XPRBexpr p1 = 0;
 	XPRBexpr p2 = 0;
@@ -1662,7 +1663,7 @@ void IRP::addValidIneq(int ValidIneq)
 						}
 						minVisit = ExcessConsumption[i][t1][t2] / min(Database.Capacity, (double) nodeDel->UpperLimit - nodeDel->LowerLimit);
 						
-						if (ceil(minVisit) - minVisit >= ExcessParameter)
+						if (ceil(minVisit) - minVisit >= ModelParameters::ExcessParameter/100)
 						{
 							prob.newCtr("MinVisitDelivery", p1 >= ceil(minVisit));
 						}
@@ -1684,7 +1685,7 @@ void IRP::addValidIneq(int ValidIneq)
 							p1 += y[i][t];
 						}
 						minVisit = ExcessProd[i][t1][t2] / min(Database.Capacity, nodePick->UpperLimit - nodePick->LowerLimit);
-						if (ceil(minVisit) - minVisit >= ExcessParameter)
+						if (ceil(minVisit) - minVisit >= ModelParameters::ExcessParameter/100)
 						{
 							prob.newCtr("MinVisitPickup", p1 >= ceil(minVisit));
 						}
@@ -1714,7 +1715,7 @@ void IRP::addValidIneq(int ValidIneq)
 						p3 = 1 - p3;
 						p1 = inventory[i][t1 - 1];
 
-						prob.newCtr("MinInventory", p1 >= p2*p3 + node->LowerLimit).print();
+						prob.newCtr("MinInventory", p1 >= p2*p3 + node->LowerLimit);
 						p1 = 0;
 						p2 = 0;
 						p3 = 0;
@@ -1851,8 +1852,8 @@ void IRP::updateTabuMatrix(double ** changeMatrix)
 	
 				//If visit, lock that visit with 20% chance.
 				if (CountMatrix[i][t] >= 1) {
-					//if (rand() % 100 + 1 <= 10){
-					if(fmod(i, 7) - floor(i/7) <= 0.2){
+					if (rand() % 100 + 1 <= ModelParameters::TABU_LOCK){
+					//if(fmod(i, 7) - floor(i/7) <= 0.2){
 						TabuMatrix[i][t] = prob.newCtr(XPRBnewname("ReqVisit"), y[i][t] >= 1);
 						counter += 1;
 						cout << "*\t";
@@ -1875,8 +1876,8 @@ void IRP::updateTabuMatrix(double ** changeMatrix)
 
 					}
 					else*/
-					//if (rand() % 100 + 1 <= 10) {
-					if (fmod(i, 7) - floor(i / 7) <= 0.2){
+					if (rand() % 100 + 1 <= ModelParameters::TABU_LOCK) {
+					//if (fmod(i, 7) - floor(i / 7) <= 0.2){
 						TabuMatrix[i][t] = prob.newCtr(XPRBnewname("ReqNotVisit"), y[i][t] <= 0);
 						counter += 1;
 						cout << "*\t";
@@ -1928,7 +1929,7 @@ void IRP::updateTabuMatrix(double ** changeMatrix)
 
 int IRP::getNumOfNodes()
 {
-	return Database.Nodes.size();
+	return (int) Database.Nodes.size();
 }
 
 void IRP::addHoldingCostCtr(double holdingCost)
@@ -1940,7 +1941,7 @@ void IRP::addHoldingCostCtr(double holdingCost)
 		for(int t : Database.Periods)
 			p1 += inventory[i][t];
 
-	prob.newCtr(XPRBnewname("HoldingCost"), p1 <= holdingCost * 1.05);
+	prob.newCtr(XPRBnewname("HoldingCost"), p1 <= holdingCost * (1+ModelParameters::HOLDING_COST_INCREMENT));
 	p1 = 0;
 
 	//Delete current objective
