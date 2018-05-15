@@ -107,7 +107,8 @@ public:
 	//To store all routes that are generated
 	vector <Route *> routes;
 
-	vector<vector<vector<XPRBvar>>> subtourIndices;
+	vector<vector<int>> subtourIndices;
+	vector<vector<int>> matrixValues;
 	//Sets
 	time_t startTime;
 	vector <int> integers1;

@@ -67,7 +67,8 @@ public:
 	void clearRoutes();
 	void clearEdges(int period);
 	void shiftQuantity(int SELECTION);
-	void shiftQuantityMIP(int shiftPer = -1);
+	void shiftQuantityMIP(int PeriodSelection);
+	int getMaxShiftPeriod();
 	bool isRouteFeasible(Route *);
 	double getNumberOfRoutes(int period) const;
 	double getResidualCapacity(int period);

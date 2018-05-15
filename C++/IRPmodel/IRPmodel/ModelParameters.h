@@ -4,7 +4,7 @@ class ModelParameters
 public:
 
 	//Running time
-	static const int MAX_RUNNING_TIME_IRP = 60;//seconds
+	static const int MAX_RUNNING_TIME_IRP = 600;//seconds
 	static const int MAX_RUNNING_TIME_VRP = 60; //seconds
 	static const int MAX_TIME_ROUTE_PROBLEM = 90; //seconds
 	static const int INTENSIFICATION_MAX_TIME = 600; //seconds
@@ -19,6 +19,7 @@ public:
 	static const int MAX_SHIFT = 3;
 	static const int RESTRICTED_SHIFT = 4;
 	static const int MINIMIZE_VISITS = 5;
+	static const int INFEASIBLE = 6;
 	static const int SLACK = 10; //Slack in restricted shift constraint, % of capacity
 
 	//Diversication holding cost
@@ -33,7 +34,7 @@ public:
 	static const int NO_CHANGE = 46;
 
 	////Model parameters;
-	static const int nVehicles = 3;
+	static const int nVehicles = 7;
 	static const int TRANSCOST_MULTIPLIER = 13;
 	static const int SERVICECOST_MULTIPLIER =100;
 	static const int TRAVELTIME_MULTIPLIER = 1;

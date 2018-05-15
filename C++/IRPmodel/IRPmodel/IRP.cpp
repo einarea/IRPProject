@@ -58,9 +58,7 @@ void XPRS_CC acceptIntQuantity(XPRSprob oprob, void * vd, int soltype, int * ifr
 	for (auto node : modelInstance->getDB()->Nodes) {
 		i = node->getId();
 		for (auto t : modelInstance->getDB()->Periods) {
-			if (modelInstance->SubtourElimination)
-				subtours = modelInstance->sepStrongComponents(subtourCut);
-			if (modelInstance->inventory[i][t].getSol() - round(modelInstance->inventory[i][t].getSol()) > 0.001 || subtours)
+			if (abs(modelInstance->inventory[i][t].getSol() - round(modelInstance->inventory[i][t].getSol())) > 0.001)
 				{
 				*ifreject = 1;
 				break;
@@ -111,28 +109,54 @@ int XPRS_CC cbmng(XPRSprob oprob, void * vd)
 	//Load LP relaxation currently held in the optimizer
 	modelInstance->getProblem()->beginCB(oprob);
 	modelInstance->getProblem()->sync(XPRB_XPRS_SOL);
-	
 	//For printing
 
 	//Load model instance
 	XPRBprob *bprob = modelInstance->getProblem();
 
-	bool addedCuts = modelInstance->sepStrongComponents(subtourCut);
+	//Columns number
+	int * mindo = nullptr;
+	//Matrix values
+	double * dvalo = nullptr;
 
-	if (addedCuts) {
-		int node;
+	bool addedCuts = modelInstance->sepStrongComponents(subtourCut);
+	/*if(addedCuts){
+	int i, j;
+	for (auto subtour : modelInstance->subtourIndices) {
+		mindo = new int[subtour.size()];
+
+		for (i = 0; i < subtour.size(); i++) {
+			mindo[i] = subtour[i];
+		}
+
+		for (auto rowValues : modelInstance->matrixValues)
+			for (j = 0; j < rowValues.size(); j++)
+				dvalo[j] = rowValues[j];
+
+		char qrtype = 'L';
+		double drhso = 1.0;
+		int nzp, status, mtype, mstart[2], *mindp, ncols;
+		double drhsp, *dvalp;
+
+		XPRSgetintattrib(oprob, XPRS_COLS, &ncols);
+
+		mindp = (int*)malloc(ncols*sizeof(int));
+		dvalp = (double*)malloc(ncols*sizeof(double));
+		XPRSpresolverow(oprob, qrtype, 2, mindo, dvalo, drhso, ncols,
+			&nzp, mindp, dvalp, &drhsp, &status);
+	}*/
+	if(addedCuts){
+	XPRSgetintattrib(oprob, XPRS_NODES, &node);
+	XPRSgetdblattrib(oprob, XPRS_LPOBJVAL, &objval);
 	
-		XPRSgetintattrib(oprob, XPRS_NODES, &node);
-		XPRSgetdblattrib(oprob, XPRS_LPOBJVAL, &objval);
 
 		modelInstance->getProblem()->setCutMode(1); // Enable the cut mode
 		for (XPRBcut cut : subtourCut)
-		{
-			
+		{	
 		
 			modelInstance->nSubtourCuts += 1;
 			cutId = modelInstance->nSubtourCuts;
-			//cut.print();
+			cut.print();
 			bprob->addCuts(&cut, 1);
 		}
 		modelInstance->getProblem()->setCutMode(0);
@@ -679,8 +703,8 @@ void IRP::addSubtourCut(vector<vector<Node *>>& strongComp, int t, bool &newCut,
 
 			if (circleFlow >= visitSum - maxVisitSum + alpha) {
 				//print subtour
-				vector<vector<XPRBvar>> subtour;
-				subtour.resize(2);
+				vector<int> varColumns;
+				vector<int> rowValues;
 				
 			//	graphAlgorithm::printGraph(strongComp[i], *this, "Subtour\subtour");
 				// save current basis
@@ -699,20 +723,26 @@ void IRP::addSubtourCut(vector<vector<Node *>>& strongComp, int t, bool &newCut,
 					//y[node->getId()][t].print();
 					//cout << "\n";
 					rSideStr = rSideStr + " + " + "y_" + to_string(node->getId());
-					subtour[1].push_back(y[node->getId()][t]);
+					varColumns.push_back(y[node->getId()][t].getColNum());
+					if (node->getId() == maxVisitID)
+						rowValues.push_back(1);
+					else
+						rowValues.push_back(-1);
 					for (Node *node2 : strongComp[i]) {
 						if (node->getId() != node2->getId() && node2->getId()+1 != node->getId()) {
 							//printf("x_%d%d + ", u, v);
 							lSide += x[node->getId()][node2->getId()][t];
+							rowValues.push_back(1);
 							//x[node->getId()][edge->getEndNode()->getId()][t].print();
 							//cout << "\n";
 
-							subtour[0].push_back(x[node->getId()][node2->getId()][t]);
+							varColumns.push_back(x[node->getId()][node2->getId()][t].getColNum());
 						}
 					}
 				}
 				
-				subtourIndices.push_back(subtour);
+				subtourIndices.push_back(varColumns);
+
 				rSide -= y[maxVisitID][t];
 				rSideStr = rSideStr + " - " + "y_" + to_string(maxVisitID);
 				//cout << rSideStr << "\n";
@@ -726,7 +756,7 @@ void IRP::addSubtourCut(vector<vector<Node *>>& strongComp, int t, bool &newCut,
 
 				//SubtourCut.push_back(vv);
 			
-				//SubtourCut.push_back(vv);
+	
 				newCut = true;		
 				maxVisitID = -1;
 				
@@ -807,7 +837,7 @@ bool IRP::addSubtourCtr(vector<vector<Node *>>& strongComp, int t)
 						}
 					}
 				}
-				subtourIndices.push_back(subtour);
+				//subtourIndices.push_back(subtour);
 				rSide -= y[maxVisitID][t];
 				rSideStr = rSideStr + " - " + "y_" + to_string(maxVisitID);
 				//cout << rSideStr << "\n";
@@ -833,33 +863,41 @@ bool IRP::formulateProblem()
 	bool arcIndicator;
 	/****OBJECTIVE****/
 		//Transportation costs
-	for (auto node1 : Database.AllNodes) {
-		i = node1->getId();
-		for (auto node2 : Database.AllNodes) {
-			j = node2->getId();
-			if (ModelParameters::Simultaneous)
-				arcIndicator = (Database.inSimultaneousArcSet(i, j) && !node1->isColocated(node2));
-			else
-				arcIndicator = node1->inArcSet(node2);
+	if (!ModelParameters::Simultaneous) {
+		for (auto node1 : Database.AllNodes) {
+			i = node1->getId();
+			for (auto node2 : Database.AllNodes) {
+				if (node1->inArcSet(node2)) {
+					j = node2->getId();
+					for (int t : Database.Periods) {
 
-			for (int t : Database.Periods) {
-				if (arcIndicator)
-					objective += node1->getTransCost(node2) * x[i][j][t];
-			}
-		}
-
-		if (ModelParameters::Simultaneous) {
-			for (auto node1 : Database.DeliveryNodes) {
-				i = node1->getId();
-				for (auto node2 : Database.PickupNodes) {
-					i = node2->getId();
-					if (Database.isColocated(i, j))
-						for (int t : Database.Periods)
-							objective += simAction[i][j][t] * node1->getTransCost(node2);
+						objective += node1->getTransCost(node2) * x[i][j][t];
+					}
 				}
 			}
 		}
-	} // End transportation costs
+	}
+
+	else {
+		for (auto node1 : Database.AllNodes) {
+			i = node1->getId();
+			for (auto node2 : Database.AllNodes) {
+				if (node1->inArcSet(node2)) {
+					j = node2->getId();
+					for (int t : Database.Periods) {
+						if (node1->isColocated(node2)) {
+							objective += simAction[i][j][t] * node1->getTransCost(node2);
+						}
+						else {
+							objective += node1->getTransCost(node2) * x[i][j][t];
+						}
+					}
+				}
+			}
+		}
+	}
+	
+
 
 	//Add penalty cost for extra vehicle
 	for (int t : Database.Periods)
@@ -881,8 +919,8 @@ bool IRP::formulateProblem()
 		for (auto node1 : Database.DeliveryNodes) {
 			i = node1->getId();
 			for (auto node2 : Database.PickupNodes) {
-				j = node2->getId();
-				if (node1->isColocated(node2)) {
+				if (node1->inArcSet(node2) && node1->isColocated(node2)) {
+					j = node2->getId();
 					for (int t : Database.Periods) {
 						p1 = actionDelivery[i][t] + actionPickup[j][t] - epsilon* simAction[i][j][t];
 						prob.newCtr("SimAction", p1 <= 2 - epsilon);
@@ -903,13 +941,14 @@ bool IRP::formulateProblem()
 				p1 = 0;
 			}
 
-			for (auto node : Database.DeliveryNodes)
+			for (auto node : Database.DeliveryNodes) {
 				i = node->getId();
-			for (int t : Database.Periods)
-			{
-				p1 = delivery[i][t] - min(Database.Capacity, node->UpperLimit - node->LowerLimit)*actionDelivery[i][t];
-				prob.newCtr("PickupAction", p1 <= 0);
-				p1 = 0;
+				for (int t : Database.Periods)
+				{
+					p1 = delivery[i][t] - min(Database.Capacity, node->UpperLimit - node->LowerLimit)*actionDelivery[i][t];
+					prob.newCtr("Deliveryction", p1 <= 0);
+					p1 = 0;
+				}
 			}
 		}
 	}

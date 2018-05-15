@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <stdlib.h>
+#include <list>
 #include <fstream>
 #include <iomanip> // setprecision
 #include <sstream> // stringstream
@@ -20,11 +21,14 @@ public:
 
 	class InstanceInfo {
 	public:
+
+		void fillInfo();
 		InstanceInfo(string name);
 		const Information * getInfo(int time) const;
-		vector<Information> infoHolder;
+		list<Information> infoHolder;
 		string Name;
-		void printInstanceToFile();
+		void printInstanceToFile(double bestInfo = -1);
+		int getMaxTime();
 		void addSolutionPoint(int state, double objectiveVal, double time);
 	};
 

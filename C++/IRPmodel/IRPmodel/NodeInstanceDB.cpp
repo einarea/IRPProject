@@ -305,22 +305,46 @@ NodeInstanceDB::NodeInstanceDB(string fileName)
 }
 
 //Generate two colocated nodes for nCustomers
-NodeInstanceDB::NodeInstanceDB(int nCustomers, int nPer)
+NodeInstanceDB::NodeInstanceDB(int nCustomers, int nPer, int type)
 	:
 	nPeriods(nPer)
 {
 	AllNodes.push_back(new NodeInstance(0, true, 0, 0, nPer, 1));
 
-	for (int i = 1; i <= 2*nCustomers; i = i+2) {
-		auto delNode = new NodeInstance(i, true, nPer, i);
-		AllNodes.push_back(delNode);
-		AllNodes.push_back(new NodeInstance(i+1, false, delNode->PosX, delNode->PosY, nPer, i+1));
+	switch (type) {
+	case COLOCATED: {
+		for (int i = 1; i <= 2 * nCustomers; i = i + 2) {
+			auto delNode = new NodeInstance(i, true, nPer, i);
+			AllNodes.push_back(delNode);
+			AllNodes.push_back(new NodeInstance(i + 1, false, delNode->PosX, delNode->PosY, nPer, i + 1));
+		}
+		break;
+	}
+
+	case SEPARATE: {
+		for (int i = 1; i <= nCustomers; i = i + 2) {
+			auto delNode = new NodeInstance(i, true, nPer, i + 100);
+			AllNodes.push_back(delNode);
+			auto picNode = new NodeInstance(i + 1, false, nPer, i + 200);
+			AllNodes.push_back(picNode);
+		}
+		break;
+	}
+
+	case DELIVERY: {
+		for (int i = 1; i <= nCustomers; i++) {
+			auto delNode = new NodeInstance(i, true, nPer, i + 100);
+			AllNodes.push_back(delNode);
+		}
+		break;
+	}
 	}
 
 	initializeSets();
 
 	//Initialize capacity
 	initializeCapacity();
+
 }
 
 
@@ -331,7 +355,7 @@ NodeInstanceDB::~NodeInstanceDB()
 NodeInstanceDB* NodeInstanceDB::createInstance(int nCustomers, int nPeriods, int version)
 {
 	//Sleep(1000);
-	NodeInstanceDB *db = new NodeInstanceDB(nCustomers, nPeriods);
+	NodeInstanceDB *db = new NodeInstanceDB(nCustomers, nPeriods, COLOCATED);
 
 	ofstream instanceFile;
 
@@ -339,6 +363,32 @@ NodeInstanceDB* NodeInstanceDB::createInstance(int nCustomers, int nPeriods, int
 	db->writeInstanceToFile(instanceFile, filename);
 	return db;
 
+}
+
+NodeInstanceDB * NodeInstanceDB::createPDInstance(int nCustomers, int nPeriods, int version)
+{
+	NodeInstanceDB *db = new NodeInstanceDB(nCustomers, nPeriods, SEPARATE);
+
+	ofstream instanceFile;
+
+	string filename = getFilename(nCustomers, nPeriods, version);
+	db->writeInstanceToFile(instanceFile, filename);
+	return db;
+
+	return nullptr;
+}
+
+NodeInstanceDB * NodeInstanceDB::createDelInstance(int nCustomers, int nPeriods, int version)
+{
+	NodeInstanceDB *db = new NodeInstanceDB(nCustomers, nPeriods, DELIVERY);
+
+	ofstream instanceFile;
+
+	string filename = getFilename(nCustomers, nPeriods, version);
+	db->writeInstanceToFile(instanceFile, filename);
+	return db;
+
+	return nullptr;
 }
 
 NodeInstanceDB * NodeInstanceDB::openInstance(int nCustomers, int nPeriods, int version)

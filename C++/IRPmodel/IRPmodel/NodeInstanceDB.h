@@ -13,6 +13,9 @@ using namespace::std;
 //Class that stores the instance and define arc set, used to initialize the instance from the file name
 class NodeInstanceDB
 {
+	static const int DELIVERY = 22;
+	static const int COLOCATED = 23;
+	static const int SEPARATE = 24;
 	friend class Solution;
 	friend class Route;
 	friend class IRP;
@@ -30,12 +33,14 @@ public:
 	double Capacity;
 
 	NodeInstanceDB(string fileName);
-	NodeInstanceDB(int nCustomers, int nPeriods);
+	NodeInstanceDB(int nCustomers, int nPeriods, int type = COLOCATED);
 	~NodeInstanceDB();
 
 	vector<int> getDifference2(vector<int> set1, vector<NodeInstance*> set2) const;
 	vector<NodeInstance*> getDifference(vector<NodeInstance*> set1, vector<NodeInstance*> set2) const;
 	static NodeInstanceDB * createInstance(int nCustomers, int nPeriods, int version);
+	static NodeInstanceDB * createPDInstance(int nCustomers, int nPeriods, int version);
+	static NodeInstanceDB * createDelInstance(int nCustomers, int nPeriods, int version);
 	static NodeInstanceDB * openInstance(int nCustomers, int nPeriods, int version);
 	static string getFilename(int nCustomers, int nPeriods, int version);
 	NodeInstance * getColocatedNode(const NodeInstance*);

@@ -67,9 +67,19 @@ bool NodeInstance::inArcSet(const NodeInstance * n) const
 	if (*this == *n)
 		return false;
 
-	for (auto m : ForbiddenNodes)
+	if (ModelParameters::Simultaneous) {
+		//No arcs into pickup
+		if (getId() == 0 && !n->isDelivery())
+			return false;
+		//no arcs out from delivery unless to colocated node
+		else if (getId()!= 0 && isDelivery() && !isColocated(n))
+			return false;
+	}
+
+	for (auto m : ForbiddenNodes) {
 		if (m == n)
 			return false;
+	}
 
 	return true;
 }
@@ -130,7 +140,7 @@ bool NodeInstance::isDelivery() const
 }
 
 
-bool NodeInstance::isColocated(NodeInstance * node) const
+bool NodeInstance::isColocated(const NodeInstance * node) const
 {
 	if (PosX == node->PosX && PosY == node->PosY)
 		return true;

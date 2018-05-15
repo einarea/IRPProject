@@ -1138,7 +1138,7 @@ void Solution::shiftQuantity(int SELECTION)
 	solveInventoryProblem();
 }
 
-void Solution::shiftQuantityMIP(int shiftPer)
+void Solution::shiftQuantityMIP(int periodSelection)
 {
 	Solution tempSol(*this);
 	RouteProblem routeProb(Instance, getAllRoutes());
@@ -1156,10 +1156,25 @@ void Solution::shiftQuantityMIP(int shiftPer)
 		}
 	}
 	
-	if (shiftPer == -1)
+	switch (periodSelection) {
+	case ModelParameters::INFEASIBLE: {
+		routeProb.ShiftPeriod = getInfeasiblePeriod();
+		break;
+	}
+
+	case ModelParameters::RESTRICTED_SHIFT: {
 		routeProb.ShiftPeriod = getPeriodWithMinExcess(Periods);
-	else
-		routeProb.ShiftPeriod = shiftPer;
+		break;
+	}
+
+	case ModelParameters::MAX_SHIFT: {
+		routeProb.ShiftPeriod = getMaxShiftPeriod();
+		break;
+	}
+	}
+
+	if (routeProb.ShiftPeriod == -1)
+		 exit(111);
 
 	if (TabuPeriods.size() >= 2)
 		TabuPeriods.pop_back();
@@ -1177,6 +1192,41 @@ void Solution::shiftQuantityMIP(int shiftPer)
 	routeProb.solveProblem(&tempSol);
 	updateSolution(tempSol);
 }
+
+int Solution::getMaxShiftPeriod()
+{
+	Solution tempSol(*this);
+	double origQuantity;
+	double newQuantity;
+	double maxShift = -1;
+	int shiftPeriod = -1;
+	for (int t : Instance.Periods) {
+		RouteProblem routeProb(Instance, getAllRoutes());
+
+		if (getNumberOfRoutes(t) >= 1) {
+			routeProb.ShiftPeriod = t;
+			routeProb.formulateRouteProblem(ModelParameters::MIN_SERVICE);
+			routeProb.lockRoutes(Instance.Periods);
+
+			origQuantity = getTotalDelivery(t) + getTotalPickup(t);
+			routeProb.solveProblem(&tempSol);
+
+
+			//Select the period with the greatest shift
+			newQuantity = tempSol.getTotalDelivery(t) + tempSol.getTotalPickup(t);
+
+			if (origQuantity - newQuantity > maxShift) {
+				maxShift = origQuantity - newQuantity;
+				shiftPeriod = t;
+			}
+
+		}
+	}
+
+	return shiftPeriod;
+}
+
+
 
 bool Solution::isRouteFeasible(Route * r)
 {

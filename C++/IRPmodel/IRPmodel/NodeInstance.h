@@ -43,7 +43,7 @@ public:
 	NodeInstance(int NodeId, bool Del, int posX, int posY, int nPer, int randSeed);
 	NodeInstance(int id, bool Del, int nPer, int randSeed);
 	bool isDelivery() const;
-	bool isColocated(NodeInstance *) const;
+	bool isColocated(const NodeInstance *) const;
 	bool hasArc(NodeInstance * node);
 	double getXpos() const;
 	double getYpos() const ;

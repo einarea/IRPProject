@@ -45,6 +45,26 @@ SolutionInfo::~SolutionInfo()
 {
 }
 
+
+void SolutionInfo::InstanceInfo::fillInfo()
+{
+	double n;
+	double obj;
+	auto pos = infoHolder.begin();
+	while (pos->State != "FINAL") {
+		n = pos->Time + 1;
+		obj = pos->ObjectiveVal;
+		pos++;
+		while (n != pos->Time + 1){
+			if(pos->State != "CON" || pos->Time == infoHolder.begin()->Time)
+				infoHolder.insert(pos, *new Information("N/A", obj, n));
+			else
+				infoHolder.insert(pos, *new Information("N/A", -1, n));
+			n++;
+		}
+	}
+}
+
 SolutionInfo::InstanceInfo::InstanceInfo(string name)
 	:
 	Name(name)
@@ -53,26 +73,59 @@ SolutionInfo::InstanceInfo::InstanceInfo(string name)
 
 const SolutionInfo::Information * SolutionInfo::InstanceInfo::getInfo(int time) const
 {
-	int i = 0;
-	for (int i = 0; i < infoHolder.size(); i++)
-		if (infoHolder[i].Time == time)
-			return &infoHolder[i];
-
-	return nullptr;
+	return 0;
 }
 
-void SolutionInfo::InstanceInfo::printInstanceToFile()
+void SolutionInfo::InstanceInfo::printInstanceToFile(double bestBound)
 {
 	ofstream ins;
 	ins.open("Heurestic/" + Name);
 
-	for (Information v : infoHolder) {
-		ins << v.State << "\t";
-		ins << v.Time << "\t";
-		ins << v.ObjectiveVal << "\n";
+	if (bestBound == -1) {
+
+		for (Information &info : infoHolder) {
+			if (info.State != "FINAL") {
+				ins << info.State << "\t";
+				ins << info.Time << "\t";
+				if (info.ObjectiveVal == -1) {
+					ins << "\t";
+					ins << infoHolder.back().ObjectiveVal << "\n";
+				}
+				else {
+					ins << info.ObjectiveVal << "\t";
+					ins << infoHolder.back().ObjectiveVal << "\n";
+				}
+
+
+
+			}
+		}
+	}
+	else {
+		for (Information &info : infoHolder) {
+			if (info.State != "FINAL") {
+				ins << info.State << "\t";
+				ins << info.Time << "\t";
+				if (info.ObjectiveVal == -1) {
+					ins << "\t";
+					ins << (infoHolder.back().ObjectiveVal - bestBound) / bestBound << "\n";
+				}
+				else {
+					ins << (info.ObjectiveVal-bestBound)/bestBound << "\t";
+					ins << (infoHolder.back().ObjectiveVal-bestBound)/bestBound << "\n";
+				}
+
+			}
+		}
 	}
 
+
 	ins.close();
+}
+
+int SolutionInfo::InstanceInfo::getMaxTime()
+{
+	return infoHolder.back().Time;
 }
 
 void SolutionInfo::InstanceInfo::addSolutionPoint(int state, double objectiveVal, double time)
