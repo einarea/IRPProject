@@ -312,6 +312,36 @@ void Solution::createSubroute(vector<NodeIRP*> nodes)
 	}
 }
 
+void Solution::buildStrongGraph(vector<NodeStrong*>& graph, int t)
+{
+	int s;
+	double edgeValue;
+	int i, j;
+
+	//Create nodes for each visited customer
+	for (NodeIRPHolder * node : Nodes) {
+		if (node->quantity(t) >= 0.001) {
+			NodeStrong * node2 = new NodeStrong(node->getId());
+			graph.push_back(node2);
+		}
+	}
+	//Not robust, but faster arcset lookup, be aware of changing node set logic
+	//Add outgoing edges from each visited node
+	for (NodeStrong *node : graph) {
+		s = node->getId();
+		if (node->getEdge()->getValue() > ModelParameters::EDGE_WEIGHT) {
+			node->addEdge(node->getEdge()->getValue(), node->getEdge()->getEndNode());
+		}
+	}
+}
+
+void Solution::getSubtours(vector<Node*>strongComp, int t)
+{
+
+}
+
+
+
 
 Solution::Solution(const NodeInstanceDB & model)
 	:
@@ -1136,6 +1166,22 @@ void Solution::shiftQuantity(int SELECTION)
 
 	//Minimize the inventory
 	solveInventoryProblem();
+}
+
+void Solution::getStrongComponents()
+{
+	vector <vector<Node*>> result; //matrix to store strong components
+	vector <NodeStrong*> graph;		//Graph to store nodes
+
+	bool newCut = false;
+	
+	for (int t : Instance.Periods) {
+		//buildStrongGraph(graph, t, false, EDGE_WEIGHT); //Do not include depot in graph
+													//graphAlgorithm::printGraph(graph, *this, "Subtour/DepotGone" + to_string(t), ModelParameters::X);
+
+		buildStrongGraph(graph, t); //Do not include depot in graph
+		graphAlgorithm::sepByStrongComp(graph, result);
+	}
 }
 
 void Solution::shiftQuantityMIP(int periodSelection)

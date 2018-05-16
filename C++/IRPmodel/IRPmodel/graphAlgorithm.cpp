@@ -8,168 +8,26 @@ graphAlgorithm::graphAlgorithm()
 {
 }
 
+void graphAlgorithm::printGraph(vector<NodeStrong*>& graph, string filename, int weight) {
+	vector<NodeIRP*> graph2;
+	for (Node* n : graph)
+		graph2.push_back(NodeIRP::getNode(n));
+
+	printGraphHelper(graph2, filename, false, weight);
+}
+
+
+void graphAlgorithm::printGraph(vector<Node*>& graph, string filename, int weight) {
+	vector<NodeIRP*> graph2;
+	for (Node* n : graph)
+		graph2.push_back(NodeIRP::getNode(n));
+
+	printGraphHelper(graph2, filename, false, weight);
+}
 
 void graphAlgorithm::printGraph(vector<NodeIRP*>& graph, string filename, int weight) {
 
-
-	FILE *gnuplotPipe = _popen("C:\\Octave\\3.2.4_gcc-4.4.0\\bin\\gnuplot", "w");
-	Gnuplot gp(gnuplotPipe);
-
-	vector < pair<int, int>> nodePoints;
-	vector < pair<int, int>> Depot;
-	vector<vector<boost::tuple<int, int, int, int> >> arcs(9);
-
-	int x1;
-	int y1;
-	int	x2;
-	int y2;
-
-	int xLoc;
-	int yLoc;
-
-	int pickup = 0;
-	int nextPickup = 0;
-	for (NodeIRP *node : graph) {
-
-		xLoc = node->getPosX();
-		yLoc = node->getPosY();
-
-		if (xLoc == 0 && yLoc == 0) {
-			Depot.push_back(make_pair(xLoc, yLoc));
-		}
-
-		else {
-			if (node->isDelivery()) {
-				nodePoints.push_back(make_pair(
-					xLoc,
-					yLoc));
-			}
-			else {
-				nodePoints.push_back(make_pair(
-					xLoc + 4,
-					yLoc));
-			}
-		}
-	}
-	for (NodeIRP *node : graph) {
-		
-		x1 = node->getPosX();
-		y1 = node->getPosY();
-
-		if (!node->isDelivery())
-			//Move outgoing arc from pickup
-		{
-			x1 += 4;
-		}
-
-		for (NodeIRP::EdgeIRP* edge : node->getEdges()) {
-			if (edge->getValue() != -1) {
-				x2 = edge->getEndNode()->getPosX();
-				y2 = edge->getEndNode()->getPosY();
-
-				if (!edge->getEndNode()->isDelivery())
-					//Move incoming arc to pickup
-					{
-						x2 += 4;
-					}
-				int id;
-				NodeIRP::EdgeIRP * edgePtr;
-				switch (weight) {
-				case 0:
-					id = getColor(1);
-				case ModelParameters::LOAD:
-					edgePtr = static_cast<NodeIRP::EdgeIRP*> (edge);
-					id = getColor((edgePtr->LoadDel + edgePtr->LoadPick) / 100);
-					break;
-
-				case ModelParameters::X:
-					id = id = getColor(edge->getValue());
-					break;
-				}
-				arcs[id].push_back(boost::make_tuple(
-						x1,
-						y1,
-						x2 - x1,
-						y2 - y1
-						));
-				}
-				
-			}
-		} //end node
-	
-	string color[] = {"#DDEEF9",  "#AAD5F0","#8DC6EB", "#72B8E7", "#5FADE2","#3498db", "#2384C5", "#1C689B", "#124567" };
-	string file = "set term pngcairo size 700, 700\nset output '" + filename + ".png'\n";
-	gp << file;
-	gp << "set xrange [-55:55]\nset yrange [-55:55]\n";
-	gp << "unset tics\n";
-	gp << "set size ratio -1\n";
-	// '-' means read from stdin.  The send1d() function sends data to gnuplot's stdin.
-
-	if (!nodePoints.empty()) {
-		if (!Depot.empty() && !arcs.empty()) {
-
-			string str = "plot";
-			for (int i = 0; i < arcs.size(); i++)
-				if (!arcs[i].empty())
-					str = str + "'-' with vectors notitle lw 2 lt rgb '" + color[i] + "' filled, ";
-
-			if (!nodePoints.empty())
-				str = str + "'-' with points lt rgb '#e74c3c' pointtype 7 pointsize 2.5 notitle, ";
-
-			str = str + "'-' with points lt rgb '#16a085' pointtype 7 pointsize 3.3 notitle \n";
-
-			gp << str;
-
-			for (int i = 0; i < arcs.size(); i++) {
-				if (!arcs[i].empty())
-					gp.send1d(arcs[i]);
-
-			}
-			if (!nodePoints.empty())
-				gp.send1d(nodePoints);
-			gp.send1d(Depot);
-		}
-		else if (!nodePoints.empty()) {
-			string str = "plot";
-			for (int i = 0; i < arcs.size(); i++)
-				if (!arcs[i].empty())
-					str = str + "'-' with vectors notitle lw 2 lt rgb '" + color[i] + "' filled, ";
-
-			if (!nodePoints.empty())
-				str = str + "'-' with points lt rgb '#e74c3c' pointtype 7 pointsize 2.5 notitle \n";
-
-			gp << str;
-
-			for (int i = 0; i < arcs.size(); i++) {
-				if (!arcs[i].empty())
-					gp.send1d(arcs[i]);
-
-			}
-			if (!nodePoints.empty())
-				gp.send1d(nodePoints);
-		}
-		else {
-			string str = "plot";
-			for (int i = 0; i < arcs.size(); i++)
-				if (!arcs[i].empty())
-					str = str + "'-' with vectors notitle lw 2 lt rgb '" + color[i] + "' filled, ";
-
-			str = str + "'-' with points lt rgb '#e74c3c' pointtype 7 pointsize 2.5 notitle, \
-			'-' with points lt rgb '#16a085' pointtype 7 pointsize 3.3 notitle \n";
-
-			gp << str;
-
-			for (int i = 0; i < arcs.size(); i++) {
-				if (!arcs[i].empty())
-					gp.send1d(arcs[i]);
-
-			}
-
-			gp.send1d(nodePoints);
-			gp.send1d(Depot);
-		}
-	}
-	
+	printGraphHelper(graph, filename, true, weight);
 }
 
 void graphAlgorithm::getRoutes(vector<Node*>& graph,  vector<vector<Node*>>& routes)
@@ -263,6 +121,8 @@ void graphAlgorithm::depthFirst(Node::Edge * edge, int &total, int & equal, vect
 			depthFirst(edge, total, equal, graph1, graph2);
 	}
 }
+
+
 
 //Tarjans strongly connected components algorithm, sets value of edges not in strong components to -1.
 void graphAlgorithm::sepByStrongComp(vector<NodeStrong*>& graph, vector<vector<Node*>> & result)
@@ -361,6 +221,167 @@ void graphAlgorithm::strongConnect(NodeStrong & node, int &index, stack <NodeStr
 		
 	}
 
+}
+
+void graphAlgorithm::printGraphHelper(vector<NodeIRP *>& graph, string filename,  bool load, int weight)
+{
+	FILE *gnuplotPipe = _popen("C:\\Octave\\3.2.4_gcc-4.4.0\\bin\\gnuplot", "w");
+	Gnuplot gp(gnuplotPipe);
+
+	vector < pair<int, int>> nodePoints;
+	vector < pair<int, int>> Depot;
+	vector<vector<boost::tuple<int, int, int, int> >> arcs(9);
+
+	int x1;
+	int y1;
+	int	x2;
+	int y2;
+
+	int xLoc;
+	int yLoc;
+
+	int pickup = 0;
+	int nextPickup = 0;
+	for (NodeIRP *node : graph) {
+
+		xLoc = node->getPosX();
+		yLoc = node->getPosY();
+
+		if (xLoc == 0 && yLoc == 0) {
+			Depot.push_back(make_pair(xLoc, yLoc));
+		}
+
+		else {
+			if (node->isDelivery()) {
+				nodePoints.push_back(make_pair(
+					xLoc,
+					yLoc));
+			}
+			else {
+				nodePoints.push_back(make_pair(
+					xLoc + 4,
+					yLoc));
+			}
+		}
+	}
+	for (NodeIRP *node : graph) {
+
+		x1 = node->getPosX();
+		y1 = node->getPosY();
+
+		if (!node->isDelivery())
+			//Move outgoing arc from pickup
+		{
+			x1 += 4;
+		}
+
+		for (NodeIRP::EdgeIRP* edge : node->getEdges()) {
+			if (edge->getValue() != -1) {
+				x2 = edge->getEndNode()->getPosX();
+				y2 = edge->getEndNode()->getPosY();
+
+				if (!edge->getEndNode()->isDelivery())
+					//Move incoming arc to pickup
+				{
+					x2 += 4;
+				}
+				int id;
+				NodeIRP::EdgeIRP * edgePtr;
+				switch (weight) {
+				case 0:
+					id = getColor(1);
+				case ModelParameters::LOAD:
+					edgePtr = static_cast<NodeIRP::EdgeIRP*> (edge);
+					id = getColor((edgePtr->LoadDel + edgePtr->LoadPick) / 100);
+					break;
+
+				case ModelParameters::X:
+					id = id = getColor(edge->getValue());
+					break;
+				}
+				arcs[id].push_back(boost::make_tuple(
+					x1,
+					y1,
+					x2 - x1,
+					y2 - y1
+					));
+			}
+
+		}
+	} //end node
+
+	string color[] = { "#DDEEF9",  "#AAD5F0","#8DC6EB", "#72B8E7", "#5FADE2","#3498db", "#2384C5", "#1C689B", "#124567" };
+	string file = "set term pngcairo size 700, 700\nset output '" + filename + ".png'\n";
+	gp << file;
+	gp << "set xrange [-55:55]\nset yrange [-55:55]\n";
+	gp << "unset tics\n";
+	gp << "set size ratio -1\n";
+	// '-' means read from stdin.  The send1d() function sends data to gnuplot's stdin.
+
+	if (!nodePoints.empty()) {
+		if (!Depot.empty() && !arcs.empty()) {
+
+			string str = "plot";
+			for (int i = 0; i < arcs.size(); i++)
+				if (!arcs[i].empty())
+					str = str + "'-' with vectors notitle lw 2 lt rgb '" + color[i] + "' filled, ";
+
+			if (!nodePoints.empty())
+				str = str + "'-' with points lt rgb '#e74c3c' pointtype 7 pointsize 2.5 notitle, ";
+
+			str = str + "'-' with points lt rgb '#16a085' pointtype 7 pointsize 3.3 notitle \n";
+
+			gp << str;
+
+			for (int i = 0; i < arcs.size(); i++) {
+				if (!arcs[i].empty())
+					gp.send1d(arcs[i]);
+
+			}
+			if (!nodePoints.empty())
+				gp.send1d(nodePoints);
+			gp.send1d(Depot);
+		}
+		else if (!nodePoints.empty()) {
+			string str = "plot";
+			for (int i = 0; i < arcs.size(); i++)
+				if (!arcs[i].empty())
+					str = str + "'-' with vectors notitle lw 2 lt rgb '" + color[i] + "' filled, ";
+
+			if (!nodePoints.empty())
+				str = str + "'-' with points lt rgb '#e74c3c' pointtype 7 pointsize 2.5 notitle \n";
+
+			gp << str;
+
+			for (int i = 0; i < arcs.size(); i++) {
+				if (!arcs[i].empty())
+					gp.send1d(arcs[i]);
+
+			}
+			if (!nodePoints.empty())
+				gp.send1d(nodePoints);
+		}
+		else {
+			string str = "plot";
+			for (int i = 0; i < arcs.size(); i++)
+				if (!arcs[i].empty())
+					str = str + "'-' with vectors notitle lw 2 lt rgb '" + color[i] + "' filled, ";
+
+			str = str + "'-' with points lt rgb '#e74c3c' pointtype 7 pointsize 2.5 notitle, \
+			'-' with points lt rgb '#16a085' pointtype 7 pointsize 3.3 notitle \n";
+
+			gp << str;
+
+			for (int i = 0; i < arcs.size(); i++) {
+				if (!arcs[i].empty())
+					gp.send1d(arcs[i]);
+
+			}
+
+			gp.send1d(nodePoints);
+			gp.send1d(Depot);
+		}
+	}
 }
 
 

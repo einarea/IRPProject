@@ -67,6 +67,7 @@ public:
 	void clearRoutes();
 	void clearEdges(int period);
 	void shiftQuantity(int SELECTION);
+	void getStrongComponents();
 	void shiftQuantityMIP(int PeriodSelection);
 	int getMaxShiftPeriod();
 	bool isRouteFeasible(Route *);
@@ -113,6 +114,8 @@ public:
 	double SolutionTime;
 
 private:
+	void buildStrongGraph(vector<NodeStrong*>& graph, int t);
+	void getSubtours(vector<Node*> result, int t);
 	static int solCounter;
 	list<int> TabuPeriods;
 	//Integer solutions

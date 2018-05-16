@@ -22,6 +22,7 @@ private:
 	bool Delivery;
 
 	double getDistance(const NodeInstance * node) const;
+	NodeInstance * getColocatedNode();
 	int HoldingCost;
 	void randomQuantities(int randSeed);
 	int LowerLimit;
@@ -32,6 +33,7 @@ private:
 	bool inArcSet(const NodeInstance * n) const;
 	//Set of forbidden traversals
 	vector<NodeInstance*> ForbiddenNodes;
+	NodeInstance* ColocatedNode;
 
 	double getTransCost(const NodeInstance * node) const;
 	double getTravelTime(const NodeInstance* node) const;
@@ -77,4 +79,9 @@ inline double NodeInstance::getTravelTime(const NodeInstance * node) const
 inline double NodeInstance::getDistance(const NodeInstance * node) const
 {
 	return (int)floor(sqrt(pow(PosX - node->PosX, 2) + pow(PosY - node->PosY, 2)));
+}
+
+inline NodeInstance * NodeInstance::getColocatedNode()
+{
+	return ColocatedNode;
 }

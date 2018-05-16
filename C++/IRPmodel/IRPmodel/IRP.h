@@ -29,11 +29,6 @@ private:
 
 	void addInventoryAndLoadingCtr(XPRBprob & problem);
 
-
-	//Subtour
-	double EDGE_WEIGHT;
-	double alpha;
-
 	int NumOfCustomers;
 	double getTransportationCost();
 	double getHoldingCost();
@@ -73,6 +68,10 @@ private:
 	bool initializeVariables();
 	bool initializeParameters();
 
+	void IRP::copyGraph(vector<Node*>& newGraph, vector<NodeStrong*>& cpGraph);
+	void IRP::copyGraph(vector<Node*>& newGraph, vector<Node*>& cpGraph);
+	bool IRP::getSubtourGraph(vector<Node*>&subtour, int t);
+
 	bool formulateProblem();
 
 	void printGraph(vector <Node> &);
@@ -88,6 +87,7 @@ public:
 	double solutionTime = -1;
 	bool SubtourElimination = false;
 	int nNodes = -1;
+	int CutType;
 	int timeCounter = 0;
 	int nVariables = -1;
 	int nConstraints = -1;
@@ -95,7 +95,7 @@ public:
 	double bestSol = -1;
 	void printSolutionToFile(double lpOptimat, double trans, double hold, int version);
 	void buildGraph(vector <Node*> &, int, bool includeDepot, double weight = 0.01);
-	void buildStrongGraph(vector <NodeStrong*> &, int, bool includeDepot, double weight = 0.01);
+	void buildStrongGraph(vector <NodeStrong*> &, int, bool includeDepot);
 	vector <Solution *> solutions;
 
 	XPRBvar ** inventory;
@@ -115,7 +115,7 @@ public:
 
 
 	void clearVariables();
-	
+	void printStrongCompAlgorithm();
 	//For valid ineq
 	double *** ExcessConsumption;
 	double *** ExcessProd;
@@ -150,7 +150,7 @@ public:
 	void addRouteCtr(vector<Route*> routes);
 	void printMatrix();
 	int getCapacity();
-	void useIPSubtourElimination();
+	void useIPSubtourElimination(int cuttype);
 	void useLPSubtourElimination();
 	bool LPSubtour;
 	void calculateExcess();

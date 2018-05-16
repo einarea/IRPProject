@@ -221,6 +221,15 @@ void NodeInstanceDB::initializeArcSet()
 		for (auto nodeDel : DeliveryNodes)
 			if (nodePick->isColocated(nodeDel)) {
 				nodePick->ForbiddenNodes.push_back(nodeDel);
+				nodePick->ColocatedNode = nodeDel;
+				break;
+			}
+	}
+
+	for (auto nodeDel : DeliveryNodes) {
+		for (auto nodePick : PickupNodes)
+			if (nodeDel->isColocated(nodePick)) {
+				nodeDel->ColocatedNode = nodePick;
 				break;
 			}
 	}
