@@ -1,7 +1,6 @@
 #pragma once
 #include "xprb_cpp.h"
 #include <vector>
-#include "CustomerVRPDB.h"
 #include "NodeIRP.h"
 #include "xprs.h"
 #include <string.h>
@@ -17,7 +16,6 @@ public:
 	void solveModel(Solution * currentSol = 0);
 	~VRPmodel();
 	void updateSolution(Solution * sol);
-	void addRoutesToIRP(int t, Solution * sol);
 
 	time_t StartTime;
 	double SolutionTime;

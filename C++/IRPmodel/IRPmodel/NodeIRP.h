@@ -28,7 +28,6 @@ public:
 
 	//Copy constructor
 	NodeIRP(const NodeIRP&);
-	NodeIRP(int id);
 	NodeIRP* getNextNode();
 	NodeIRP& operator =(const NodeIRP& cpNode);
 

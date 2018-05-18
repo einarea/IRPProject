@@ -64,7 +64,7 @@ void graphAlgorithm::printToLatex(string * Columns, string * Rows, double ** dat
 int graphAlgorithm::getColor(double value)
 {
 
-	int i = (int) floor(value * 8.9);
+	int i = (int) floor(value * 9.9);
 	if (i < 0) i = 0;
 	return i;
 }
@@ -230,7 +230,7 @@ void graphAlgorithm::printGraphHelper(vector<NodeIRP *>& graph, string filename,
 
 	vector < pair<int, int>> nodePoints;
 	vector < pair<int, int>> Depot;
-	vector<vector<boost::tuple<int, int, int, int> >> arcs(9);
+	vector<vector<boost::tuple<int, int, int, int> >> arcs(10);
 
 	int x1;
 	int y1;
@@ -310,7 +310,7 @@ void graphAlgorithm::printGraphHelper(vector<NodeIRP *>& graph, string filename,
 		}
 	} //end node
 
-	string color[] = { "#DDEEF9",  "#AAD5F0","#8DC6EB", "#72B8E7", "#5FADE2","#3498db", "#2384C5", "#1C689B", "#124567" };
+	string color[] = { "#DDEEF9", "#CAE4F6", "#AAD5F0","#8DC6EB", "#72B8E7", "#5FADE2","#3498db", "#2384C5", "#1C689B", "#124567"};
 	string file = "set term pngcairo size 700, 700\nset output '" + filename + ".png'\n";
 	gp << file;
 	gp << "set xrange [-55:55]\nset yrange [-55:55]\n";
@@ -327,7 +327,7 @@ void graphAlgorithm::printGraphHelper(vector<NodeIRP *>& graph, string filename,
 					str = str + "'-' with vectors notitle lw 2 lt rgb '" + color[i] + "' filled, ";
 
 			if (!nodePoints.empty())
-				str = str + "'-' with points lt rgb '#e74c3c' pointtype 7 pointsize 2.5 notitle, ";
+				str = str + "'-' with points lt rgb '#E67E22' pointtype 7 pointsize 2.5 notitle, ";
 
 			str = str + "'-' with points lt rgb '#16a085' pointtype 7 pointsize 3.3 notitle \n";
 
@@ -349,7 +349,7 @@ void graphAlgorithm::printGraphHelper(vector<NodeIRP *>& graph, string filename,
 					str = str + "'-' with vectors notitle lw 2 lt rgb '" + color[i] + "' filled, ";
 
 			if (!nodePoints.empty())
-				str = str + "'-' with points lt rgb '#e74c3c' pointtype 7 pointsize 2.5 notitle \n";
+				str = str + "'-' with points lt rgb '#E67E22' pointtype 7 pointsize 2.5 notitle \n";
 
 			gp << str;
 
@@ -367,7 +367,7 @@ void graphAlgorithm::printGraphHelper(vector<NodeIRP *>& graph, string filename,
 				if (!arcs[i].empty())
 					str = str + "'-' with vectors notitle lw 2 lt rgb '" + color[i] + "' filled, ";
 
-			str = str + "'-' with points lt rgb '#e74c3c' pointtype 7 pointsize 2.5 notitle, \
+			str = str + "'-' with points lt rgb '#E67E22' pointtype 7 pointsize 2.5 notitle, \
 			'-' with points lt rgb '#16a085' pointtype 7 pointsize 3.3 notitle \n";
 
 			gp << str;

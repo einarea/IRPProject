@@ -636,7 +636,7 @@ void IRP::buildGraph(vector<Node*> &graph, int t, bool Depot, double weight)
 		graph.push_back(node);
 	}
 	//Create nodes for each visited customer
-	for (NodeInstance* node : Database.Nodes) {
+	for (NodeInstance* node : Database.AllNodes) {
 		i = node->getId();
 		if (y[i][t].getSol() >= 0.001){
 			Node * node = new Node(i);
@@ -658,11 +658,18 @@ void IRP::buildGraph(vector<Node*> &graph, int t, bool Depot, double weight)
 	}
 }
 
-void IRP::buildStrongGraph(vector<NodeStrong*>& graph, int t, bool Depot)
+void IRP::buildStrongGraph(vector<NodeStrong*>& graph, int t, bool Depot, double weight)
 {
 	int s;
 	double edgeValue;
 	int i, j;
+	double w;
+
+	if (weight != -1) {
+		w = weight;
+	}
+	else
+		w = (double)ModelParameters::EDGE_WEIGHT / 100;
 
 	if (Depot) {
 		NodeStrong * node = new NodeStrong(0);
@@ -683,7 +690,7 @@ void IRP::buildStrongGraph(vector<NodeStrong*>& graph, int t, bool Depot)
 		for (NodeStrong *endingNode : graph) {
 			if (Database.inArcSet(s, endingNode->getId())) {
 				edgeValue = x[s][endingNode->getId()][t].getSol();
-				if (edgeValue >= (double) ModelParameters::EDGE_WEIGHT/10) {
+				if (edgeValue >= w) {
 					node->addEdge(edgeValue, endingNode);
 				}
 			}
@@ -699,11 +706,11 @@ void IRP::copyGraph(vector<Node*>& newGraph, vector<Node*>& cpGraph)
 	}
 
 	for (int i = 0; i < cpGraph.size(); i++) {
-		if (cpGraph[i]->getEdges().size() >= 1) {
-			j = cpGraph[i]->getEdge()->getEndNode()->getId();
+		for (auto edge : cpGraph[i]->getEdges()) {
+			j = edge->getEndNode()->getId();
 			for (auto node : newGraph) {
 				if (node->getId() == j) {
-					newGraph[i]->addEdge(cpGraph[i]->getEdge()->getValue(), node);
+					newGraph[i]->addEdge(edge->getValue(), node);
 				}
 			}
 		}
@@ -759,16 +766,17 @@ void IRP::copyGraph(vector<Node*>& newGraph, vector<NodeStrong*>& cpGraph)
 	}
 
 	for (int i = 0; i < cpGraph.size(); i++) {
-		if (cpGraph[i]->getEdges().size() >= 1) {
-			j = cpGraph[i]->getEdge()->getEndNode()->getId();
-			for (auto node : newGraph) {
-				if (node->getId() == j) {
-					newGraph[i]->addEdge(cpGraph[i]->getEdge()->getValue(), node);
+		for (auto edge : cpGraph[i]->getEdges()) {
+				j = edge->getEndNode()->getId();
+				for (auto node : newGraph) {
+					if (node->getId() == j) {
+						newGraph[i]->addEdge(edge->getValue(), node);
+					}
 				}
 			}
 		}
-	}
 }
+
 	
 
 
@@ -1297,39 +1305,43 @@ void IRP::printStrongCompAlgorithm()
 	subtourIndices.clear();
 	matrixValues.clear();
 	for (int t : Database.Periods) {
-		//buildGraph(graph, t, true, 0.01); //include depot
-		//	graphAlgorithm::printGraph(graph, "Subtour/LPrelax" + to_string(t), ModelParameters::X);
-		//graph.clear();
-		buildStrongGraph(graph, t, false); //Do not include depot in graph
+	
 
+		//Print graph
+		buildStrongGraph(graph, t, false); //Do not include depot in graph
 		copyGraph(tempGraph, graph);
 		graphAlgorithm::printGraph(tempGraph, "Subtour/DepotGone" + to_string(t), ModelParameters::X);
 		tempGraph.clear();
+
+
+		//Print strong components
 		graphAlgorithm::sepByStrongComp(graph, result);
 
-		for (auto graph : result) {
-			for (auto n : graph)
+		for (auto g : result) {
+			for (auto n : g)
 				tempGraph2.push_back(n);
 		}
 
-
-	
 		copyGraph(tempGraph, tempGraph2);
-
 		graphAlgorithm::printGraph(tempGraph, "Subtour/Separation" + to_string(t), ModelParameters::X);
 		tempGraph.clear();
 		tempGraph2.clear();
-		for (auto graph : result) {
-			if (getSubtourGraph(graph, t)) {
-				for (auto n : graph) {
+
+
+		//Print subtours
+		for (auto g : result) {
+			if (getSubtourGraph(g, t)) {
+				for (auto n : g) {
 					tempGraph2.push_back(n);
 				}
-				copyGraph(tempGraph, tempGraph2);
-				graphAlgorithm::printGraph(tempGraph, "Subtour/SUBTOUR" + to_string(t), ModelParameters::X);
-				tempGraph.clear();
-				tempGraph2.clear();
 			}
 		}
+
+		copyGraph(tempGraph, tempGraph2);
+		graphAlgorithm::printGraph(tempGraph, "Subtour/SUBTOUR" + to_string(t), ModelParameters::X);
+		tempGraph.clear();
+		tempGraph2.clear();
+		
 
 		
 
@@ -1441,7 +1453,7 @@ void IRP::getSubset(vector<NodeInstance*> subset, int subsetSize, int nodePos, v
 				}
 			}
 			p2 = ceil(flow / denominator);
-			prob.newCtr("MinFlow", p1 >= p2).print();
+			prob.newCtr("MinFlow", p1 >= p2);
 		}
 	}	
 }

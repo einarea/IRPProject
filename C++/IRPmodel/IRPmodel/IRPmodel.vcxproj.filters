@@ -13,125 +13,89 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Source Files\Customer">
-      <UniqueIdentifier>{2c4a9309-1b4e-4115-85be-d8a0c1e66fc8}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\Node">
       <UniqueIdentifier>{c0758794-f632-45d8-bc38-d6f9a0f88646}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Models">
+      <UniqueIdentifier>{1654f806-66f8-4392-84b7-3ea36dc85861}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Models">
+      <UniqueIdentifier>{601b0a4f-c882-4c74-aeff-45aef3f6c9e6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Node">
+      <UniqueIdentifier>{956914ca-08d5-48c6-8410-0718576e7995}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Other">
+      <UniqueIdentifier>{44c1c406-e297-43c1-aac4-1786d134aac0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Other">
+      <UniqueIdentifier>{38df5f3f-04ab-4b1f-aae9-838a613a2a57}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="stdafx.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="targetver.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="IRP.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ModelBase.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="VRP.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="graphAlgorithm.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="VRPmodel.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="CustomerVRP.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="CustomerIRP.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="CustomerVRPDB.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ModelParameters.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Node.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="NodeStrong.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="IRPmodel.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="NodeIRP.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Calculations.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="DataSets.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Node</Filter>
     </ClInclude>
     <ClInclude Include="NodeInstance.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="NodeIRPHolder.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Node</Filter>
     </ClInclude>
     <ClInclude Include="NodeInstanceDB.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Node</Filter>
     </ClInclude>
-    <ClInclude Include="Solution.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="NodeIRP.h">
+      <Filter>Header Files\Node</Filter>
     </ClInclude>
-    <ClInclude Include="Route.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="NodeIRPHolder.h">
+      <Filter>Header Files\Node</Filter>
+    </ClInclude>
+    <ClInclude Include="NodeStrong.h">
+      <Filter>Header Files\Node</Filter>
+    </ClInclude>
+    <ClInclude Include="IRP.h">
+      <Filter>Header Files\Models</Filter>
+    </ClInclude>
+    <ClInclude Include="VRPmodel.h">
+      <Filter>Header Files\Models</Filter>
     </ClInclude>
     <ClInclude Include="RouteProblem.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Models</Filter>
     </ClInclude>
     <ClInclude Include="SolutionInfo.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Other</Filter>
+    </ClInclude>
+    <ClInclude Include="Route.h">
+      <Filter>Header Files\Other</Filter>
+    </ClInclude>
+    <ClInclude Include="Solution.h">
+      <Filter>Header Files\Other</Filter>
+    </ClInclude>
+    <ClInclude Include="Calculations.h">
+      <Filter>Header Files\Other</Filter>
+    </ClInclude>
+    <ClInclude Include="DataSets.h">
+      <Filter>Header Files\Other</Filter>
+    </ClInclude>
+    <ClInclude Include="graphAlgorithm.h">
+      <Filter>Header Files\Other</Filter>
+    </ClInclude>
+    <ClInclude Include="ModelBase.h">
+      <Filter>Header Files\Other</Filter>
+    </ClInclude>
+    <ClInclude Include="IRPmodel.h">
+      <Filter>Header Files\Other</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>Header Files\Other</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h">
+      <Filter>Header Files\Other</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="stdafx.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="IRPmodel.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="IRP.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Map.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ModelBase.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="graphAlgorithm.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="VRPmodel.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MapIRP.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="CustomerVRPDB.cpp">
-      <Filter>Source Files\Customer</Filter>
-    </ClCompile>
-    <ClCompile Include="CustomerIRP.cpp">
-      <Filter>Source Files\Customer</Filter>
-    </ClCompile>
-    <ClCompile Include="CustomerIRPDB.cpp">
-      <Filter>Source Files\Customer</Filter>
-    </ClCompile>
-    <ClCompile Include="CustomerVRP.cpp">
-      <Filter>Source Files\Customer</Filter>
-    </ClCompile>
-    <ClCompile Include="ModelParameters.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="NodeStrong.cpp">
@@ -143,29 +107,47 @@
     <ClCompile Include="NodeIRP.cpp">
       <Filter>Source Files\Node</Filter>
     </ClCompile>
-    <ClCompile Include="Calculations.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="NodeInstanceDB.cpp">
+      <Filter>Source Files\Node</Filter>
     </ClCompile>
     <ClCompile Include="NodeInstance.cpp">
-      <Filter>Source Files\Customer</Filter>
-    </ClCompile>
-    <ClCompile Include="NodeIRPHolder.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="NodeInstanceDB.cpp">
-      <Filter>Source Files\Customer</Filter>
-    </ClCompile>
-    <ClCompile Include="Solution.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Route.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Node</Filter>
     </ClCompile>
     <ClCompile Include="RouteProblem.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Models</Filter>
+    </ClCompile>
+    <ClCompile Include="IRP.cpp">
+      <Filter>Source Files\Models</Filter>
+    </ClCompile>
+    <ClCompile Include="VRPmodel.cpp">
+      <Filter>Source Files\Models</Filter>
+    </ClCompile>
+    <ClCompile Include="NodeIRPHolder.cpp">
+      <Filter>Source Files\Node</Filter>
     </ClCompile>
     <ClCompile Include="SolutionInfo.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Other</Filter>
+    </ClCompile>
+    <ClCompile Include="Route.cpp">
+      <Filter>Source Files\Other</Filter>
+    </ClCompile>
+    <ClCompile Include="Solution.cpp">
+      <Filter>Source Files\Other</Filter>
+    </ClCompile>
+    <ClCompile Include="ModelParameters.cpp">
+      <Filter>Source Files\Other</Filter>
+    </ClCompile>
+    <ClCompile Include="ModelBase.cpp">
+      <Filter>Source Files\Other</Filter>
+    </ClCompile>
+    <ClCompile Include="graphAlgorithm.cpp">
+      <Filter>Source Files\Other</Filter>
+    </ClCompile>
+    <ClCompile Include="Calculations.cpp">
+      <Filter>Source Files\Other</Filter>
+    </ClCompile>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Source Files\Other</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
