@@ -33,9 +33,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ModelParameters.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Node.h">
       <Filter>Header Files\Node</Filter>
     </ClInclude>
@@ -93,6 +90,12 @@
     <ClInclude Include="stdafx.h">
       <Filter>Header Files\Other</Filter>
     </ClInclude>
+    <ClInclude Include="ModelParameters.h">
+      <Filter>Header Files\Other</Filter>
+    </ClInclude>
+    <ClInclude Include="RouteAnalyzer.h">
+      <Filter>Header Files\Other</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="IRPmodel.cpp">
@@ -147,6 +150,9 @@
       <Filter>Source Files\Other</Filter>
     </ClCompile>
     <ClCompile Include="stdafx.cpp">
+      <Filter>Source Files\Other</Filter>
+    </ClCompile>
+    <ClCompile Include="RouteAnalyzer.cpp">
       <Filter>Source Files\Other</Filter>
     </ClCompile>
   </ItemGroup>

@@ -164,6 +164,7 @@
     <ClInclude Include="NodeIRPHolder.h" />
     <ClInclude Include="NodeStrong.h" />
     <ClInclude Include="Route.h" />
+    <ClInclude Include="RouteAnalyzer.h" />
     <ClInclude Include="RouteProblem.h" />
     <ClInclude Include="Solution.h" />
     <ClInclude Include="SolutionInfo.h" />
@@ -185,6 +186,7 @@
     <ClCompile Include="NodeIRPHolder.cpp" />
     <ClCompile Include="NodeStrong.cpp" />
     <ClCompile Include="Route.cpp" />
+    <ClCompile Include="RouteAnalyzer.cpp" />
     <ClCompile Include="RouteProblem.cpp" />
     <ClCompile Include="Solution.cpp" />
     <ClCompile Include="SolutionInfo.cpp" />
