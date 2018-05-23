@@ -4,6 +4,7 @@
 #include "xprb_cpp.h"
 #include "xprs.h"
 #include "NodeInstanceDB.h"
+#include "RouteAnalyzer.h"
 
 
 using namespace ::dashoptimization;
@@ -11,9 +12,13 @@ using namespace ::dashoptimization;
 class RouteProblem
 {
 public:
+
+	friend class Solution;
+
 	RouteProblem(const NodeInstanceDB & Instance, vector<Route*> routes);
 	~RouteProblem();
 
+	vector<Route *> getSelectedRoutes();
 	void addRouteConstraints();
 	void addRestrictedShiftCtr(double nRoutes, double oldDel, double oldPick);
 	void formulateMIP();
@@ -24,10 +29,14 @@ public:
 	void addInventoryCtr();
 	void addChangeCtr();
 	void printRouteType();
+	void saveRouteType();
 	int getShiftPeriod();
+	static void clearRouteCounter();
+	static void printRouteTypeToFile(string filename, double improvement);
 	void formulateMinVisitProblem();
 	void shiftQuantityCtr(int quantity);
 	void initializeRoutes();
+	int getnRoutes();
 	void updateEdges(Solution* sol);
 	void printRouteMatrix();
 	void addRoutesToVector();
@@ -38,6 +47,18 @@ public:
 	int ShiftPeriod;
 	time_t StartTime;
 	double SolutionTime;
+
+	//Route types
+	static int Orig;
+	static int Insertion;
+	static int InsRem;
+	static int Combination;
+	static int LeastServedRemoval;
+	static int LeastServedInsertion;
+	static int DoubleInsertion;
+	static vector<vector <int>> RouteCounter;
+	static int Iteration;
+	void countRouteTypes();
 
 	Solution * solveProblem(Solution * currentSol = 0);
 private:

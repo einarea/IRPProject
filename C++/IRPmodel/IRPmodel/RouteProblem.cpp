@@ -341,6 +341,57 @@ void RouteProblem::printRouteType()
 					break;
 				}
 
+				case Route::DOUBLE_INSERTION_REMOVAL: {
+					cout << "Double insertion and removal\n";
+					break;
+				}
+
+				default: {
+					cout << "Error\n";
+					break;
+				}
+				}
+			}
+		}
+}
+
+int RouteProblem::Iteration = -1;
+
+void RouteProblem::saveRouteType()
+{
+	for (int r : Routes)
+		for (int t : Instance.Periods) {
+			if (travelRoute[r][t].getSol() >= 0.01) {
+				switch (routes[r]->State) {
+				case Route::ORIG: {
+					Orig++;
+					break;
+				}
+				case Route::SIMPLE_INSERTION: {
+					Insertion++;
+					break;
+				}
+				case Route::INSERTION_REMOVAL: {
+					InsRem++;
+					break;
+				}
+				case Route::MERGE: {
+					Combination++;
+					break;
+				}
+				case Route::LEAST_SERVED_INSERTION: {
+					LeastServedInsertion++;
+					break;
+				}
+				case Route::LEAST_SERVED_REMOVAL: {
+					LeastServedRemoval++;
+					break;
+				}
+				case Route::DOUBLE_INSERTION_REMOVAL: {
+					DoubleInsertion++;
+					break;
+				}
+
 				default: {
 					cout << "Error\n";
 					break;
@@ -353,6 +404,44 @@ void RouteProblem::printRouteType()
 int RouteProblem::getShiftPeriod()
 {
 	return ShiftPeriod;
+}
+
+void RouteProblem::clearRouteCounter()
+{
+	Orig = 0;
+	Combination = 0;
+	LeastServedInsertion = 0;
+	LeastServedRemoval = 0;
+	Insertion = 0;
+	InsRem = 0;
+	RouteCounter.clear();
+	Iteration = -1;
+}
+
+
+void RouteProblem::printRouteTypeToFile(string filename, double improvement)
+{
+	ofstream ins;
+	ins.open("Heurestic/" + filename);
+
+	ins << "Improvement:\t" << improvement << "\n";
+	ins << "Orig:\t" << Orig << "\n" << "Ins:\t" << Insertion << "\n" << "InsRem:\t" << InsRem << "\n"
+		<< "LSRem:\t" << LeastServedRemoval << "\n" << "LSIns:\t" << LeastServedInsertion << "\n" << "Comb:\t" << Combination << "\n"
+		<< "Double:\t" << DoubleInsertion << "\n";
+
+	ins << "Routes in each route search: \n";
+	for (vector<int> iteration : RouteCounter) {
+		ins << "Orig:\t" << iteration[Route::ORIG] << "\t";
+		ins << "Ins:\t" << iteration[Route::SIMPLE_INSERTION] << "\t";
+		ins << "InsRem:\t" << iteration[Route::INSERTION_REMOVAL] << "\t";
+		ins << "LSRem:\t" << iteration[Route::LEAST_SERVED_REMOVAL] << "\t";
+		ins << "LSIns:\t" << iteration[Route::LEAST_SERVED_INSERTION] << "\t";
+		ins << "Comb:\t" << iteration[Route::MERGE] << "\t";
+		ins << "Double: \t" << iteration[Route::DOUBLE_INSERTION_REMOVAL];
+		ins << "\n";
+	}
+
+	ins.close();
 }
 
 void RouteProblem::formulateMinVisitProblem()
@@ -441,6 +530,11 @@ void RouteProblem::initializeRoutes()
 	}
 }
 
+int RouteProblem::getnRoutes()
+{
+	return routes.size();
+}
+
 void RouteProblem::updateEdges(Solution * sol)
 {
 	double loadDel;
@@ -472,6 +566,20 @@ void RouteProblem::updateEdges(Solution * sol)
 }
 
 
+
+vector<Route*> RouteProblem::getSelectedRoutes()
+{
+	vector<Route*> selected;
+	for (auto t : Instance.Periods) {
+		for (auto r : Routes) {
+			if (travelRoute[r][t].getSol() > 0.01) {
+				selected.push_back(routes[r]);
+			}
+		}
+	}
+
+	return selected;
+}
 
 void RouteProblem::addRouteConstraints()
 {
@@ -1014,6 +1122,67 @@ void RouteProblem::lockRoute(Route * route)
 	int routeId = route->getId();
 	int period = route->getPeriod();
 	routeProblem.newCtr("RouteLock", travelRoute[routeId][period] == 1);
+}
+
+vector<vector <int>> RouteProblem::RouteCounter;
+int RouteProblem::Orig;
+int RouteProblem::Insertion;
+int RouteProblem::InsRem;
+int RouteProblem::Combination;
+int RouteProblem::LeastServedRemoval;
+int RouteProblem::LeastServedInsertion;
+int RouteProblem::DoubleInsertion;
+
+
+void RouteProblem::countRouteTypes()
+{
+	Iteration++;
+	vector<int> temp;
+	RouteCounter.push_back(temp);
+
+	RouteCounter[Iteration].resize(7);
+	for (int type : RouteCounter[Iteration])
+		RouteCounter[Iteration][type] = 0;
+
+
+	for (int r : Routes)
+				switch (routes[r]->State) {
+				case Route::ORIG: {
+					RouteCounter[Iteration][Route::ORIG]++;
+					break;
+				}
+				case Route::SIMPLE_INSERTION: {
+					RouteCounter[Iteration][Route::SIMPLE_INSERTION]++;
+					break;
+				}
+				case Route::INSERTION_REMOVAL: {
+					RouteCounter[Iteration][Route::INSERTION_REMOVAL]++;
+					break;
+				}
+				case Route::MERGE: {
+					RouteCounter[Iteration][Route::MERGE]++;
+					break;
+				}
+				case Route::LEAST_SERVED_INSERTION: {
+					RouteCounter[Iteration][Route::LEAST_SERVED_INSERTION]++;
+					break;
+				}
+				case Route::LEAST_SERVED_REMOVAL: {
+					RouteCounter[Iteration][Route::LEAST_SERVED_REMOVAL]++;
+					break;
+				}
+				case Route::DOUBLE_INSERTION_REMOVAL: {
+					RouteCounter[Iteration][Route::DOUBLE_INSERTION_REMOVAL]++;
+					break;
+				}
+
+				default: {
+					cout << "Error\n";
+					break;
+			}
+		}
+			
+		
 }
 
 Solution * RouteProblem::solveProblem(Solution * sol)

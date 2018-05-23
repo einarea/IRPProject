@@ -61,7 +61,7 @@ void XPRS_CC acceptIntQuantity(XPRSprob oprob, void * vd, int soltype, int * ifr
 	for (auto node : modelInstance->getDB()->Nodes) {
 		i = node->getId();
 		for (auto t : modelInstance->getDB()->Periods) {
-			if (abs(modelInstance->inventory[i][t].getSol() - round(modelInstance->inventory[i][t].getSol())) > 0.001)
+			if (abs(modelInstance->inventory[i][t].getSol() - round(modelInstance->inventory[i][t].getSol())) > 0.001 || subtours)
 				{
 				*ifreject = 1;
 				break;
@@ -749,7 +749,7 @@ bool IRP::getSubtourGraph(vector<Node*>& strongComp, int t)
 
 		}
 
-		if (circleFlow >= visitSum - maxVisitSum +(double) ModelParameters::ALPHA/10) {
+		if (circleFlow >= visitSum - maxVisitSum +(double) ModelParameters::ALPHA/100) {
 			//print subtour
 			return true;
 		}
@@ -871,7 +871,7 @@ void IRP::addSubtourCut(vector<vector<Node *>>& strongComp, int t, bool &newCut,
 
 			}
 
-			if (circleFlow >= visitSum - maxVisitSum + (double) ModelParameters::ALPHA/10) {
+			if (circleFlow >= visitSum - maxVisitSum + (double) ModelParameters::ALPHA/100) {
 				//print subtour
 				vector<int> varColumns;
 				vector<int> rowValues;
@@ -898,11 +898,13 @@ void IRP::addSubtourCut(vector<vector<Node *>>& strongComp, int t, bool &newCut,
 					{
 						varColumns.push_back(y[node->getId()][t].getColNum());
 						rowValues.push_back(-1);
+						rSide -= y[node->getId()][t];
 					}
-
+					else
+						rSide += y[node->getId()][t];
 
 					for (Node *node2 : strongComp[i]) {
-						if (node->getId() != node2->getId() && node2->getId()+1 != node->getId()) {
+						if (Database.inExtensiveArcSet(node->getId(), node2->getId())) {
 							//printf("x_%d%d + ", u, v);
 							lSide += x[node->getId()][node2->getId()][t];
 			
@@ -975,7 +977,7 @@ bool IRP::addSubtourCtr(vector<vector<Node *>>& strongComp, int t)
 
 			}
 
-			if (circleFlow >= visitSum - maxVisitSum + ModelParameters::ALPHA) {
+			if (circleFlow >= visitSum - maxVisitSum + ModelParameters::ALPHA/100) {
 				//print subtour
 				vector<vector<XPRBvar>> subtour;
 				subtour.resize(2);

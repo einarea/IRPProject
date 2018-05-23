@@ -4,7 +4,8 @@
 
 SolutionInfo::InstanceInfo * SolutionInfo::newInstance(string name)
 {
-	return new InstanceInfo(name);
+	Instances.push_back(*new SolutionInfo::InstanceInfo(name));
+	return &Instances.back();
 }
 
 SolutionInfo::SolutionInfo()
@@ -12,15 +13,20 @@ SolutionInfo::SolutionInfo()
 }
 
 
-void SolutionInfo::addSolution(InstanceInfo * instance)
+double SolutionInfo::getMaxTime()
 {
-	Solutions.push_back(*instance);
+	double maxTime = 100000;
+	for (auto i : Instances)
+		if (i.infoHolder.back().Time < maxTime)
+			maxTime = i.infoHolder.back().Time;
+
+	return maxTime;
 }
 
 void SolutionInfo::printAllInstancesToFile(string name)
 {
 	//Print for every n'th second
-	ofstream ins;
+	/*ofstream ins;
 	ins.open("Heurestic/" +name);
 
 	int n = 0;
@@ -36,6 +42,30 @@ void SolutionInfo::printAllInstancesToFile(string name)
 		}
 		ins << "\n";
 		n += increment;
+	}
+	ins.close();*/
+}
+
+void SolutionInfo::printAverageInstancesToFile(string name)
+{
+	//Print for every n'th second
+
+	double maxTime = getMaxTime();
+
+	ofstream ins;
+	ins.open("Solution/" + name);
+
+	double average = 0;
+	double gap;
+	for (int t = 1; t <= maxTime; t++){
+		average = 0;
+		for (InstanceInfo i : Instances) {
+			gap = i.getGap(t);
+			if (gap != -1)
+				average += gap * 1 / Instances.size();
+		}
+		ins << "Time:\t" << t << "\tGap from best exact solution:\t" << average << "\n";
+	
 	}
 	ins.close();
 }
@@ -63,6 +93,39 @@ void SolutionInfo::InstanceInfo::fillInfo()
 			n++;
 		}
 	}
+
+	//insert maxtime
+	MaxTime = infoHolder.back().Time;
+}
+
+double SolutionInfo::InstanceInfo::getGap(int t)
+{
+	double avg = getAverageObjective(t);
+	if (avg == -1)
+		return -1;
+	else
+		return (getAverageObjective(t) - bestExactSolution) / bestExactSolution;
+}
+
+//returns 0 if not defined for t
+double SolutionInfo::InstanceInfo::getAverageObjective(int t)
+{
+	auto pos = infoHolder.begin();
+	while (pos->Time < t && pos->State != "FINAL")
+		pos++;
+
+	double total = 0;
+	int n = 0;
+	while (pos->Time < t + 1 && pos->State != "FINAL") {
+		total += pos->ObjectiveVal;
+		pos++;
+		n++;
+	}
+
+	if (n == 0)
+		return -1;
+	else
+		return (double) total / n;
 }
 
 SolutionInfo::InstanceInfo::InstanceInfo(string name)
@@ -73,7 +136,11 @@ SolutionInfo::InstanceInfo::InstanceInfo(string name)
 
 const SolutionInfo::Information * SolutionInfo::InstanceInfo::getInfo(int time) const
 {
-	return 0;
+	auto pos = infoHolder.begin();
+	while (pos->Time <= time)
+		pos++;
+
+	return &*pos;
 }
 
 void SolutionInfo::InstanceInfo::printInstanceToFile(double bestBound)

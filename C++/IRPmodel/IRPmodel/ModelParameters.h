@@ -3,12 +3,12 @@ class ModelParameters
 {
 public:
 	//Running time
-	static const int MAX_RUNNING_TIME_IRP = 60;//seconds
-	static const int MAX_RUNNING_TIME_VRP = 60; //seconds
-	static const int MAX_TIME_ROUTE_PROBLEM = 90; //seconds
+	static const int MAX_RUNNING_TIME_IRP = 180;//seconds
+	static const int MAX_RUNNING_TIME_VRP = 100; //seconds
+	static const int MAX_TIME_ROUTE_PROBLEM = 600; //seconds
 	static const int INTENSIFICATION_MAX_TIME = 600; //seconds
-	static const int TERMINATE_IF_NO_NEW_SOLUTION = 3600; //seconds
-	static const int HEURESTIC_TIME = 3600; // seconds
+	static const int TERMINATE_IF_NO_NEW_SOLUTION = 12000; //seconds
+	static const int HEURESTIC_TIME = 20; // seconds
 	static const int ROUTE_LOCK = 70;
 
 	//Valid inequalitues
@@ -23,7 +23,7 @@ public:
 
 	//Subtour parameters
 	static const int EDGE_WEIGHT = 50; //Divided by 100, weight of edges in graph to construct
-	static const int ALPHA = 3;		//Degree of subtour, divided by 10
+	static const int ALPHA = 30;		//Degree of subtour, divided by 10
 
 	//Diversication holding cost
 	static const int HOLDING_COST_INCREMENT = 5; //Used by addHoldingCostCtr, Holding cost allowed to increase in percentage, removed from objective function.
@@ -48,6 +48,9 @@ public:
 	static const int SERVICETIME = 20;
 	static const int maxTime = 480;
 	static const int VehiclePenalty = 100000;
+
+	//Only record improvement
+	static const bool RecordImprovement = false;
 
 	//Simultanous model
 	static const bool Simultaneous = false;

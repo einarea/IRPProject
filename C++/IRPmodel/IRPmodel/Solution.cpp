@@ -511,7 +511,10 @@ void Solution::routeSearch(int REQUIRE_REQ_CHANGE)
 
 		routeProb.lockRoutes(periods); */
 		routeProb.solveProblem(this);
-		routeProb.printRouteType();
+		
+
+		SelectedRoutes = routeProb.getSelectedRoutes();
+		GeneratedRoutes = routeProb.routes;
 	}
 }
 
@@ -672,13 +675,13 @@ int Solution::getInfeasiblePeriod()
 int Solution::solCounter = 0;
 
 //Returns the least served node in a period which is stricly positive
-const NodeIRP* Solution::getLeastServed(int period) const
+const NodeIRP* Solution::getLeastServed(int period) const 
 {
 	NodeIRP * minNode = 0;
 	double minService = Instance.Capacity;
 	for (Route * r : getRoutes(period))
 		for (NodeIRP * node : r->route)
-			if (node->Quantity < minService && !node->isDepot()) {
+			if (node->Quantity < minService && !node->isDepot() && node->getState() != Node::TABU) {
 				minNode = node;
 				minService = node->Quantity;
 			}
@@ -686,12 +689,12 @@ const NodeIRP* Solution::getLeastServed(int period) const
 	return minNode;
 }
 
-const NodeIRP * Solution::getLeastServed(vector<NodeIRP*> nodes, int period) const
+const NodeIRP * Solution::getLeastServed(vector<NodeIRP*> nodes, int period) const 
 {
 	NodeIRP * minNode = nullptr;
 	double minService = Instance.Capacity;
 	for (NodeIRP * node : nodes)
-			if (Nodes[node->getId()]->quantity(period) < minService && Nodes[node->getId()]->quantity(period) >= 0.1) {
+			if (Nodes[node->getId()]->quantity(period) < minService && Nodes[node->getId()]->quantity(period) >= 0.1 && node->getState() != Node::TABU) {
 				minNode = Nodes[node->getId()]->NodePeriods[period];
 				minService = Nodes[node->getId()]->quantity(period);
 			}
@@ -809,10 +812,6 @@ void Solution::generateRoutes(vector<Route* >&routeHold)
 		count++;
 	}
 
-	int k = 0;
-	for (Route r : origRoutes) {
-		//r.printPlot("Routes/orig" + to_string(k++));
-	}
 
 	//Insert least served node in next period to the cheapest route in previous period
 	const NodeIRP * node;
@@ -820,17 +819,14 @@ void Solution::generateRoutes(vector<Route* >&routeHold)
 	Route newRoute;
 	Route *ptr = nullptr;
 	for (int t : Instance.Periods) {
-		if (t > 1) {
-			
 			node = getLeastServed(t);
 			if (node != nullptr) {
+	
 				newRoute = *removeNodeFromPeriod(t, node);
 				if (newRoute.getSize() >= 2) {
 					for (Route r : routeHolder)
 						if (newRoute.isDuplicate(&r))
 							duplicate = true;
-
-					//newRoute.printPlot("Routes/removal" + to_string(k++));
 
 
 					if (!duplicate && newRoute.isFeasible()) {
@@ -840,12 +836,28 @@ void Solution::generateRoutes(vector<Route* >&routeHold)
 				}
 			}
 
-			vector<NodeIRP*> nodes = getNotVisitedNodes(t-1);
 
-				node = getLeastServed(nodes, t);
+
+			if (t > 1) {
+				vector<NodeIRP*> nodes1 = getNotVisitedNodes(t - 1);
+				node = getLeastServed(nodes1, t);
 
 				if (node != nullptr) {
-					cout << node->Quantity;
+					//Restricted least served procedure 
+					newRoute = *removeNodeFromPeriod(t, node);
+					if (newRoute.getSize() >= 2) {
+						for (Route r : routeHolder)
+							if (newRoute.isDuplicate(&r))
+								duplicate = true;
+
+
+						if (!duplicate && newRoute.isFeasible()) {
+							Route *r = new Route(newRoute);
+							r->State = Route::RESTRICTED_LEAST_SERVED_REMOVAL;
+							routeHold.push_back(r);
+						}
+					}
+
 					duplicate = false;
 					ptr = insertNodeInPeriod(t - 1, node);
 
@@ -863,50 +875,86 @@ void Solution::generateRoutes(vector<Route* >&routeHold)
 						}
 					}
 				}
+			}
+			if (t < Instance.Periods.back()) {
+				vector<NodeIRP*> nodes2 = getNotVisitedNodes(t + 1);
+				node = getLeastServed(nodes2, t);
+
+				if (node != nullptr) {
+					//Restricted least served procedure 
+					newRoute = *removeNodeFromPeriod(t, node);
+					if (newRoute.getSize() >= 2) {
+						for (Route r : routeHolder)
+							if (newRoute.isDuplicate(&r))
+								duplicate = true;
+
+
+						if (!duplicate && newRoute.isFeasible()) {
+							Route *r = new Route(newRoute);
+							r->State = Route::RESTRICTED_LEAST_SERVED_REMOVAL;
+							routeHold.push_back(r);
+						}
+					}
+
+					duplicate = false;
+					ptr = insertNodeInPeriod(t + 1, node);
+
+					if (ptr != nullptr) {
+						newRoute = *ptr;
+						newRoute.State = Route::LEAST_SERVED_INSERTION;
+						//newRoute.printPlot("Routes/insertion" + to_string(k++));
+						for (Route r : routeHolder)
+							if (newRoute.isDuplicate(&r))
+								duplicate = true;
+
+						if (!duplicate && newRoute.isFeasible()) {
+							Route * r = new Route(newRoute);
+							routeHold.push_back(r);
+						}
+					}
+				}
+			}
+
+			
 		}
-	}
-
-
-	duplicate = false;
-	vector < vector < const NodeIRP* >> nodePeriods;
-	for (int t : Instance.Periods)
+		
+		vector < vector < const NodeIRP* >> nodePeriods;
+		for (int t : Instance.Periods)
 		nodePeriods.push_back(getNodesIRP(t));
 
-	cout << "Merge\n";
-	if (routes.size() >= 2) {
 		//Iterations of merge
+		if (routes.size() >= 2) {
+			for (int i = 1; i <= 1; i++) {
+				int u = 0;
+				for (Route * r1 : routes)
+					for (Route * r2 : routes)
+						if (r1 != r2 && r1->sameDirection(r2) && r1->State == Route::ORIG && r2->State == Route::ORIG) {
+							r1->generateRoute(r2, origRoutes);
+						}
+			}
 
-		for (int i = 1; i <= 1; i++) {
-			int u = 0;
-			for (Route * r1 : routes)
-				for (Route * r2 : routes)
-					if (r1 != r2 && r1->sameDirection(r2) && r1->State==Route::ORIG && r2->State == Route::ORIG) {
-						r1->generateRoute(r2, origRoutes);
+
+			origRoutes.sort();
+
+			auto pos = origRoutes.begin();
+			int i = 0;
+			do {
+				if (pos->State != Route::ORIG) {
+					Route * r = new Route(*pos);
+					r->State = Route::MERGE;
+					if (r->isFeasible()) {
+						routeHold.push_back(r);
 					}
+
+				}
+				pos++;
+				i++;
+			} while (i < 100 && !(pos == origRoutes.end()));
 		}
 
-		origRoutes.sort();
-
-		auto pos = origRoutes.begin();
-		int i = 0;
-		do {
-			if (pos->State != Route::ORIG) {
-				Route * r = new Route(*pos);
-				r->State = Route::MERGE;
-				if (r->isFeasible()) {
-					routeHold.push_back(r);
-				}
-
-			}
-			pos++;
-			i++;
-		} while (i < 100 && !(pos == origRoutes.end()));
-
-	cout << "Insert\n";
 	//insert single node in all routes
 	int k = 0;
 
-	Route newRoute;
 	for (Route * r1 : routes) {
 		duplicate = false;
 		int t = r1->getPeriod();
@@ -926,7 +974,24 @@ void Solution::generateRoutes(vector<Route* >&routeHold)
 
 	k = 0;
 
-	cout << "Insert and remove\n";
+	//Remove single node in all routes
+	for (Route * r1 : routes) {
+		duplicate = false;
+		int t = r1->getPeriod();
+		newRoute = *r1;
+		newRoute.removeSubroute(1);
+
+		for (Route r : routeHolder)
+			if (newRoute.isDuplicate(&r))
+				duplicate = true;
+
+		if (!duplicate &&  newRoute.isFeasible()) {
+			Route * r = new Route(newRoute);
+			r->State = Route::SIMPLE_REMOVAL;
+			routeHold.push_back(r);
+		}
+	}
+
 	//insert single node and remove other
 	for (Route * r1 : routes) {
 		duplicate = false;
@@ -942,6 +1007,27 @@ void Solution::generateRoutes(vector<Route* >&routeHold)
 		if (!duplicate &&  newRoute.isFeasible()) {
 			Route * r = new Route(newRoute);
 			r->State = Route::INSERTION_REMOVAL;
+			routeHold.push_back(r);
+		}
+	}
+
+	//insert two nodes in each route and remove two other
+	for (Route * r1 : routes) {
+		duplicate = false;
+		int t = r1->getPeriod();
+		newRoute = *r1;
+		newRoute.clearState();
+		newRoute.insertCheapestNode(nodePeriods[t - 1]);
+		newRoute.insertCheapestNode(nodePeriods[t - 1]);
+		newRoute.removeSubroute(2);
+
+		for (Route r : routeHolder)
+			if (newRoute.isDuplicate(&r))
+				duplicate = true;
+
+		if (!duplicate &&  newRoute.isFeasible()) {
+			Route * r = new Route(newRoute);
+			r->State = Route::DOUBLE_INSERTION_REMOVAL;
 			routeHold.push_back(r);
 		}
 	}
@@ -988,7 +1074,6 @@ void Solution::generateRoutes(vector<Route* >&routeHold)
 			}
 			r->printPlot(filename);
 		}*/
-	}
 }
 
 //Returns the visited nodes in a period

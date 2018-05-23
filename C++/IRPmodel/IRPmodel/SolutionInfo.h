@@ -6,6 +6,7 @@
 #include <iomanip> // setprecision
 #include <sstream> // stringstream
 #include "ModelParameters.h"
+#include "RouteAnalyzer.h"
 
 using namespace std;
 class SolutionInfo
@@ -22,7 +23,11 @@ public:
 	class InstanceInfo {
 	public:
 
+		double bestExactSolution = -1;
 		void fillInfo();
+		double getGap(int t);
+		double getAverageObjective(int t);
+		int MaxTime = -1;
 		InstanceInfo(string name);
 		const Information * getInfo(int time) const;
 		list<Information> infoHolder;
@@ -32,11 +37,11 @@ public:
 		void addSolutionPoint(int state, double objectiveVal, double time);
 	};
 
-	vector<InstanceInfo> Solutions;
-
-	void addSolution(InstanceInfo*);
-
+	vector<InstanceInfo> Instances;
+	int MaxTime = -1;
+	double getMaxTime();
 	void printAllInstancesToFile(string name);
+	void printAverageInstancesToFile(string name);
 	InstanceInfo * newInstance(string name);
 
 

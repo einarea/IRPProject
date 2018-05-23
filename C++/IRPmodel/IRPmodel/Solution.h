@@ -24,6 +24,8 @@ public:
 	//Destructors
 	~Solution();
 
+
+
 	int SolID;
 	NodeIRP * getDepot(int period) const;
 
@@ -101,6 +103,8 @@ public:
 	Route * insertNodeInPeriod(int period, const NodeIRP * insNode);
 	bool isVisited(const NodeIRP * node, int period);
 
+	vector<Route*> SelectedRoutes;
+	vector<Route*> GeneratedRoutes;
 
 	//Operators
 	void removeVisit(Route * route, int selection = 1);

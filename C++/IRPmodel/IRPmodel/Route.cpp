@@ -8,6 +8,12 @@ Route::~Route()
 		delete node;
 }
 
+void Route::clearState()
+{
+	for (NodeIRP * node : route)
+		node->setState(Node::FREE);
+}
+
 void Route::insertCheapestNode(vector<const NodeIRP*> nodes)
 {
 	double minCost = 100000;
@@ -20,7 +26,6 @@ void Route::insertCheapestNode(vector<const NodeIRP*> nodes)
 	vector<NodeIRP *> n;
 	n.resize(1);
 
-	cout << nodes.size();
 	//printPlot("Routes/beforeInsertion");
 	for (const NodeIRP * node : nodes) {
 		if (!inRoute(node)) {
@@ -334,7 +339,7 @@ double Route::removeSubroute(int size)
 	double minCost = 100000;
 	vector<NodeIRP*> Nodes = cheapestRemoval(size, minCost);
 
-	if (route.size() - Nodes.size() >= 2) {
+	if (route.size() - Nodes.size() >= 2 && Nodes.size() > 0) {
 
 		//Delete edges and add edges
 
@@ -761,7 +766,8 @@ vector<NodeIRP*> Route::cheapestRemoval(int subroutesize, double &minCost)
 			u = v;
 		}
 	}
-
+	if (Nodes[0] == NULL)
+		Nodes.resize(0);
 	return Nodes;
 }
 

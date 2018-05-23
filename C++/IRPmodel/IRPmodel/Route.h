@@ -13,12 +13,15 @@ class Route
 public:
 
 	//How route was constructed
-	static const int ORIG = 65;
-	static const int SIMPLE_INSERTION = 66;
-	static const int INSERTION_REMOVAL = 67;
-	static const int LEAST_SERVED_REMOVAL = 68;
-	static const int LEAST_SERVED_INSERTION = 69;
-	static const int MERGE = 70;
+	static const int ORIG = 0;
+	static const int SIMPLE_INSERTION = 1;
+	static const int SIMPLE_REMOVAL = 7;
+	static const int INSERTION_REMOVAL = 2;
+	static const int DOUBLE_INSERTION_REMOVAL = 6;
+	static const int LEAST_SERVED_REMOVAL = 3;
+	static const int LEAST_SERVED_INSERTION = 4;
+	static const int RESTRICTED_LEAST_SERVED_REMOVAL = 8;
+	static const int MERGE = 5;
 
 	void setId(int id);
 	Route();
@@ -39,6 +42,7 @@ public:
 
 	//Destructor
 	~Route();
+	void clearState();
 	void insertCheapestNode(vector<const NodeIRP*> nodes);
 	int getPeriod();
 	void removeSubgraph(vector <NodeIRP*>);

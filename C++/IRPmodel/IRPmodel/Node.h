@@ -62,7 +62,9 @@ public:
 	}
 	//Possible state constants
 	static const int TABU_EDGE = 31;
+	static const int FREE = 30;
 	static const int REMOVE = 32;
+	static const int TABU = 33;
 
 private:
 	int NodeID;
