@@ -65,6 +65,7 @@ public:
 
 		int getRouteTypeSelected(int Selection);
 		double getAverageRouteTypeSelected(int sel);
+
 		int getTotalSelectedRoutes();
 		double getAverageTotalSelectedRoutes();
 

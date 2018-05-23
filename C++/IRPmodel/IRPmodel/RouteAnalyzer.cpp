@@ -473,6 +473,7 @@ void RouteAnalyzer::RouteGeneration::addSelectedGeneration(const vector<Route*>&
 		}
 		}
 
+
 	avgRouteLength = 0;
 	for (auto r : Routes)
 		avgRouteLength += (double) r->getSize() * 1 / Routes.size();
