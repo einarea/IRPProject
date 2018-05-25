@@ -2302,7 +2302,7 @@ void IRP::useIPSubtourElimination(int cuttype)
 	//prob.setCutMode(1);
 	XPRSsetcbcutmgr(oprob, cbmng, &(*this));
 	//XPRSsetcbprenode(oprob, preNode, &(*this));
-	XPRSsetcbpreintsol(oprob, acceptInt, &(*this));
+	//XPRSsetcbpreintsol(oprob, acceptInt, &(*this));
 }
 
 void IRP::useLPSubtourElimination()

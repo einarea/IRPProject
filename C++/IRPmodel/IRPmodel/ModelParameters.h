@@ -11,6 +11,7 @@ public:
 	static const int HEURESTIC_TIME = 240; // seconds
 
 	static const int nVehicles = 3;
+	static const bool SUBTOUR_ELIMINATION = true;
 
 	//Diversification parameters
 	static const int ROUTE_LOCK = 70; //Percentage of routes to require changes to
