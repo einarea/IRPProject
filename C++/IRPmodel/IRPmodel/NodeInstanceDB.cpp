@@ -239,6 +239,8 @@ void NodeInstanceDB::initializeArcSet()
 
 //Constructor
 NodeInstanceDB::NodeInstanceDB(string fileName)
+	:
+	Name(fileName)
 {
 	
 	ifstream nodeRecords(fileName, ios::in);
@@ -359,6 +361,11 @@ NodeInstanceDB::NodeInstanceDB(int nCustomers, int nPer, int type)
 
 NodeInstanceDB::~NodeInstanceDB()
 {
+}
+
+string NodeInstanceDB::getName() const
+{
+	return Name;
 }
 
 NodeInstanceDB* NodeInstanceDB::createInstance(int nCustomers, int nPeriods, int version)

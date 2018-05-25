@@ -49,7 +49,7 @@ public:
 	bool isFeasible();
 	void resize(int size);
 	int getSize();
-	void generateRoute(const Route *, list<Route> & routeHolder);
+	void generateRoute(const Route *, list<Route> & routeHolder, list<Route> & tabuRoutes);
 	void reverseRoute();
 	void setPeriod(int period);
 	bool coincide(Route* r);

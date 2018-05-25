@@ -1357,10 +1357,10 @@ void IRP::printStrongCompAlgorithm()
 	}
 }
 
-void IRP::printSolutionToFile(double lpOptima, double trans, double hold,  int version)
+void IRP::printSolutionToFile(double lpOptima, double trans, double hold,  int version, int edge)
 {
 	ofstream instanceFile;
-	instanceFile.open("Results/C" + to_string(Database.getNumNodes() / 2) + "V" + to_string(ModelParameters::nVehicles) + "version " +to_string(version) + ".txt");
+	instanceFile.open("Results/C" + to_string(Database.getNumNodes() / 2) + "V" + to_string(ModelParameters::nVehicles) + "version " +to_string(version) +"_edge_" + to_string(edge) + ".txt");
 	instanceFile << "Sol. time: \t " << solutionTime << "\n";
 	instanceFile << "IP objective: \t" << bestSol << "\n";
 	instanceFile << "Trans. cost: \t" << getTransportationCost() << "\n";
@@ -1373,6 +1373,7 @@ void IRP::printSolutionToFile(double lpOptima, double trans, double hold,  int v
 	instanceFile << "Variables: \t" << nVariables <<"\n";
 	instanceFile << "Constraints: \t" << nConstraints << "\n";
 	instanceFile << "nRoutes: \t" << getnRoutes()<<"\n";
+	instanceFile << "nCuts\t" << nSubtourCuts;
 
 	instanceFile.close();
 }
@@ -1884,7 +1885,7 @@ void IRP::addVisitConstraint(double ** Visit, int selection)
 				}
 			}
 		}
-		VisitCtr = prob.newCtr("MinVisits", p1 >= ceil(visits*0.4));
+		VisitCtr = prob.newCtr("MinVisits", p1 >= ceil(visits*(double) ModelParameters::MIN_CHANGE/100));
 		VisitCtr.print();
 		cout << "\n";
 	}
@@ -1903,7 +1904,7 @@ void IRP::addVisitConstraint(double ** Visit, int selection)
 		}
 
 		//add constraint
-		VisitCtr = prob.newCtr("MinVisits", p1 + p2 >= ceil(Database.Nodes.size()*Database.Periods.size()*0.25));
+		VisitCtr = prob.newCtr("MinVisits", p1 + p2 >= ceil(Database.Nodes.size()*Database.Periods.size()* (double) ModelParameters::MIN_CHANGE/100));
 		p1 = 0;
 		VisitCtr.print();
 		cout << "\n";

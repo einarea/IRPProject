@@ -45,6 +45,10 @@ public:
 	//Database
 	vector<NodeIRPHolder *> Nodes;
 
+	vector<Route *> TabuRoutes;
+
+	void addTabuRoutes(vector <Route*> routes, vector<Route*> origRoutes);
+
 	int selectPeriod(int selection);
 	vector<NodeIRPHolder *>& getNodes();
 

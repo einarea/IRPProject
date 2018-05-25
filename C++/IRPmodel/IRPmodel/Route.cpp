@@ -456,7 +456,7 @@ int Route::getSize()
 }
 
 //Generate, cannot take routes that visit the same customer. Use selectRoutes first
-void Route::generateRoute(const  Route * r, list<Route> & RouteHolder)
+void Route::generateRoute(const  Route * r, list<Route> & RouteHolder, list<Route> & tabuRoutes)
 {
 	//Copy insertion route
 	Route tempRoute2(*r);
@@ -542,7 +542,7 @@ void Route::generateRoute(const  Route * r, list<Route> & RouteHolder)
 					targetRoute.removeSubroute(1);
 
 				bool Duplicate = false;
-				for (Route r : RouteHolder) {
+				for (Route r : tabuRoutes) {
 					if (targetRoute.isDuplicate(&r))
 						Duplicate = true;
 				}

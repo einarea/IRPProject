@@ -3,12 +3,12 @@ class ModelParameters
 {
 public:
 	//Running time
-	static const int MAX_RUNNING_TIME_IRP = 180;//seconds
-	static const int MAX_RUNNING_TIME_VRP = 100; //seconds
+	static const int MAX_RUNNING_TIME_IRP = 3600;//seconds
+	static const int MAX_RUNNING_TIME_VRP = 30; //seconds
 	static const int MAX_TIME_ROUTE_PROBLEM = 600; //seconds
-	static const int INTENSIFICATION_MAX_TIME = 600; //seconds
+	static const int INTENSIFICATION_MAX_TIME = 60; //seconds
 	static const int TERMINATE_IF_NO_NEW_SOLUTION = 12000; //seconds
-	static const int HEURESTIC_TIME = 20; // seconds
+	static const int HEURESTIC_TIME = 200; // seconds
 	static const int ROUTE_LOCK = 70;
 
 	//Valid inequalitues
@@ -23,7 +23,7 @@ public:
 
 	//Subtour parameters
 	static const int EDGE_WEIGHT = 50; //Divided by 100, weight of edges in graph to construct
-	static const int ALPHA = 30;		//Degree of subtour, divided by 10
+	static const int ALPHA = 10;		//Degree of subtour, divided by 100
 
 	//Diversication holding cost
 	static const int HOLDING_COST_INCREMENT = 5; //Used by addHoldingCostCtr, Holding cost allowed to increase in percentage, removed from objective function.
@@ -31,6 +31,9 @@ public:
 	//Diversication tabuList 
 	static const int TabuLength = 2;  //Number of diversication iterations locked
 	static const int TABU_LOCK = 20; //Percentage of changes to lock randomly.
+
+	//Diversification parameters
+	static const int MIN_CHANGE = 20; //Percentage of changes to solution
 
 	//Selection for route search
 	static const int REQUIRE_CHANGE = 31;

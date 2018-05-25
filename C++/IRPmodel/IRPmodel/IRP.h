@@ -93,7 +93,7 @@ public:
 	int nConstraints = -1;
 	double bestBound = -1;
 	double bestSol = -1;
-	void printSolutionToFile(double lpOptimat, double trans, double hold, int version);
+	void printSolutionToFile(double lpOptimat, double trans, double hold, int version, int edge);
 	void buildGraph(vector <Node*> &, int, bool includeDepot, double weight = 0.01);
 	void buildStrongGraph(vector <NodeStrong*> &, int, bool includeDepot, double weight = -1);
 	vector <Solution *> solutions;

@@ -28,6 +28,7 @@ private:
 
 	//Database vector
 	void initializeArcSet();
+	string Name;
 
 public:
 	double Capacity;
@@ -35,6 +36,8 @@ public:
 	NodeInstanceDB(string fileName);
 	NodeInstanceDB(int nCustomers, int nPeriods, int type = COLOCATED);
 	~NodeInstanceDB();
+
+	string getName() const;
 
 	vector<int> getDifference2(vector<int> set1, vector<NodeInstance*> set2) const;
 	vector<NodeInstance*> getDifference(vector<NodeInstance*> set1, vector<NodeInstance*> set2) const;

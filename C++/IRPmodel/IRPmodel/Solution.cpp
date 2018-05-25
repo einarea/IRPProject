@@ -413,6 +413,8 @@ Solution & Solution::operator=(const Solution & cpSol)
 
 bool Solution::operator==(const Solution & sol)
 {
+	double a = sol.getTransportationCost();
+	double b = getTransportationCost();
 	if (sol.getTransportationCost() == getTransportationCost() && sol.getHoldingCost() == getHoldingCost())
 		return true;
 	else
@@ -503,6 +505,12 @@ void Solution::routeSearch(int REQUIRE_REQ_CHANGE)
 		if (REQUIRE_REQ_CHANGE == ModelParameters::REQUIRE_CHANGE)
 			routeProb.addChangeCtr();
 
+
+		int rr = 0;
+		for (auto r : RouteHolder) {
+			rr++;
+		}
+		
 		//Periods to lock routes for
 		/*vector<int> periods;
 		for (int t : Instance.Periods)
@@ -510,8 +518,12 @@ void Solution::routeSearch(int REQUIRE_REQ_CHANGE)
 				periods.push_back(t);
 
 		routeProb.lockRoutes(periods); */
+
+		vector<Route*> originalRoutes = getAllRoutes();
+
 		routeProb.solveProblem(this);
-		
+
+		addTabuRoutes(routeProb.getSelectedRoutes(), originalRoutes);
 
 		SelectedRoutes = routeProb.getSelectedRoutes();
 		GeneratedRoutes = routeProb.routes;
@@ -569,6 +581,24 @@ int *** Solution::getRouteMatrix()
 	}*/
 
 	return RouteMatrix;
+}
+
+void Solution::addTabuRoutes(vector<Route*> SelRoutes, vector<Route*> OrigRoutes)
+{
+	bool duplicate;
+	for (auto r1 : SelRoutes) {
+		duplicate = false;
+		for (auto r2 : OrigRoutes) {
+			if (r1->isDuplicate(r2)) {
+				duplicate = true;
+				break;
+			}
+		}
+		if (!duplicate) {
+			TabuRoutes.push_back(new Route(*r1));
+		//	r1->printPlot("Routes/Tabu");
+		}
+	}
 }
 
 //Returns a period based on a selection criteria
@@ -802,6 +832,7 @@ void Solution::generateRoutes(vector<Route* >&routeHold)
 	list <Route> origRoutes;
 	list <Route> routeHolder;
 	int count = 0;
+	bool duplicate = false;
 	//push back exisiting routes
 	for (auto r : routes) {
 		r->setId(count);
@@ -812,10 +843,14 @@ void Solution::generateRoutes(vector<Route* >&routeHold)
 		count++;
 	}
 
+	for (auto r : TabuRoutes) {
+		routeHolder.push_back(*new Route(*r));
+	}
+
 
 	//Insert least served node in next period to the cheapest route in previous period
 	const NodeIRP * node;
-	bool duplicate = false;
+
 	Route newRoute;
 	Route *ptr = nullptr;
 	for (int t : Instance.Periods) {
@@ -832,6 +867,7 @@ void Solution::generateRoutes(vector<Route* >&routeHold)
 					if (!duplicate && newRoute.isFeasible()) {
 						Route *r = new Route(newRoute);
 						routeHold.push_back(r);
+						routeHolder.push_back(*new Route(newRoute));
 					}
 				}
 			}
@@ -855,6 +891,7 @@ void Solution::generateRoutes(vector<Route* >&routeHold)
 							Route *r = new Route(newRoute);
 							r->State = Route::RESTRICTED_LEAST_SERVED_REMOVAL;
 							routeHold.push_back(r);
+							routeHolder.push_back(*new Route(newRoute));
 						}
 					}
 
@@ -872,6 +909,7 @@ void Solution::generateRoutes(vector<Route* >&routeHold)
 						if (!duplicate && newRoute.isFeasible()) {
 							Route * r = new Route(newRoute);
 							routeHold.push_back(r);
+							routeHolder.push_back(*new Route(newRoute));
 						}
 					}
 				}
@@ -893,6 +931,7 @@ void Solution::generateRoutes(vector<Route* >&routeHold)
 							Route *r = new Route(newRoute);
 							r->State = Route::RESTRICTED_LEAST_SERVED_REMOVAL;
 							routeHold.push_back(r);
+							routeHolder.push_back(*new Route(newRoute));
 						}
 					}
 
@@ -910,6 +949,7 @@ void Solution::generateRoutes(vector<Route* >&routeHold)
 						if (!duplicate && newRoute.isFeasible()) {
 							Route * r = new Route(newRoute);
 							routeHold.push_back(r);
+							routeHolder.push_back(*new Route(newRoute));
 						}
 					}
 				}
@@ -929,7 +969,7 @@ void Solution::generateRoutes(vector<Route* >&routeHold)
 				for (Route * r1 : routes)
 					for (Route * r2 : routes)
 						if (r1 != r2 && r1->sameDirection(r2) && r1->State == Route::ORIG && r2->State == Route::ORIG) {
-							r1->generateRoute(r2, origRoutes);
+							r1->generateRoute(r2, origRoutes, routeHolder);
 						}
 			}
 
@@ -944,6 +984,7 @@ void Solution::generateRoutes(vector<Route* >&routeHold)
 					r->State = Route::MERGE;
 					if (r->isFeasible()) {
 						routeHold.push_back(r);
+						routeHolder.push_back(*new Route(newRoute));
 					}
 
 				}
@@ -969,6 +1010,7 @@ void Solution::generateRoutes(vector<Route* >&routeHold)
 			Route * r = new Route(newRoute);
 			r->State = Route::SIMPLE_INSERTION;
 			routeHold.push_back(r);
+			routeHolder.push_back(*new Route(newRoute));
 		}
 	}
 
@@ -989,6 +1031,7 @@ void Solution::generateRoutes(vector<Route* >&routeHold)
 			Route * r = new Route(newRoute);
 			r->State = Route::SIMPLE_REMOVAL;
 			routeHold.push_back(r);
+			routeHolder.push_back(*new Route(newRoute));
 		}
 	}
 
@@ -1008,6 +1051,7 @@ void Solution::generateRoutes(vector<Route* >&routeHold)
 			Route * r = new Route(newRoute);
 			r->State = Route::INSERTION_REMOVAL;
 			routeHold.push_back(r);
+			routeHolder.push_back(*new Route(newRoute));
 		}
 	}
 
@@ -1029,6 +1073,7 @@ void Solution::generateRoutes(vector<Route* >&routeHold)
 			Route * r = new Route(newRoute);
 			r->State = Route::DOUBLE_INSERTION_REMOVAL;
 			routeHold.push_back(r);
+			routeHolder.push_back(*new Route(newRoute));
 		}
 	}
 	
@@ -1104,6 +1149,7 @@ vector<NodeIRP*> Solution::getNotVisitedNodes(int period)
 	}
 	return visitedNodes;
 }
+
 
 void Solution::plotPeriod(int t, string filename)
 {

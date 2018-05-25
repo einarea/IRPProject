@@ -307,6 +307,42 @@ void RouteProblem::addChangeCtr()
 	}
 
 	routeProblem.newCtr("Change", p2 <= nRoutes - 1);
+
+	p2 = 0;
+
+	//Require qunatity to be strictly positive
+	XPRBexpr p1;
+	for (int r : Routes) {
+		for (NodeIRP* node : routes[r]->route)
+			if (!node->isDepot()) {
+				for (int t : Instance.Periods) {
+					if (node->isDelivery()) {
+						p1 += 1 - delivery[node->getId()][t];
+						p2 = 1 - travelRoute[r][t];
+						//routeProblem.newCtr("Action req", p1 <= p2);
+						p1 = 0;
+						p2 = 0;
+					}
+					else{
+						p1 += 1 - pickup[node->getId()][t];
+						p2 = 1 - travelRoute[r][t];
+						//routeProblem.newCtr("Action req", p1 <= p2);
+						p1 = 0;
+						p2 = 0;
+					}
+
+				}
+			}
+	}
+
+	//Require qunatity to be strictly positive
+	for (NodeIRP* nodeDel : PickupNodes) {
+		for (int t : Instance.Periods) {
+			p2 += pickup[nodeDel->getId()][t];
+			routeProblem.newCtr("Action req", p2 >= 1).print();
+			p2 = 0;
+		}
+	}
 }
 
 void RouteProblem::printRouteType()
@@ -328,6 +364,12 @@ void RouteProblem::printRouteType()
 					cout << "Insertion and removal\n";
 					break;
 				}
+
+				case Route::SIMPLE_REMOVAL: {
+					cout << "Simpler removal\n";
+					break;
+				}
+
 				case Route::MERGE: {
 					cout << "Merge\n";
 					break;
@@ -340,7 +382,10 @@ void RouteProblem::printRouteType()
 					cout << "Least served removal\n";
 					break;
 				}
-
+				case Route::RESTRICTED_LEAST_SERVED_REMOVAL: {
+					cout << "Restriced least served removal";
+					break;
+				}
 				case Route::DOUBLE_INSERTION_REMOVAL: {
 					cout << "Double insertion and removal\n";
 					break;
@@ -1074,6 +1119,8 @@ void RouteProblem::lockRoutes(vector<int> Periods)
 }
 
 
+
+
 void RouteProblem::clearVariables()
 {
 	int i, j;
@@ -1205,6 +1252,7 @@ Solution * RouteProblem::solveProblem(Solution * sol)
 	//routeProblem.print();
 	sol->SolutionTime = SolutionTime;
 
+	printRouteType();
 
 	//routeProblem.print();
 	updateSolution(sol);
@@ -1273,7 +1321,8 @@ void RouteProblem::fillLoad(vector <NodeIRPHolder*> &nodeHolder) {
 	double loadPick;
 	NodeIRP::EdgeIRP * edge;
 
-	for (auto r : Routes)
+	for (auto r : Routes) {
+		
 		for (int t : Instance.Periods) {
 			//Fill load for entire route
 			if (travelRoute[r][t].getSol() >= 0.01)
@@ -1298,6 +1347,8 @@ void RouteProblem::fillLoad(vector <NodeIRPHolder*> &nodeHolder) {
 								j = route[n + 1]->getId();
 						}
 					}
+				
+				
 					//Fill load
 					if (i != j) {
 						loadDel = loadDelivery[i][j][t].getSol();
@@ -1307,11 +1358,13 @@ void RouteProblem::fillLoad(vector <NodeIRPHolder*> &nodeHolder) {
 
 				}
 
-			//Fill time
+				//Fill time
 				for (int n = 1; n < route.size(); n++) {
 					nodeHolder[route[n]->getId()]->NodePeriods[t]->TimeServed = nodeHolder[route[n - 1]->getId()]->NodePeriods[t]->TimeServed + route[n - 1]->getTravelTime(route[n]);
 				}
 			}
-
+		
 		}
+	
+	}
 }
