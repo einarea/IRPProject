@@ -56,15 +56,20 @@ void SolutionInfo::printAverageInstancesToFile(string name)
 	ins.open("Heurestic/" + name + ".txt");
 
 	double average = 0;
+	int n;
 	double gap;
 	for (int t = 1; t <= maxTime; t++){
+		n = 0;
 		average = 0;
 		for (InstanceInfo i : Instances) {
 			gap = i.getGap(t);
-			if (gap != -1)
-				average += gap * 1 / Instances.size();
+			if (gap != -1) {
+				n++;
+				average += gap;
+			}
 		}
-		ins << "Time:\t" << t << "\tGap from best exact solution:\t" << average << "\n";
+
+		ins << "Time:\t" << t << "\tGap from best exact solution:\t" << to_string((double) average/n) << "\n";
 	
 	}
 	ins.close();

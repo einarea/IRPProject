@@ -3,15 +3,15 @@ class ModelParameters
 {
 public:
 	//Running time
-	static const int MAX_RUNNING_TIME_IRP = 180;//seconds
-	static const int MAX_RUNNING_TIME_VRP = 60; //seconds
+	static const int MAX_RUNNING_TIME_IRP = 60;//seconds
+	static const int MAX_RUNNING_TIME_VRP = 30; //seconds
 	static const int MAX_TIME_ROUTE_PROBLEM = 90; //seconds
 	static const int INTENSIFICATION_TIME = 60; //seconds
 	static const int TERMINATE_IF_NO_NEW_SOLUTION = 12000; //seconds
-	static const int HEURESTIC_TIME = 240; // seconds
+	static const int HEURESTIC_TIME = 600; // seconds
 
 	static const int nVehicles = 3;
-	static const bool SUBTOUR_ELIMINATION = true;
+	static const bool SUBTOUR_ELIMINATION = false;
 
 	//Diversification parameters
 	static const int ROUTE_LOCK = 70; //Percentage of routes to require changes to
