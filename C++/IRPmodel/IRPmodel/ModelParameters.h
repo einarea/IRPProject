@@ -3,13 +3,21 @@ class ModelParameters
 {
 public:
 	//Running time
-	static const int MAX_RUNNING_TIME_IRP = 3600;//seconds
-	static const int MAX_RUNNING_TIME_VRP = 30; //seconds
-	static const int MAX_TIME_ROUTE_PROBLEM = 600; //seconds
-	static const int INTENSIFICATION_MAX_TIME = 60; //seconds
+	static const int MAX_RUNNING_TIME_IRP = 180;//seconds
+	static const int MAX_RUNNING_TIME_VRP = 60; //seconds
+	static const int MAX_TIME_ROUTE_PROBLEM = 90; //seconds
+	static const int INTENSIFICATION_TIME = 60; //seconds
 	static const int TERMINATE_IF_NO_NEW_SOLUTION = 12000; //seconds
-	static const int HEURESTIC_TIME = 200; // seconds
-	static const int ROUTE_LOCK = 70;
+	static const int HEURESTIC_TIME = 240; // seconds
+
+	static const int nVehicles = 3;
+
+	//Diversification parameters
+	static const int ROUTE_LOCK = 70; //Percentage of routes to require changes to
+	static const int MIN_CHANGE = 20; //Percentage of changes to solution
+
+	//Only record improvement
+	static const bool RecordImprovement = true;
 
 	//Valid inequalitues
 	static const int ExcessParameter = 30; //Pecentage excess above vehicle capacity. Only those with more are added
@@ -32,8 +40,7 @@ public:
 	static const int TabuLength = 2;  //Number of diversication iterations locked
 	static const int TABU_LOCK = 20; //Percentage of changes to lock randomly.
 
-	//Diversification parameters
-	static const int MIN_CHANGE = 20; //Percentage of changes to solution
+
 
 	//Selection for route search
 	static const int REQUIRE_CHANGE = 31;
@@ -44,7 +51,7 @@ public:
 	static const int LOCAL_CUTS = 34;
 
 	////Model parameters;
-	static const int nVehicles = 3;
+
 	static const int TRANSCOST_MULTIPLIER = 13;
 	static const int SERVICECOST_MULTIPLIER =100;
 	static const int TRAVELTIME_MULTIPLIER = 1;
@@ -52,8 +59,7 @@ public:
 	static const int maxTime = 480;
 	static const int VehiclePenalty = 100000;
 
-	//Only record improvement
-	static const bool RecordImprovement = false;
+
 
 	//Simultanous model
 	static const bool Simultaneous = false;

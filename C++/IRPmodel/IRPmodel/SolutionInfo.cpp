@@ -53,7 +53,7 @@ void SolutionInfo::printAverageInstancesToFile(string name)
 	double maxTime = getMaxTime();
 
 	ofstream ins;
-	ins.open("Solution/" + name);
+	ins.open("Heurestic/" + name + ".txt");
 
 	double average = 0;
 	double gap;
@@ -104,7 +104,7 @@ double SolutionInfo::InstanceInfo::getGap(int t)
 	if (avg == -1)
 		return -1;
 	else
-		return (getAverageObjective(t) - bestExactSolution) / bestExactSolution;
+		return (getAverageObjective(t) - bestBound) / bestBound;
 }
 
 //returns 0 if not defined for t
@@ -146,7 +146,7 @@ const SolutionInfo::Information * SolutionInfo::InstanceInfo::getInfo(int time) 
 void SolutionInfo::InstanceInfo::printInstanceToFile(double bestBound)
 {
 	ofstream ins;
-	ins.open("Heurestic/" + Name);
+	ins.open("Heurestic/" + Name + ".txt");
 
 	if (bestBound == -1) {
 

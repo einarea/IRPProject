@@ -23,7 +23,7 @@ public:
 	class InstanceInfo {
 	public:
 
-		double bestExactSolution = -1;
+		double bestBound = -1;
 		void fillInfo();
 		double getGap(int t);
 		double getAverageObjective(int t);
