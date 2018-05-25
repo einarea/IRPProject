@@ -16,6 +16,14 @@ public:
 	//Diversification parameters
 	static const int ROUTE_LOCK = 70; //Percentage of routes to require changes to
 	static const int MIN_CHANGE = 20; //Percentage of changes to solution
+	static const int TabuLength = 2;  //Number of diversication iterations locked
+	static const int TABU_LOCK = 20; //Percentage of changes to lock randomly.
+	static const int HOLDING_COST_INCREMENT = 5; //Used by addHoldingCostCtr, Holding cost allowed to increase in percentage, removed from objective function.
+
+	//Subtour parameters
+	static const int EDGE_WEIGHT = 50; //Divided by 100, weight of edges in graph to construct
+	static const int ALPHA = 10;		//Degree of subtour, divided by 100
+
 
 	//Only record improvement
 	static const bool RecordImprovement = true;
@@ -29,18 +37,6 @@ public:
 	static const int MINIMIZE_VISITS = 5;
 	static const int INFEASIBLE = 6;
 	static const int SLACK = 10; //Slack in restricted shift constraint, % of capacity
-
-	//Subtour parameters
-	static const int EDGE_WEIGHT = 50; //Divided by 100, weight of edges in graph to construct
-	static const int ALPHA = 10;		//Degree of subtour, divided by 100
-
-	//Diversication holding cost
-	static const int HOLDING_COST_INCREMENT = 5; //Used by addHoldingCostCtr, Holding cost allowed to increase in percentage, removed from objective function.
-
-	//Diversication tabuList 
-	static const int TabuLength = 2;  //Number of diversication iterations locked
-	static const int TABU_LOCK = 20; //Percentage of changes to lock randomly.
-
 
 
 	//Selection for route search
