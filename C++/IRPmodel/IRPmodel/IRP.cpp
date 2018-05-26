@@ -387,7 +387,7 @@ Solution * IRP::solveModel()
 	//XPRSsetcbpreintsol(oprob, acceptInt, &(*this));
 	//prob.print();
 	//XPRSsetcbcutmgr(oprob, cbmng, &(*this));
-	//prob.print();
+	prob.print();
 	prob.mipOptimise();
 	vector<XPRBcut> ass;
 

@@ -3,7 +3,7 @@ class ModelParameters
 {
 public:
 	//Running time
-	static const int MAX_RUNNING_TIME_IRP = 60;//seconds
+	static const int MAX_RUNNING_TIME_IRP = 3600;//seconds
 	static const int MAX_RUNNING_TIME_VRP = 30; //seconds
 	static const int MAX_TIME_ROUTE_PROBLEM = 90; //seconds
 	static const int INTENSIFICATION_TIME = 60; //seconds
@@ -21,7 +21,7 @@ public:
 	static const int HOLDING_COST_INCREMENT = 5; //Used by addHoldingCostCtr, Holding cost allowed to increase in percentage, removed from objective function.
 
 	//Subtour parameters
-	static const int EDGE_WEIGHT = 50; //Divided by 100, weight of edges in graph to construct
+	static const int EDGE_WEIGHT = 10; //Divided by 100, weight of edges in graph to construct
 	static const int ALPHA = 10;		//Degree of subtour, divided by 100
 
 
@@ -59,7 +59,7 @@ public:
 
 
 	//Simultanous model
-	static const bool Simultaneous = false;
+	static const bool Simultaneous = true;
 	//Heurestic
 	//static const double VisitRatio = 0.5;
 

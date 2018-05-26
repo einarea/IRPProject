@@ -68,9 +68,14 @@ bool NodeInstance::inArcSet(const NodeInstance * n) const
 		return false;
 
 	if (ModelParameters::Simultaneous) {
-		//No arcs into pickup
+		//No arcs from depot to pickup
 		if (getId() == 0 && !n->isDelivery())
 			return false;
+
+		//No into pickup from pickup
+		if (!isDelivery() && !n->isDelivery())
+			return false;
+
 		//no arcs out from delivery unless to colocated node
 		else if (getId()!= 0 && isDelivery() && !isColocated(n))
 			return false;
