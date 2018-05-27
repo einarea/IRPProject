@@ -93,7 +93,7 @@ public:
 	int nConstraints = -1;
 	double bestBound = -1;
 	double bestSol = -1;
-	void printSolutionToFile(double lpOptimat, double trans, double hold, int version);
+	void printSolutionToFile(double lpOptimat, double trans, double hold, int version, int alpha);
 	void buildGraph(vector <Node*> &, int, bool includeDepot, double weight = 0.01);
 	void buildStrongGraph(vector <NodeStrong*> &, int, bool includeDepot);
 	vector <Solution *> solutions;
@@ -163,7 +163,7 @@ public:
 	Solution * solveLPModel();
 	XPRBprob * getProblem();
 	vector <XPRBbasis> SavedBasis;
-	int nSubtourCuts;
+	int nSubtourCuts = 0;
 	int getNumOfPeriods();
 	int getNumOfCustomers();
 	//void getVisitedCustomers(int period, vector <Customer *> &);

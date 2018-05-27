@@ -61,7 +61,7 @@ void XPRS_CC acceptIntQuantity(XPRSprob oprob, void * vd, int soltype, int * ifr
 	for (auto node : modelInstance->getDB()->Nodes) {
 		i = node->getId();
 		for (auto t : modelInstance->getDB()->Periods) {
-			if (abs(modelInstance->inventory[i][t].getSol() - round(modelInstance->inventory[i][t].getSol())) > 0.001)
+			if (abs(modelInstance->inventory[i][t].getSol() - round(modelInstance->inventory[i][t].getSol())) > 0.001 || subtours)
 				{
 				*ifreject = 1;
 				break;
@@ -69,6 +69,73 @@ void XPRS_CC acceptIntQuantity(XPRSprob oprob, void * vd, int soltype, int * ifr
 			else
 				modelInstance->lastSolutionFound = time(NULL);
 		}
+	}
+
+	if (subtours) {
+		//Load model instance
+		XPRBprob *bprob = modelInstance->getProblem();
+
+		//Columns number
+		int * mindo = nullptr;
+		//Matrix values
+		double * dvalo = nullptr;
+		vector<int> subtour;
+		vector<int> rowValues;
+
+		for (int i = 0; i < subtourCut.size(); i++) {
+			rowValues.clear();
+			subtour.clear();
+			//	cout << "\n";
+			subtour = modelInstance->subtourIndices[i];
+			mindo = (int*)malloc(subtour.size()*sizeof(int));
+
+			//	cout << "Sub: ";
+			for (int s = 0; s < subtour.size(); s++) {
+				mindo[s] = subtour[s];
+				//		cout <<subtour[s] << "\t";
+			}
+			//	cout << "\n";
+			//	cout << "MatValues: ";
+			rowValues = modelInstance->matrixValues[i];
+			dvalo = (double*)malloc(rowValues.size()*sizeof(double));
+			for (int j = 0; j < rowValues.size(); j++) {
+				dvalo[j] = rowValues[j];
+				//cout << rowValues[j]<< "\t";
+			}
+
+			//cout << "\n";
+
+			char qrtype = 'L';
+			double drhso = 0;
+			int nzp, status, mtype = 1, mstart[2], *mindp, ncols;
+			int nzo = subtour.size();
+			double drhsp, *dvalp;
+			XPRScut mindex;
+
+			XPRSgetintattrib(oprob, XPRS_COLS, &ncols);
+
+			mindp = (int*)malloc(ncols*sizeof(int));
+			dvalp = (double*)malloc(ncols*sizeof(double));
+			XPRSpresolverow(oprob, qrtype, nzo, mindo, dvalo, drhso, ncols,
+				&nzp, mindp, dvalp, &drhsp, &status);
+
+			/*cout << "Presolve var: \n";
+			for (int a = 0; a < nzp; a++) {
+			cout << mindp[a] << "\t";
+			}
+			cout << "\tCut End\n"; */
+
+			if (status >= 0) {
+				int nCuts = 1;
+				mstart[0] = 0; mstart[1] = nzp;
+				XPRSstorecuts(oprob, nCuts, 1, &mtype, &qrtype, &drhsp, mstart, &mindex, mindp, dvalp);
+				modelInstance->nSubtourCuts++;
+
+			}
+			XPRSloadcuts(oprob, 1, -1, -1, NULL);
+			//cout << "Stored\n";
+		}
+	
 	}
 	modelInstance->getProblem()->endCB();
 }
@@ -81,8 +148,7 @@ void XPRS_CC cbmngtimeIRP(XPRSprob oprob, void * vd,int parent, int newnode, int
 	//cout << (int)floor((XPRB::getTime() - modelInstance->startTime) / 1000) << "\n";
 
 	//cout << difftime(time(NULL), modelInstance->startTime) << "\n";
-	if (difftime(time(NULL), modelInstance->startTime) >= ModelParameters::MAX_RUNNING_TIME_IRP ||
-		(modelInstance->lastSolutionFound!= 0 && difftime(time(NULL), modelInstance->lastSolutionFound)>=ModelParameters::TERMINATE_IF_NO_NEW_SOLUTION))
+	if (difftime(time(NULL), modelInstance->startTime) >= ModelParameters::MAX_RUNNING_TIME_IRP)
 	{
 		XPRSinterrupt(oprob, XPRS_STOP_TIMELIMIT);
 	}
@@ -134,7 +200,6 @@ int XPRS_CC cbmng(XPRSprob oprob, void * vd)
 			for (int i = 0; i < subtourCut.size(); i++) {
 				rowValues.clear();
 				subtour.clear();
-			//	subtourCut[i].print();
 			//	cout << "\n";
 				subtour = modelInstance->subtourIndices[i];
 				mindo = (int*)malloc(subtour.size()*sizeof(int));
@@ -179,6 +244,7 @@ int XPRS_CC cbmng(XPRSprob oprob, void * vd)
 					int nCuts = 1;
 					mstart[0] = 0; mstart[1] = nzp;
 					XPRSstorecuts(oprob, nCuts, 1, &mtype, &qrtype, &drhsp, mstart, &mindex, mindp, dvalp);
+					modelInstance->nSubtourCuts++;
 				
 				}
 				XPRSloadcuts(oprob, 1, -1, -1, NULL);
@@ -683,7 +749,7 @@ void IRP::buildStrongGraph(vector<NodeStrong*>& graph, int t, bool Depot)
 		for (NodeStrong *endingNode : graph) {
 			if (Database.inArcSet(s, endingNode->getId())) {
 				edgeValue = x[s][endingNode->getId()][t].getSol();
-				if (edgeValue >= (double) ModelParameters::EDGE_WEIGHT/10) {
+				if (edgeValue >= (double) ModelParameters::EDGE_WEIGHT/100) {
 					node->addEdge(edgeValue, endingNode);
 				}
 			}
@@ -742,7 +808,7 @@ bool IRP::getSubtourGraph(vector<Node*>& strongComp, int t)
 
 		}
 
-		if (circleFlow >= visitSum - maxVisitSum +(double) ModelParameters::ALPHA/10) {
+		if (circleFlow >= visitSum - maxVisitSum +(double) ModelParameters::ALPHA/100) {
 			//print subtour
 			return true;
 		}
@@ -863,7 +929,7 @@ void IRP::addSubtourCut(vector<vector<Node *>>& strongComp, int t, bool &newCut,
 
 			}
 
-			if (circleFlow >= visitSum - maxVisitSum + (double) ModelParameters::ALPHA/10) {
+			if (circleFlow >= visitSum - maxVisitSum + (double) ModelParameters::ALPHA/100) {
 				//print subtour
 				vector<int> varColumns;
 				vector<int> rowValues;
@@ -881,20 +947,22 @@ void IRP::addSubtourCut(vector<vector<Node *>>& strongComp, int t, bool &newCut,
 				//printf("\nAdded subtour cut: ");
 
 				for (Node *node : strongComp[i]) {
-					rSide += y[node->getId()][t];
+				
 					//y[node->getId()][t].print();
 					//cout << "\n";
 					rSideStr = rSideStr + " + " + "y_" + to_string(node->getId());
 
 					if (node->getId() != maxVisitID)
 					{
+						rSide += y[node->getId()][t];
 						varColumns.push_back(y[node->getId()][t].getColNum());
 						rowValues.push_back(-1);
 					}
-
+					else
+						rSide += y[node->getId()][t];
 
 					for (Node *node2 : strongComp[i]) {
-						if (node->getId() != node2->getId() && node2->getId()+1 != node->getId()) {
+						if (Database.inExtensiveArcSet(node->getId(), node2->getId())) {
 							//printf("x_%d%d + ", u, v);
 							lSide += x[node->getId()][node2->getId()][t];
 			
@@ -913,7 +981,7 @@ void IRP::addSubtourCut(vector<vector<Node *>>& strongComp, int t, bool &newCut,
 				rSide -= y[maxVisitID][t];
 				rSideStr = rSideStr + " - " + "y_" + to_string(maxVisitID);
 				//cout << rSideStr << "\n";
-				nSubtourCuts += 1;
+		
 	
 				XPRBcut vv = prob.newCut( lSide <= rSide);
 				//vv.print();
@@ -967,7 +1035,7 @@ bool IRP::addSubtourCtr(vector<vector<Node *>>& strongComp, int t)
 
 			}
 
-			if (circleFlow >= visitSum - maxVisitSum + ModelParameters::ALPHA) {
+			if (circleFlow >= visitSum - maxVisitSum + ModelParameters::ALPHA/100) {
 				//print subtour
 				vector<vector<XPRBvar>> subtour;
 				subtour.resize(2);
@@ -1008,7 +1076,7 @@ bool IRP::addSubtourCtr(vector<vector<Node *>>& strongComp, int t)
 				rSide -= y[maxVisitID][t];
 				rSideStr = rSideStr + " - " + "y_" + to_string(maxVisitID);
 				//cout << rSideStr << "\n";
-				nSubtourCuts += 1;
+		
 
 				prob.newCtr(XPRBnewname("Subtour"), lSide <= rSide).print();
 				//vv.print();
@@ -1343,10 +1411,10 @@ void IRP::printStrongCompAlgorithm()
 	}
 }
 
-void IRP::printSolutionToFile(double lpOptima, double trans, double hold,  int version)
+void IRP::printSolutionToFile(double lpOptima, double trans, double hold,  int version, int alpha)
 {
 	ofstream instanceFile;
-	instanceFile.open("Results/C" + to_string(Database.getNumNodes() / 2) + "V" + to_string(ModelParameters::nVehicles) + "version " +to_string(version) + ".txt");
+	instanceFile.open("Results/C" + to_string(Database.getNumNodes() / 2) + "V" + to_string(ModelParameters::nVehicles) + "version " +to_string(version) + "_alpha_ "+to_string(alpha)+".txt");
 	instanceFile << "Sol. time: \t " << solutionTime << "\n";
 	instanceFile << "IP objective: \t" << bestSol << "\n";
 	instanceFile << "Trans. cost: \t" << getTransportationCost() << "\n";
@@ -1359,6 +1427,7 @@ void IRP::printSolutionToFile(double lpOptima, double trans, double hold,  int v
 	instanceFile << "Variables: \t" << nVariables <<"\n";
 	instanceFile << "Constraints: \t" << nConstraints << "\n";
 	instanceFile << "nRoutes: \t" << getnRoutes()<<"\n";
+	instanceFile << "nCuts:\t" << nSubtourCuts << "\n";
 
 	instanceFile.close();
 }

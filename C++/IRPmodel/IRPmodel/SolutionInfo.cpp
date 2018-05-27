@@ -22,21 +22,44 @@ void SolutionInfo::printAllInstancesToFile(string name)
 	//Print for every n'th second
 	ofstream ins;
 	ins.open("Heurestic/" +name);
-
-	int n = 0;
-	int increment = 1;
-
-	while (n <= 60) {
-		ins << n << "\t";
+	int kk = -1;
+	for (int cc = 0; cc < 8; cc++) {
 		for (InstanceInfo i : Solutions) {
-			const Information * info = i.getInfo(n);
-			if (info != nullptr) {
-				ins << info->ObjectiveVal << "\t";
+			auto pos = i.infoHolder.begin();
+			for (int dd = 0; dd < kk-1; dd++) {
+				pos++;
 			}
+			if (cc == 0) {
+				ins << i.Name;
+				ins << "\t";
+			}
+			else if (cc == 6) {
+				ins << pos->ObjectiveVal << "\t";
+			}
+
+			else if (cc == 7) {
+				ins << pos->ObjectiveVal << "\t";
+			}
+
+			else if (cc == 1) {
+				ins << pos->Time;
+				ins << "\t";
+			}
+			else if (cc < 6) {
+				
+				ins << pos->ObjectiveVal;
+				ins << "\t";
+			}
+
+			
+
 		}
+		kk++;	
 		ins << "\n";
-		n += increment;
 	}
+
+	
+
 	ins.close();
 }
 
