@@ -33,6 +33,16 @@ bool NodeIRP::inArcSet(const NodeIRP * n) const
 	return NodeData.inArcSet(&n->NodeData);
 }
 
+bool NodeIRP::isColocated(const NodeIRP * node) const
+{
+	return getData().isColocated(&node->getData());
+}
+
+int NodeIRP::getColocatedNode() const
+{
+	return getData().getColocatedNode()->getId();
+}
+
 bool NodeIRP::inArcSet(const NodeInstance * n) const
 {
 	return NodeData.inArcSet(n);

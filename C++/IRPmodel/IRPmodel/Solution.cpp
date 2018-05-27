@@ -458,6 +458,23 @@ NodeIRP * Solution::getDepot(int period) const
 	exit(111);
 }
 
+int Solution::getNumberOfDivisible()
+{
+	int divisible = 0;
+	for (NodeIRPHolder* node : Nodes) {
+		for (int t : Instance.Periods) {
+			auto nodeDel = node->NodePeriods[t];
+			if (!nodeDel->isDepot() && nodeDel->isDelivery()) {
+				//Check if both colocated nodes are served and edge between them are not traversed
+				if (nodeDel->Quantity >= 0.01 && !nodeDel->isColocated(nodeDel->getNextNode()) && Nodes[nodeDel->getColocatedNode()]->NodePeriods[t]->Quantity >= 0.01)
+					divisible++;
+			}
+		}
+	}
+
+	return divisible;
+}
+
 void Solution::solveVRP(int period)
 {
 	VRPmodel model(Instance, getVisitedNodes(period), period);

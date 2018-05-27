@@ -121,17 +121,32 @@ NodeInstance::NodeInstance(int nodeId, bool Del, int posX, int posY, int nPer, i
 }
 
 //Create random node
-NodeInstance::NodeInstance(int id, bool del, int nPer, int randSeed)
+NodeInstance::NodeInstance(int id, bool del, int nPer, int randSeed, int posType)
 	:
 	NodeID(id),
 	Delivery(del),
 	nPeriods(nPer)
 {
 	srand(time(0) + randSeed);
-	PosX = (rand() % 100 + 0) - 50;
-	PosY = (rand() % 100 + 0) - 50;
+	switch (posType) {
+	case -1: {
+		PosX = (rand() % 100 + 0) - 50;
+		PosY = (rand() % 100 + 0) - 50;
 
-	randomQuantities(randSeed);
+		randomQuantities(randSeed);
+	}
+
+			 //Greater chance of closeness to depot
+		 /*	case DEPOT_CLOSENESS:{
+				 subtract =
+				 PosX = 100 - ((double)(1/100)*(rand() % 100 + 0) - 50);
+				 PosY = (rand() % 100 + 0) - 50;
+
+				 randomQuantities(randSeed);
+			 }*/
+
+
+	}
 }
 
 bool NodeInstance::isDelivery() const

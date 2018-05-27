@@ -32,6 +32,8 @@ public:
 	NodeIRP& operator =(const NodeIRP& cpNode);
 
 	bool inArcSet(const NodeIRP *) const;
+	bool isColocated(const NodeIRP *) const;
+	int getColocatedNode() const;
 	bool inArcSet(const NodeInstance *) const;
 	double getTransCost(const NodeIRP * node) const;
 	double getTravelTime(const NodeIRP * node) const;

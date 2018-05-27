@@ -153,6 +153,12 @@ void SolutionInfo::InstanceInfo::printInstanceToFile(double bestBound)
 	ofstream ins;
 	ins.open("Heurestic/" + Name + ".txt");
 
+	ins << "Objective:\t" << this->Objective << "\n";
+	ins << "bestBound:\t" << this->bestBound << "\n";
+	ins << "Trans. cost:\t" << this->TransportationCost << "\n";
+	ins << "Hold. cost:\t" << this->HoldingCost << "\n";
+	ins << "nDivisble:\t" << this->nDivisible << "\n\n\n";
+
 	if (bestBound == -1) {
 
 		for (Information &info : infoHolder) {

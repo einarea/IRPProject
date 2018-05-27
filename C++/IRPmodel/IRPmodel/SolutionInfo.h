@@ -23,6 +23,11 @@ public:
 	class InstanceInfo {
 	public:
 
+		int nDivisible;
+		double TransportationCost;
+		double HoldingCost;
+		double Objective;
+
 		double bestBound = -1;
 		void fillInfo();
 		double getGap(int t);

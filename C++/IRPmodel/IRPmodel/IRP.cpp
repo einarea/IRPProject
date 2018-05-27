@@ -2233,7 +2233,7 @@ void IRP::addHoldingCostCtr(double holdingCost)
 		for(int t : Database.Periods)
 			p1 += inventory[i][t];
 
-	prob.newCtr(XPRBnewname("HoldingCost"), p1 <= holdingCost * (1+ModelParameters::HOLDING_COST_INCREMENT));
+	prob.newCtr(XPRBnewname("HoldingCost"), p1 <= (double) holdingCost * (1+ModelParameters::HOLDING_COST_INCREMENT/100));
 	p1 = 0;
 
 	//Delete current objective

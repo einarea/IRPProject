@@ -22,7 +22,7 @@ private:
 	bool Delivery;
 
 	double getDistance(const NodeInstance * node) const;
-	NodeInstance * getColocatedNode();
+	NodeInstance * getColocatedNode() const;
 	int HoldingCost;
 	void randomQuantities(int randSeed);
 	int LowerLimit;
@@ -43,7 +43,7 @@ public:
 
 	NodeInstance(int NodeId, bool Del, int posX, int posY, int nPer, int inital, int holdingCost, int upperLim, int lowerLim, vector<int> Demand);
 	NodeInstance(int NodeId, bool Del, int posX, int posY, int nPer, int randSeed);
-	NodeInstance(int id, bool Del, int nPer, int randSeed);
+	NodeInstance(int id, bool Del, int nPer, int randSeed, int posType = -1);
 	bool isDelivery() const;
 	bool isColocated(const NodeInstance *) const;
 	bool hasArc(NodeInstance * node);
@@ -81,7 +81,7 @@ inline double NodeInstance::getDistance(const NodeInstance * node) const
 	return (int)floor(sqrt(pow(PosX - node->PosX, 2) + pow(PosY - node->PosY, 2)));
 }
 
-inline NodeInstance * NodeInstance::getColocatedNode()
+inline NodeInstance * NodeInstance::getColocatedNode() const
 {
 	return ColocatedNode;
 }

@@ -28,6 +28,7 @@ public:
 
 	int SolID;
 	NodeIRP * getDepot(int period) const;
+	int getNumberOfDivisible();
 
 	//Solves an vrp for the period and update the solution
 	void solveVRP(int period);

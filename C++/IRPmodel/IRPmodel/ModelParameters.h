@@ -3,22 +3,23 @@ class ModelParameters
 {
 public:
 	//Running time
-	static const int MAX_RUNNING_TIME_IRP = 60;//seconds
-	static const int MAX_RUNNING_TIME_VRP = 30; //seconds
+	static const int MAX_RUNNING_TIME_IRP = 120;//seconds
+	static const int MAX_RUNNING_TIME_VRP = 45; //seconds
 	static const int MAX_TIME_ROUTE_PROBLEM = 90; //seconds
-	static const int INTENSIFICATION_TIME = 60; //seconds
+	static const int INTENSIFICATION_TIME = 90; //seconds
 	static const int TERMINATE_IF_NO_NEW_SOLUTION = 12000; //seconds
-	static const int HEURESTIC_TIME = 600; // seconds
+	static const int HEURESTIC_TIME = 1200; // seconds
 
 	static const int nVehicles = 3;
 	static const bool SUBTOUR_ELIMINATION = false;
 
 	//Diversification parameters
-	static const int ROUTE_LOCK = 70; //Percentage of routes to require changes to
+	static const int ROUTE_LOCK = 80; //Percentage of routes to require changes to
 	static const int MIN_CHANGE = 20; //Percentage of changes to solution
 	static const int TabuLength = 2;  //Number of diversication iterations locked
 	static const int TABU_LOCK = 20; //Percentage of changes to lock randomly.
-	static const int HOLDING_COST_INCREMENT = 5; //Used by addHoldingCostCtr, Holding cost allowed to increase in percentage, removed from objective function.
+	//static const int HOLDING_COST_INCREMENT = 5; //Used by addHoldingCostCtr, Holding cost allowed to increase in percentage, removed from objective function.
+	static double HOLDING_COST_INCREMENT;
 
 	//Subtour parameters
 	static const int EDGE_WEIGHT = 50; //Divided by 100, weight of edges in graph to construct

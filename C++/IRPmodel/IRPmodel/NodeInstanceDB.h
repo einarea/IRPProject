@@ -16,6 +16,8 @@ class NodeInstanceDB
 	static const int DELIVERY = 22;
 	static const int COLOCATED = 23;
 	static const int SEPARATE = 24;
+	static const int DEPOT_CLOSENESS = 25;
+	static const int CLUSTER = 26;
 	friend class Solution;
 	friend class Route;
 	friend class IRP;
@@ -42,6 +44,8 @@ public:
 	vector<int> getDifference2(vector<int> set1, vector<NodeInstance*> set2) const;
 	vector<NodeInstance*> getDifference(vector<NodeInstance*> set1, vector<NodeInstance*> set2) const;
 	static NodeInstanceDB * createInstance(int nCustomers, int nPeriods, int version);
+	static NodeInstanceDB * createCloseToDepotInstance(int nCustomers, int nPeriods, int version);
+	static NodeInstanceDB * createClusterInstance(int nCustomers, int nPeriods, int version);
 	static NodeInstanceDB * createPDInstance(int nCustomers, int nPeriods, int version);
 	static NodeInstanceDB * createDelInstance(int nCustomers, int nPeriods, int version);
 	static NodeInstanceDB * openInstance(int nCustomers, int nPeriods, int version);
