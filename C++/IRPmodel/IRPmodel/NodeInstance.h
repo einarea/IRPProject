@@ -66,19 +66,19 @@ public:
 
 inline double NodeInstance::getTransCost(const NodeInstance * node) const
 {
-	return getDistance(node) * ModelParameters::TRANSCOST_MULTIPLIER + ModelParameters::SERVICECOST_MULTIPLIER;
+	return floor(getDistance(node) * ModelParameters::TRANSCOST_MULTIPLIER) + ModelParameters::SERVICECOST_MULTIPLIER;
 }
 
 
 inline double NodeInstance::getTravelTime(const NodeInstance * node) const
 {
-	return getDistance(node) * ModelParameters::TRAVELTIME_MULTIPLIER + ModelParameters::SERVICETIME;
+	return floor(getDistance(node) * ModelParameters::TRAVELTIME_MULTIPLIER) + ModelParameters::SERVICETIME;
 }
 
 
 inline double NodeInstance::getDistance(const NodeInstance * node) const
 {
-	return (int)floor(sqrt(pow(PosX - node->PosX, 2) + pow(PosY - node->PosY, 2)));
+	return (double)(sqrt(pow(PosX - node->PosX, 2) + pow(PosY - node->PosY, 2)));
 }
 
 inline NodeInstance * NodeInstance::getColocatedNode()

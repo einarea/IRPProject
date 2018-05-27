@@ -84,17 +84,17 @@ inline double NodeIRP::getDistance(const NodeIRP * node) const
 
 inline double NodeIRP::getTransCost(const NodeInstance * node) const
 {
-	return getDistance(node) * ModelParameters::TRANSCOST_MULTIPLIER + ModelParameters::SERVICECOST_MULTIPLIER;
+	return floor(getDistance(node) * ModelParameters::TRANSCOST_MULTIPLIER) + ModelParameters::SERVICECOST_MULTIPLIER;
 }
 
 inline double NodeIRP::getTravelTime(const NodeInstance * node) const
 {
-	return getDistance(node) * ModelParameters::TRAVELTIME_MULTIPLIER + ModelParameters::SERVICETIME;
+	return floor(getDistance(node) * ModelParameters::TRAVELTIME_MULTIPLIER) + ModelParameters::SERVICETIME;
 }
 
 inline double NodeIRP::getDistance(const NodeInstance * node) const
 {
-	return (int)floor(sqrt(pow(NodeData.PosX - node->PosX, 2) + pow(NodeData.PosY - node->PosY, 2)));
+	return (double) (sqrt(pow(NodeData.PosX - node->PosX, 2) + pow(NodeData.PosY - node->PosY, 2)));
 }
 
 

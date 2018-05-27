@@ -387,7 +387,7 @@ Solution * IRP::solveModel()
 	//XPRSsetcbpreintsol(oprob, acceptInt, &(*this));
 	//prob.print();
 	//XPRSsetcbcutmgr(oprob, cbmng, &(*this));
-	prob.print();
+	//prob.print();
 	prob.mipOptimise();
 	vector<XPRBcut> ass;
 
@@ -395,7 +395,7 @@ Solution * IRP::solveModel()
 	solutionTime = difftime(time(NULL), startTime);
 	//vector<XPRBcut> ass;
 	//bool a = sepStrongComponents(ass);
-	//prob.print();
+	prob.print();
 	//For printing
 
 	XPRSgetdblattrib(oprob, XPRS_BESTBOUND, &bestBound);
