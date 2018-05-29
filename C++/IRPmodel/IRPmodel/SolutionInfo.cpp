@@ -163,6 +163,7 @@ void SolutionInfo::InstanceInfo::printInstanceToFile(double bestBound)
 	ins << "nRoutes:\t" << this->nRoutes << "\n";
 	ins << "Diversification iterations:\t" << nIterations << "\n";
 	ins << "Intensification iterations:\t" << nIntIterations << "\n";
+	ins << "Route pool:\t" << nRoutePool << "\n";
 	ins << "Solution time:\t" << this->solTime << "\n\n";
 
 

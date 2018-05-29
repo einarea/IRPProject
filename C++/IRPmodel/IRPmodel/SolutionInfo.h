@@ -24,6 +24,7 @@ public:
 	public:
 
 		double bestObjective = -1;
+		int nRoutePool = -1;
 		int nIterations = -1; 
 		int nIntIterations = -1;
 		double relaxedObj = -1;
