@@ -4,7 +4,7 @@ class ModelParameters
 public:
 	//Running time
 	static const int MAX_RUNNING_TIME_IRP = 20;//seconds
-	static const int MAX_RUNNING_TIME_VRP = 10; //seconds
+	static const int MAX_RUNNING_TIME_VRP = 60; //seconds
 	static const int MAX_TIME_ROUTE_PROBLEM = 90; //seconds
 	static const int INTENSIFICATION_TIME = 10; //seconds
 	static const int TERMINATE_IF_NO_NEW_SOLUTION = 12000; //seconds
@@ -14,13 +14,15 @@ public:
 	//For the heurestic
 	static const bool SUBTOUR_ELIMINATION = true;
 	static const bool Simultanoues_RelaxedIRP = false;
+	static const bool SelectBetweenAllRoutes = true;
+
 
 	//Simultanous model
 	static bool Simultaneous;
 
 
 	//Diversification parameters
-	static const int ROUTE_LOCK = 70; //Percentage of routes to require changes to
+	static const int ROUTE_LOCK = 40; //Percentage of routes to require changes to
 	static const int MIN_CHANGE = 10; //Percentage of changes to solution
 	static const int TabuLength = 2;  //Number of diversication iterations locked
 	static const int TABU_LOCK = 20; //Percentage of changes to lock randomly.
