@@ -8,6 +8,7 @@ ModelParameters::ModelParameters()
 {
 }
 
+bool ModelParameters::Simultaneous = false;
 
 ModelParameters::~ModelParameters()
 {

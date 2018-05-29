@@ -298,7 +298,6 @@ bool VRPmodel::formulateProblem()
 
 				p2 = ModelParameters::maxTime + node1->getTravelTime(node2);
 				prob.newCtr("Time flow", p1 <= p2);
-				cout << "\n";
 				p1 = 0;
 				p2 = 0;
 
@@ -372,7 +371,6 @@ void VRPmodel::updateSolution(Solution * sol)
 		//Add time variables
 		for (auto node : Nodes) {
 			i = node->getId();
-			cout << timeVar[i].getSol();
 			node->TimeServed = timeVar[i].getSol();
 		}
 	}

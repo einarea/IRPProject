@@ -658,6 +658,92 @@ double ** Solution::getVisitDifference(const Solution &sol1, const Solution & so
 	return changedMatrix;
 }
 
+int Solution::getnDivisible()
+{
+	int nDivisible = 0;
+	for(int t : Instance.Periods){
+		for (NodeIRPHolder * node : Nodes) {
+			NodeIRP * nodePer = node->NodePeriods[t];
+			//Count only for delivery nodes to avoid double counting
+			if (nodePer->isDelivery() && !nodePer->isDepot()) {
+				//Divisible if both nodes are served and the arc between them are not traversed, not robust coded
+				if (nodePer->Quantity >= 0.01 && !nodePer->isColocated(nodePer->getNextNode()) && Nodes[node->getId()+1]->NodePeriods[t]->Quantity >= 0.01)
+					nDivisible++;
+			}
+		}
+	
+	}
+	return nDivisible;
+}
+
+int Solution::getnSingleService()
+{
+	int nSingle = 0;
+	for (int t : Instance.Periods) {
+		for (NodeIRPHolder * node : Nodes) {
+			NodeIRP * nodePer = node->NodePeriods[t];
+			if (!nodePer->isDepot()) {
+				//Single if only one of the colocated nodes are served, not robust coded
+				if (nodePer->isDelivery()) {
+					if (nodePer->Quantity >= 0.01 && Nodes[node->getId() + 1]->NodePeriods[t]->Quantity <= 0.01) {
+						nSingle++;
+					}
+				}
+				else {
+					if (nodePer->Quantity >= 0.01 && Nodes[node->getId() - 1]->NodePeriods[t]->Quantity <= 0.01) {
+						nSingle++;
+					}
+				}
+					
+			}
+		}
+	}
+	return nSingle;
+}
+
+int Solution::getTotalNodesServed()
+{
+	int nTotal = 0;
+	for (int t : Instance.Periods) {
+		for (NodeIRPHolder * node : Nodes) {
+			NodeIRP * nodePer = node->NodePeriods[t];
+			if (!nodePer->isDepot()) {
+				//Single if only one of the colocated nodes are served, not robust coded
+				if (nodePer->Quantity >= 0.01)
+					nTotal++;
+			}
+		}
+	}
+	return nTotal;
+}
+
+int Solution::getnSimultaneousVisits()
+{
+	int nDivisible = 0;
+	for (int t : Instance.Periods) {
+		for (NodeIRPHolder * node : Nodes) {
+			NodeIRP * nodePer = node->NodePeriods[t];
+			//Count only for delivery nodes to avoid double counting
+			if (nodePer->isDelivery() && !nodePer->isDepot()) {
+				//Simultanoues if arc between colocated nodes are traversed
+				if (nodePer->Quantity >= 0.01 && nodePer->isColocated(nodePer->getNextNode()))
+					nDivisible++;
+			}
+		}
+
+	}
+	return nDivisible;
+}
+
+int Solution::getnRoutes()
+{
+	int nRoutes = 0;
+	for (int t : Instance.Periods)
+		nRoutes += getNumberOfRoutes(t);
+
+	return nRoutes;
+}
+
 vector<Route*> Solution::getRoutes(int period) const
 {
 	NodeIRP* v;

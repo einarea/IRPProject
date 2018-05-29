@@ -153,6 +153,39 @@ void SolutionInfo::InstanceInfo::printInstanceToFile(double bestBound)
 	ofstream ins;
 	ins.open("Heurestic/" + Name + ".txt");
 
+	ins << "Best objective:\t" << this->bestObjective << "\n";
+	ins << "IRP relaxed sol:\t" << this->relaxedObj << "\n";
+	ins << "IRP relaxed dual bound:\t" << this->bestBound << "\n";
+	ins << "nDivisible:\t" << this->nDivisible << "\n";
+	ins << "nSimultaneous:\t" << this->nSimultanouesService << "\n";
+	ins << "Total nodes served:\t" << this->nTotalNodesServed << "\n";
+	ins << "Single visits:\t" << this->nSingleService << "\n";
+	ins << "nRoutes:\t" << this->nRoutes << "\n";
+	ins << "Diversification iterations:\t" << nIterations << "\n";
+	ins << "Intensification iterations:\t" << nIntIterations << "\n";
+	ins << "Solution time:\t" << this->solTime << "\n\n";
+
+
+	ins << "Solution method\n";
+	if (ModelParameters::Simultaneous)
+		ins << "Simultanours IRP\n";
+	else
+		ins << "Divisible IRP\n";
+
+	if (ModelParameters::SUBTOUR_ELIMINATION)
+		ins << "Subtour elimination\n\n";
+	else
+		ins << "No subtour elimination\n\n";
+
+
+	ins << "Heurestic parameters\n";
+	ins << "Heurestic time:\t" << ModelParameters::HEURESTIC_TIME << "\n";
+	ins << "Intensification time:\t" << ModelParameters::INTENSIFICATION_TIME << "\n";
+	ins << "IRP time\t:" << ModelParameters::MAX_RUNNING_TIME_IRP << "\n";
+	ins << "VRP time\t:" << ModelParameters::MAX_RUNNING_TIME_VRP << "\n\n";
+
+
+	ins << "Solution process\n";
 	if (bestBound == -1) {
 
 		for (Information &info : infoHolder) {

@@ -37,6 +37,7 @@ public:
 	double getTravelTime(const NodeIRP * node) const;
 	double getTransCost(const NodeInstance * node) const;
 	double getTravelTime(const NodeInstance * node) const;
+	bool isColocated(const NodeIRP * node) const;
 
 	NodeIRP(const NodeInstance& data);
 	~NodeIRP();
@@ -69,17 +70,17 @@ private:
 
 inline double NodeIRP::getTransCost(const NodeIRP * node) const
 {
-	return getDistance(node) * ModelParameters::TRANSCOST_MULTIPLIER + ModelParameters::SERVICECOST_MULTIPLIER;
+	return floor(getDistance(node) * ModelParameters::TRANSCOST_MULTIPLIER) + ModelParameters::SERVICECOST_MULTIPLIER;
 }
 
 inline double NodeIRP::getTravelTime(const NodeIRP * node) const
 {
-	return getDistance(node) * ModelParameters::TRAVELTIME_MULTIPLIER + ModelParameters::SERVICETIME;
+	return floor(getDistance(node) * ModelParameters::TRAVELTIME_MULTIPLIER) + ModelParameters::SERVICETIME;
 }
 
 inline double NodeIRP::getDistance(const NodeIRP * node) const
 {
-	return (int)floor(sqrt(pow(NodeData.PosX - node->NodeData.PosX, 2) + pow(NodeData.PosY - node->NodeData.PosY, 2)));
+	return (double) (sqrt(pow(NodeData.PosX - node->NodeData.PosX, 2) + pow(NodeData.PosY - node->NodeData.PosY, 2)));
 }
 
 inline double NodeIRP::getTransCost(const NodeInstance * node) const
@@ -90,6 +91,11 @@ inline double NodeIRP::getTransCost(const NodeInstance * node) const
 inline double NodeIRP::getTravelTime(const NodeInstance * node) const
 {
 	return floor(getDistance(node) * ModelParameters::TRAVELTIME_MULTIPLIER) + ModelParameters::SERVICETIME;
+}
+
+inline bool NodeIRP::isColocated(const NodeIRP * node) const
+{
+	return this->getData().isColocated(&node->getData());
 }
 
 inline double NodeIRP::getDistance(const NodeInstance * node) const

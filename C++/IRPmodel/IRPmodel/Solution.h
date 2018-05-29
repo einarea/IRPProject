@@ -69,6 +69,11 @@ public:
 	void plot(string filename);
 	void sort(vector <NodeIRP>*);
 	static double ** Solution::getVisitDifference(const Solution & sol1, const Solution & sol2);
+	int getnDivisible();
+	int getnSingleService();
+	int getTotalNodesServed();
+	int getnSimultaneousVisits();
+	int getnRoutes();
 	bool isFeasible() const;
 	void clearRoutes();
 	void clearEdges(int period);

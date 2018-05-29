@@ -23,6 +23,16 @@ public:
 	class InstanceInfo {
 	public:
 
+		double bestObjective = -1;
+		int nIterations = -1; 
+		int nIntIterations = -1;
+		double relaxedObj = -1;
+		int nDivisible = -1;
+		int nSingleService = -1;
+		int nSimultanouesService = -1;
+		int nTotalNodesServed = -1;
+		int nRoutes = -1;
+		double solTime = -1;
 		double bestBound = -1;
 		void fillInfo();
 		double getGap(int t);
