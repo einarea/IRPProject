@@ -1,5 +1,7 @@
 #pragma once
 
+#ifndef IRP_H
+#define IRP_H
 
 #include "xprb_cpp.h"
 #include "NodeInstanceDB.h"
@@ -8,6 +10,8 @@
 #include "Solution.h"
 #include "NodeIRPHolder.h"
 #include <time.h>
+#include "SolutionInfo.h"
+#include "ModelParameters.h"
 
 
 using namespace ::dashoptimization;
@@ -98,6 +102,8 @@ public:
 	void buildStrongGraph(vector <NodeStrong*> &, int, bool includeDepot, double weight = -1);
 	vector <Solution *> solutions;
 
+	SolutionInfo::InstanceInfo * InstanceData = nullptr;
+
 	XPRBvar ** inventory;
 	XPRBvar ** y;
 	XPRBvar *** x;
@@ -135,7 +141,7 @@ public:
 	};
 	
 
-	IRP(const NodeInstanceDB&, bool relaxed = false, bool maskOn = false, int ** VisitMask = 0);
+	IRP(const NodeInstanceDB&, bool relaxed = false, SolutionInfo::InstanceInfo * instance = nullptr, bool maskOn = false, int ** VisitMask = 0);
 	void addVisitConstraint(double ** VisitMatrix, int selection);
 	Route * getRoute(int id);
 	vector<Route const*>& getRoutes();
@@ -174,4 +180,6 @@ public:
 
 	~IRP();
 };
+
+#endif
 

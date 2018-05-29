@@ -3,7 +3,6 @@
 #include "ModelBase.h"
 #include <algorithm>
 #include "graphAlgorithm.h"
-#include "ModelParameters.h"
 #include <string.h>
 #include <boost/tuple/tuple.hpp>
 #include "gnuplot-iostream.h"
@@ -18,8 +17,16 @@ void XPRS_CC preNode(XPRSprob oprob, void * vd, int * ifreject)
 }
 void  XPRS_CC integerSolutionIRP(XPRSprob oprob, void * vd, int soltype, int * ifreject, double *cutoff) {
 	IRP * modelInstance;
+	double obj;
 	modelInstance = (IRP*)vd;
 	modelInstance->lastSolutionFound = time(NULL);
+	if (modelInstance->InstanceData != nullptr) {
+		XPRSgetdblattrib(oprob, XPRS_LPOBJVAL, &obj);
+		modelInstance->getProblem()->beginCB(oprob);
+		modelInstance->getProblem()->sync(XPRB_XPRS_SOL);
+		modelInstance->InstanceData->addSolutionPoint(ModelParameters::BBNode, obj , difftime(time(NULL), modelInstance->startTime));
+		modelInstance->getProblem()->endCB();
+	}
 }
 
 void XPRS_CC acceptInt(XPRSprob oprob, void * vd, int soltype, int * ifreject, double *cutoff) {
@@ -276,14 +283,15 @@ NodeInstanceDB const * IRP::getDB()
 	}
 }*/
 
-IRP::IRP(const NodeInstanceDB& db, bool ArcRel, bool maskOn, int ** VisitMask)
+IRP::IRP(const NodeInstanceDB& db, bool ArcRel, SolutionInfo::InstanceInfo * instance, bool maskOn, int ** VisitMask)
 	:
 	Database(db),
 	prob("IRP"),			//Initialize problem in BCL		
 	ARC_RELAXED(ArcRel),
 	SolutionCounter(0),
 	MaskOn(maskOn),
-	LPSubtour(false)
+	LPSubtour(false),
+	InstanceData(instance)
 {
 	//Initialize sets
 	if(!initializeSets()) {
@@ -904,7 +912,7 @@ void IRP::addSubtourCut(vector<vector<Node *>>& strongComp, int t, bool &newCut,
 						rSide += y[node->getId()][t];
 
 					for (Node *node2 : strongComp[i]) {
-						if (Database.inExtensiveArcSet(node->getId(), node2->getId())) {
+						if (Database.inArcSet(node->getId(), node2->getId())) {
 							//printf("x_%d%d + ", u, v);
 							lSide += x[node->getId()][node2->getId()][t];
 			
@@ -1360,7 +1368,7 @@ void IRP::printStrongCompAlgorithm()
 void IRP::printSolutionToFile(double lpOptima, double trans, double hold,  int version, int edge)
 {
 	ofstream instanceFile;
-	instanceFile.open("Results/C" + to_string(Database.getNumNodes() / 2) + "V" + to_string(ModelParameters::nVehicles) + "version " +to_string(version) +"_edge_" + to_string(edge) + ".txt");
+	instanceFile.open("Exact/C" + to_string(Database.getNumNodes() / 2 + 1) + "V" + to_string(ModelParameters::nVehicles) + "version " +to_string(version) +"_edge_" + to_string(edge) + ".txt");
 	instanceFile << "Sol. time: \t " << solutionTime << "\n";
 	instanceFile << "IP objective: \t" << bestSol << "\n";
 	instanceFile << "Trans. cost: \t" << getTransportationCost() << "\n";

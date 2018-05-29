@@ -1,7 +1,6 @@
 #pragma once
 
 #include "stdafx.h"
-#include "ModelBase.h"
 #include <vector>
 #include "NodeInstance.h"
 #include <iostream>

@@ -148,45 +148,94 @@ const SolutionInfo::Information * SolutionInfo::InstanceInfo::getInfo(int time) 
 	return &*pos;
 }
 
-void SolutionInfo::InstanceInfo::printInstanceToFile(double bestBound)
+double SolutionInfo::InstanceInfo::getBestSolutionTime()
+{
+	for (auto solutionPoint : infoHolder)
+		if (solutionPoint.ObjectiveVal < (bestObjective+0.5))
+			return solutionPoint.Time;
+
+	exit(145);
+}
+
+double SolutionInfo::InstanceInfo::getPercentSolutionTime(double percent)
+{
+	for (auto solutionPoint : infoHolder)
+		if (solutionPoint.ObjectiveVal < bestObjective* (1 + (double) percent/100))
+			return solutionPoint.Time;
+
+	exit(145);
+}
+
+void SolutionInfo::InstanceInfo::printInstanceToFile(double bestBound, string * filename, bool divisible)
 {
 	ofstream ins;
-	ins.open("Heurestic/" + Name + ".txt");
+	if (divisible) {
+		ins.open("Heurestic/" + Name + ".txt");
+	}
+	else
+		ins.open("Exact/" + *filename + ".txt");
 
 	ins << "Best objective:\t" << this->bestObjective << "\n";
-	ins << "IRP relaxed sol:\t" << this->relaxedObj << "\n";
-	ins << "IRP relaxed dual bound:\t" << this->bestBound << "\n";
+	if (divisible) {
+		ins << "IRP relaxed sol:\t" << this->relaxedObj << "\n";
+		ins << "IRP relaxed dual bound:\t" << this->bestBound << "\n";
+	}
+	ins << "Best sol found after:\t" << getBestSolutionTime() << "\n";
+	ins << "0.5% from best sol after:\t" << getPercentSolutionTime(0.5) << "\n";
+	ins << "1% from best sol after:\t" << getPercentSolutionTime(1) << "\n";
+	ins << "2% from best sol after:\t" << getPercentSolutionTime(2) << "\n";
+	ins << "5% from best sol after: \t" << getPercentSolutionTime(5) << "\n";
+	ins << "10% from best sol after: \t" << getPercentSolutionTime(1) << "\n";
 	ins << "nDivisible:\t" << this->nDivisible << "\n";
 	ins << "nSimultaneous:\t" << this->nSimultanouesService << "\n";
 	ins << "Total nodes served:\t" << this->nTotalNodesServed << "\n";
 	ins << "Single visits:\t" << this->nSingleService << "\n";
 	ins << "nRoutes:\t" << this->nRoutes << "\n";
-	ins << "Diversification iterations:\t" << nIterations << "\n";
-	ins << "Intensification iterations:\t" << nIntIterations << "\n";
-	ins << "Route pool:\t" << nRoutePool << "\n";
-	ins << "Solution time:\t" << this->solTime << "\n\n";
+
+	if (divisible) {
+		ins << "Diversification iterations:\t" << nIterations << "\n";
+		ins << "Intensification iterations:\t" << nIntIterations << "\n";
+
+		ins << "Route pool:\t" << nRoutePool << "\n";
+	}
+
+	ins << "Solution time:\t" << this->solTime << "\n";
+
+	if (divisible) {
+		ins << "\nSolution method\n";
+		if (ModelParameters::Simultaneous)
+			ins << "Simultanous IRP\n";
+		else
+			ins << "Divisible IRP\n";
+
+	}
+
+	ins << "\nSubtour elimination\n";
+	if (ModelParameters::SUBTOUR_ELIMINATION) {
+		ins << "Alpha:\t" << (double) ModelParameters::ALPHA/100 << "\n";
+		ins << "Edge weight:\t" << (double) ModelParameters::EDGE_WEIGHT/100 << "\n";
+	}
+	else{
+		ins << "Alpha:\t" << "-" << "\n";
+		ins << "Edge weight:\t" << "-" << "\n";
+		
+	}
+
+	if (divisible) {
+		ins << "\nHeurestic parameters\n";
+		ins << "Heurestic time:\t" << ModelParameters::HEURESTIC_TIME << "\n";
+		ins << "Intensification time:\t" << ModelParameters::INTENSIFICATION_TIME << "\n";
+		ins << "IRP time\t:" << ModelParameters::MAX_RUNNING_TIME_IRP << "\n";
+		ins << "VRP time\t:" << ModelParameters::MAX_RUNNING_TIME_VRP << "\n";
+		if (ModelParameters::RouteChange)
+			ins << "Min Route change:\t" << ModelParameters::ROUTE_LOCK << "%\n";
+
+		if (ModelParameters::MinChanges)
+			ins << "Min changes:\t" << ModelParameters::MIN_CHANGE << "%\n";
+	}
 
 
-	ins << "Solution method\n";
-	if (ModelParameters::Simultaneous)
-		ins << "Simultanours IRP\n";
-	else
-		ins << "Divisible IRP\n";
-
-	if (ModelParameters::SUBTOUR_ELIMINATION)
-		ins << "Subtour elimination\n\n";
-	else
-		ins << "No subtour elimination\n\n";
-
-
-	ins << "Heurestic parameters\n";
-	ins << "Heurestic time:\t" << ModelParameters::HEURESTIC_TIME << "\n";
-	ins << "Intensification time:\t" << ModelParameters::INTENSIFICATION_TIME << "\n";
-	ins << "IRP time\t:" << ModelParameters::MAX_RUNNING_TIME_IRP << "\n";
-	ins << "VRP time\t:" << ModelParameters::MAX_RUNNING_TIME_VRP << "\n\n";
-
-
-	ins << "Solution process\n";
+	ins << "\nSolution process\n";
 	if (bestBound == -1) {
 
 		for (Information &info : infoHolder) {
@@ -239,6 +288,10 @@ void SolutionInfo::InstanceInfo::addSolutionPoint(int state, double objectiveVal
 	string stateStr;
 	switch (state) {
 
+	case ModelParameters::BBNode: {
+		stateStr = "BB";
+		break;
+	}
 	case ModelParameters::ROUTE_SEARCH: {
 		stateStr = "RS";
 		break;

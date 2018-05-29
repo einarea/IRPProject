@@ -1,7 +1,6 @@
 #pragma once
 #include "NodeStrong.h"
 #include <stack>
-#include "IRP.h"
 #include "NodeIRP.h"
 #include <boost/tuple/tuple.hpp>
 #include "gnuplot-iostream.h"

@@ -8,7 +8,6 @@ using namespace std;
 
 
 
-
 int NodeInstanceDB::getDistance(const NodeInstance& node1, const NodeInstance& node2) const
 {
 	int distance;
@@ -39,7 +38,11 @@ int NodeInstanceDB::getDistance(int i, int j) const
 
 bool NodeInstanceDB::isColocated(int i, int j) const
 {
-	return false;
+	//Is delivery	
+	if (i % 2 != 0 && i != 0)
+		return i == j - 1;
+	else if (i != 0)
+		return i == j + 1;
 }
 
 int NodeInstanceDB::getTransCost(const NodeInstance &node1, const NodeInstance &node2) const

@@ -1,4 +1,8 @@
 #pragma once
+
+#ifndef SOLUTIONINFO_H
+#define SOLUTIONINF_H
+
 #include <vector>
 #include <stdlib.h>
 #include <list>
@@ -43,7 +47,9 @@ public:
 		const Information * getInfo(int time) const;
 		list<Information> infoHolder;
 		string Name;
-		void printInstanceToFile(double bestInfo = -1);
+		double getBestSolutionTime();
+		double getPercentSolutionTime(double percent);
+		void printInstanceToFile(double bestInfo = -1, string * filename = nullptr, bool heurestic = true);
 		int getMaxTime();
 		void addSolutionPoint(int state, double objectiveVal, double time);
 	};
@@ -61,3 +67,4 @@ public:
 
 };
 
+#endif

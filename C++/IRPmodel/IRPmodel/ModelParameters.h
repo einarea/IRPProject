@@ -3,18 +3,25 @@ class ModelParameters
 {
 public:
 	//Running time
-	static const int MAX_RUNNING_TIME_IRP = 20;//seconds
+	static const int MAX_RUNNING_TIME_IRP = 240;//seconds
 	static const int MAX_RUNNING_TIME_VRP = 60; //seconds
 	static const int MAX_TIME_ROUTE_PROBLEM = 90; //seconds
-	static const int INTENSIFICATION_TIME = 15; //seconds
+	static const int INTENSIFICATION_TIME = 60; //seconds
 	static const int TERMINATE_IF_NO_NEW_SOLUTION = 12000; //seconds
-	static const int HEURESTIC_TIME = 500; // seconds
+	static const int HEURESTIC_TIME = 1200; // seconds
 
 	static const int nVehicles = 3;
+	static const bool SUBTOUR_ELIMINATION = false;
 	//For the heurestic
-	static const bool SUBTOUR_ELIMINATION = true;
-	static const bool Simultanoues_RelaxedIRP = false;
+	static const bool Simultanoues_RelaxedIRP = true;
 	static const bool SelectBetweenAllRoutes = true;
+
+	//Only one of the diversification constraints should be true
+	static const bool RouteChange = true;
+	static const bool MinChanges = false;
+
+	//Holding cost removed from objective
+	static const bool HoldingCost = false;
 
 
 	//Simultanous model
@@ -22,7 +29,7 @@ public:
 
 
 	//Diversification parameters
-	static const int ROUTE_LOCK = 40; //Percentage of routes to require changes to
+	static const int ROUTE_LOCK = 50; //Percentage of routes to require changes to
 	static const int MIN_CHANGE = 10; //Percentage of changes to solution
 	static const int TabuLength = 2;  //Number of diversication iterations locked
 	static const int TABU_LOCK = 20; //Percentage of changes to lock randomly.
@@ -34,7 +41,7 @@ public:
 
 
 	//Only record improvement
-	static const bool RecordImprovement = false;
+	static const bool RecordImprovement = true;
 
 	//Valid inequalitues
 	static const int ExcessParameter = 30; //Pecentage excess above vehicle capacity. Only those with more are added
@@ -142,6 +149,7 @@ public:
 	static const int VRP = 79;
 	static const int INTENSIFICATAION_END = 80;
 	static const int FINAL_SOL = 81;
+	static const int BBNode = 82;
 
 
 	ModelParameters();
