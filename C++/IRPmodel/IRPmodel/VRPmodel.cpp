@@ -35,6 +35,286 @@ VRPmodel::VRPmodel(const NodeInstanceDB & db, vector<NodeIRP*> nodes, int period
 	formulateProblem();
 }
 
+int XPRS_CC cbmngVRP(XPRSprob oprob, void * vd)
+{
+
+	// subtour callback
+	//cout << "cb\n";
+	int depth;
+	int node;
+	int cutId;
+	XPRSgetintattrib(oprob, XPRS_NODEDEPTH, &depth);
+	XPRSgetintattrib(oprob, XPRS_NODES, &node);
+	double objval;
+	XPRSgetdblattrib(oprob, XPRS_LPOBJVAL, &objval);
+
+	vector<XPRBcut> subtourCut;
+
+
+
+	VRPmodel * modelInstance;
+	modelInstance = (VRPmodel*)vd;
+
+	//Load LP relaxation currently held in the optimizer
+	modelInstance->getProblem()->beginCB(oprob);
+	modelInstance->getProblem()->sync(XPRB_XPRS_SOL);
+	//For printing
+
+	//Load model instance
+	XPRBprob *bprob = modelInstance->getProblem();
+
+	//Columns number
+	int * mindo = nullptr;
+	//Matrix values
+	double * dvalo = nullptr;
+	vector<int> subtour;
+	vector<int> rowValues;
+
+	bool addedCuts = modelInstance->sepStrongComponents(subtourCut);
+
+	if (addedCuts) {
+		if (modelInstance->CutType == ModelParameters::GLOBAL_CUTS) {
+			for (int i = 0; i < subtourCut.size(); i++) {
+				rowValues.clear();
+				subtour.clear();
+				//	subtourCut[i].print();
+				//	cout << "\n";
+				subtour = modelInstance->subtourIndices[i];
+				mindo = (int*)malloc(subtour.size()*sizeof(int));
+
+				//	cout << "Sub: ";
+				for (int s = 0; s < subtour.size(); s++) {
+					mindo[s] = subtour[s];
+					//		cout <<subtour[s] << "\t";
+				}
+				//	cout << "\n";
+				//	cout << "MatValues: ";
+				rowValues = modelInstance->matrixValues[i];
+				dvalo = (double*)malloc(rowValues.size()*sizeof(double));
+				for (int j = 0; j < rowValues.size(); j++) {
+					dvalo[j] = rowValues[j];
+					//cout << rowValues[j]<< "\t";
+				}
+
+				//cout << "\n";
+
+				char qrtype = 'L';
+				double drhso = 0;
+				int nzp, status, mtype = 1, mstart[2], *mindp, ncols;
+				int nzo = subtour.size();
+				double drhsp, *dvalp;
+				XPRScut mindex;
+
+				XPRSgetintattrib(oprob, XPRS_COLS, &ncols);
+
+				mindp = (int*)malloc(ncols*sizeof(int));
+				dvalp = (double*)malloc(ncols*sizeof(double));
+				XPRSpresolverow(oprob, qrtype, nzo, mindo, dvalo, drhso, ncols,
+					&nzp, mindp, dvalp, &drhsp, &status);
+
+				/*cout << "Presolve var: \n";
+				for (int a = 0; a < nzp; a++) {
+				cout << mindp[a] << "\t";
+				}
+				cout << "\tCut End\n"; */
+
+				if (status >= 0) {
+					int nCuts = 1;
+					mstart[0] = 0; mstart[1] = nzp;
+					XPRSstorecuts(oprob, nCuts, 1, &mtype, &qrtype, &drhsp, mstart, &mindex, mindp, dvalp);
+
+				}
+				XPRSloadcuts(oprob, 1, -1, -1, NULL);
+				//cout << "Stored\n";
+			}
+		}
+	} //end add cut
+	modelInstance->getProblem()->endCB();
+	return 0;
+}
+
+
+void VRPmodel::useIPSubtourElimination(int cuttype)
+{
+	CutType = cuttype;
+	//Enable subtour elimination
+	//prob.setCutMode(1);
+	XPRSsetcbcutmgr(oprob, cbmngVRP, &(*this));
+	//XPRSsetcbprenode(oprob, preNode, &(*this));
+	//XPRSsetcbpreintsol(oprob, acceptInt, &(*this));
+}
+
+bool VRPmodel::sepStrongComponents(vector<XPRBcut> & cut)
+{
+	vector <vector<Node*>> result; //matrix to store strong components
+	vector <NodeStrong*> graph;		//Graph to store nodes
+	vector<Node*> tempGraph;
+	vector<Node*> tempGraph2;
+
+	bool newCut = false;
+	subtourIndices.clear();
+	matrixValues.clear();
+	for (int t : Database.Periods) {
+		;
+		buildStrongGraph(graph, false); //Do not include depot in graph
+		graphAlgorithm::sepByStrongComp(graph, result);
+		addSubtourCut(result, newCut, cut);
+
+		for (Node * node : graph) {
+			delete node;
+		}
+		graph.clear();
+		result.clear();
+	}
+	return newCut;
+}
+
+void VRPmodel::buildStrongGraph(vector<NodeStrong*>& graph , bool Depot, double weight)
+{
+	int s;
+	double edgeValue;
+	int i, j;
+	double w;
+
+	if (weight != -1) {
+		w = weight;
+	}
+	else
+		w = (double)ModelParameters::EDGE_WEIGHT / 100;
+
+	if (Depot) {
+		NodeStrong * node = new NodeStrong(0);
+		graph.push_back(node);
+	}
+	//Create nodes for each visited customer
+	for (NodeIRP* node : Nodes) {
+		i = node->getId();
+		if (y[i].getSol() >= 0.001) {
+			NodeStrong * node = new NodeStrong(i);
+			graph.push_back(node);
+		}
+	}
+	//Not robust, be aware of changing node set logic
+	//Add outgoing edges from each visited node
+	for (NodeStrong *node : graph) {
+		s = node->getId();
+		for (NodeStrong *endingNode : graph) {
+			if (Database.inArcSet(s, endingNode->getId())) {
+				edgeValue = x[s][endingNode->getId()].getSol();
+				if (edgeValue >= w) {
+					node->addEdge(edgeValue, endingNode);
+				}
+			}
+		}
+	}
+}
+
+void VRPmodel::addSubtourCut(vector<vector<Node *>>& strongComp, bool &newCut, vector<XPRBcut> &SubtourCut)
+{
+	//Check if SEC is violated
+	for (int i = 0; i < strongComp.size(); i++) {
+		if (strongComp[i].size() >= 2) {// only cut for subsets of size 2 or greater
+			double circleFlow = 0;
+			double visitSum = 0;
+			double maxVisitSum = 0;
+			double tempNodeVisit = 0;
+			//double tempNodeFlow = 0;
+			int maxVisitID = -1;
+			for (Node *node : strongComp[i]) {
+
+				//Value for y variable in the strong component
+				tempNodeVisit = y[node->getId()].getSol();
+				//	printf("y%d%d: %.2f\t", node.getId(), t, y[node.getId()][t].getSol());
+				visitSum += tempNodeVisit;
+
+				for (Node::Edge *edge : node->getEdges()) {
+					if (edge->getValue() >= 0) //only inlude edges in strong component
+						circleFlow += edge->getValue();
+					int u = node->getId();
+					int v = edge->getEndNode()->getId();
+					//	printf("x_%d%d: %.2f\t + ", u, v, x[u][v][t].getSol());
+				}
+
+				if (tempNodeVisit >= maxVisitSum) {
+					maxVisitID = node->getId();
+					maxVisitSum = tempNodeVisit;
+				}
+
+			}
+
+			if (circleFlow >= visitSum - maxVisitSum + (double)ModelParameters::ALPHA / 100) {
+				//print subtour
+				vector<int> varColumns;
+				vector<int> rowValues;
+
+				//	graphAlgorithm::printGraph(strongComp[i], *this, "Subtour\subtour");
+				// save current basis
+				//SavedBasis.push_back(prob.saveBasis());
+				//addSubtour constraint
+				//printf("Circleflow: %d:		NodeFlow: %d\n", circleFlow, nodeFlow);
+				XPRBexpr rSide;
+				XPRBexpr lSide;
+
+				//cout << "LP relaxation before cut: " << prob.getObjVal() << "\n";
+				string rSideStr = "<=";
+				//printf("\nAdded subtour cut: ");
+
+				for (Node *node : strongComp[i]) {
+					rSide += y[node->getId()];
+					//y[node->getId()][t].print();
+					//cout << "\n";
+					rSideStr = rSideStr + " + " + "y_" + to_string(node->getId());
+
+					if (node->getId() != maxVisitID)
+					{
+						varColumns.push_back(y[node->getId()].getColNum());
+						rowValues.push_back(-1);
+						rSide -= y[node->getId()];
+					}
+					else
+						rSide += y[node->getId()];
+
+					for (Node *node2 : strongComp[i]) {
+						if (Database.inArcSet(node->getId(), node2->getId())) {
+							//printf("x_%d%d + ", u, v);
+							lSide += x[node->getId()][node2->getId()];
+
+							rowValues.push_back(1);
+							//x[node->getId()][edge->getEndNode()->getId()][t].print();
+							//cout << "\n";
+
+							varColumns.push_back(x[node->getId()][node2->getId()].getColNum());
+						}
+					}
+				}
+
+				subtourIndices.push_back(varColumns);
+				matrixValues.push_back(rowValues);
+
+				rSide -= y[maxVisitID];
+				rSideStr = rSideStr + " - " + "y_" + to_string(maxVisitID);
+				//cout << rSideStr << "\n";
+				nSubtourCuts += 1;
+
+				XPRBcut vv = prob.newCut(lSide <= rSide);
+				//vv.print();
+
+				SubtourCut.push_back(vv);
+
+
+				//SubtourCut.push_back(vv);
+
+
+				newCut = true;
+				maxVisitID = -1;
+
+			}
+		}
+	}
+}
+
+
+
 
 void VRPmodel::solveModel(Solution * prevSol)
 {
@@ -47,8 +327,12 @@ void VRPmodel::solveModel(Solution * prevSol)
 	//Set integer solution callback
 	XPRSsetcbpreintsol(oprob, integerSolution, &(*this));
 
+	//Set callback for subtour elimination
+	useIPSubtourElimination(ModelParameters::GLOBAL_CUTS);
+
 	//prob.print();
 	prob.mipOptimise();
+
 	//prob.print();
 	SolutionTime = difftime(time(NULL), StartTime);
 	prevSol->SolutionTime = SolutionTime;
@@ -375,6 +659,11 @@ void VRPmodel::updateSolution(Solution * sol)
 		}
 	}
 
+}
+
+XPRBprob* VRPmodel::getProblem()
+{
+	return &prob;
 }
 
 

@@ -3,7 +3,7 @@ class ModelParameters
 {
 public:
 	//Running time
-	static const int MAX_RUNNING_TIME_IRP = 240;//seconds
+	static const int MAX_RUNNING_TIME_IRP = 10;//seconds
 	static const int MAX_RUNNING_TIME_VRP = 60; //seconds
 	static const int MAX_TIME_ROUTE_PROBLEM = 90; //seconds
 	static const int INTENSIFICATION_TIME = 60; //seconds

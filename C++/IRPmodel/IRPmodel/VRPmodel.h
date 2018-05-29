@@ -16,15 +16,26 @@ public:
 	void solveModel(Solution * currentSol = 0);
 	~VRPmodel();
 	void updateSolution(Solution * sol);
+	XPRBprob* getProblem();
+	bool VRPmodel::sepStrongComponents(vector<XPRBcut> & cut);
+	int nSubtourCuts = 0;
 
 	time_t StartTime;
 	double SolutionTime;
 	time_t lastSolutionFound;
 
+	void useIPSubtourElimination(int cuttype);
+	vector<vector<int>> subtourIndices;
+	vector<vector<int>> matrixValues;
+	int CutType;
+
 private:
 	void clearVariables();
 	int Period;
 	XPRBprob prob;
+
+	void buildStrongGraph(vector<NodeStrong*>& graph, bool Depot = false, double weight = -1);
+	void addSubtourCut(vector<vector<Node *>>& strongComp, bool &newCut, vector<XPRBcut> &SubtourCut);
 
 	//Variables
 	XPRBvar **x;
