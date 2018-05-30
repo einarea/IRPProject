@@ -352,6 +352,15 @@ NodeInstanceDB::NodeInstanceDB(int nCustomers, int nPer, int type)
 		}
 		break;
 	}
+
+	case CLOSENESS_TO_DEPOT: {
+		for (int i = 1; i <= 2 * nCustomers; i = i + 2) {
+			auto delNode = new NodeInstance(i, true, nPer, i, NodeInstance::CLOSE_DEPOT);
+			AllNodes.push_back(delNode);
+			AllNodes.push_back(new NodeInstance(i + 1, false, delNode->PosX, delNode->PosY, nPer, i + 1));
+		}
+		break;
+	}
 	}
 
 	initializeSets();
@@ -382,6 +391,17 @@ NodeInstanceDB* NodeInstanceDB::createInstance(int nCustomers, int nPeriods, int
 	db->writeInstanceToFile(instanceFile, filename);
 	return db;
 
+}
+
+NodeInstanceDB * NodeInstanceDB::createClosenessToDepotInstance(int nCustomers, int nPeriods, int version)
+{
+	NodeInstanceDB *db = new NodeInstanceDB(nCustomers, nPeriods, CLOSENESS_TO_DEPOT);
+
+	ofstream instanceFile;
+
+	string filename = getFilename(nCustomers, nPeriods, version);
+	db->writeInstanceToFile(instanceFile, filename);
+	return db;
 }
 
 NodeInstanceDB * NodeInstanceDB::createPDInstance(int nCustomers, int nPeriods, int version)

@@ -126,15 +126,34 @@ NodeInstance::NodeInstance(int nodeId, bool Del, int posX, int posY, int nPer, i
 }
 
 //Create random node
-NodeInstance::NodeInstance(int id, bool del, int nPer, int randSeed)
+NodeInstance::NodeInstance(int id, bool del, int nPer, int randSeed, int positionType)
 	:
 	NodeID(id),
 	Delivery(del),
 	nPeriods(nPer)
 {
 	srand(time(0) + randSeed);
-	PosX = (rand() % 100 + 0) - 50;
-	PosY = (rand() % 100 + 0) - 50;
+	
+	if (positionType == CLOSE_DEPOT) {
+		double x;
+		double y;
+		x = (rand() % 50 + 0);
+		y = (rand() % 50 + 0);
+
+		//map closer to depot by convex function
+		PosX =  ceil( 50/pow(50,1.5) * pow(x, 1.5));
+		PosY = ceil( 50 / pow(50, 1.5) * pow(y, 1.5));
+
+		if (rand() % 10 + 0 >= 5)
+			PosX = -PosX;
+		if (rand() % 10 + 0 <= 5)
+			PosY = -PosY;
+	}
+
+	if (positionType == RANDOM_POS) {
+		PosX = (rand() % 100 + 0) - 50;
+		PosY = (rand() % 100 + 0) - 50;
+	}
 
 	randomQuantities(randSeed);
 }

@@ -69,7 +69,7 @@ void SolutionInfo::printAverageInstancesToFile(string name)
 			}
 		}
 
-		ins << "Time:\t" << t << "\tGap from best exact solution:\t" << to_string((double) average/n) << "\n";
+		ins << "Time:\t" << t << "\tGap from lowerbound:\t" << to_string((double) average/n) << "\n";
 	
 	}
 	ins.close();
@@ -166,20 +166,22 @@ double SolutionInfo::InstanceInfo::getPercentSolutionTime(double percent)
 	exit(145);
 }
 
-void SolutionInfo::InstanceInfo::printInstanceToFile(double bestBound, string * filename, bool divisible)
+void SolutionInfo::InstanceInfo::printInstanceToFile(double bBound, string * filename, bool heurestic)
 {
+	bestBound = bBound;
 	ofstream ins;
-	if (divisible) {
+	if (heurestic) {
 		ins.open("Heurestic/" + Name + ".txt");
 	}
 	else
 		ins.open("Exact/" + *filename + ".txt");
 
 	ins << "Best objective:\t" << this->bestObjective << "\n";
-	if (divisible) {
+	if (heurestic) {
 		ins << "IRP relaxed sol:\t" << this->relaxedObj << "\n";
-		ins << "IRP relaxed dual bound:\t" << this->bestBound << "\n";
+		ins << "IRP relaxed dual bound:\t" << this->irpRel << "\n";
 	}
+	ins << "Best bound:\t" << this->bestBound << "\n";
 	ins << "Best sol found after:\t" << getBestSolutionTime() << "\n";
 	ins << "0.5% from best sol after:\t" << getPercentSolutionTime(0.5) << "\n";
 	ins << "1% from best sol after:\t" << getPercentSolutionTime(1) << "\n";
@@ -192,7 +194,7 @@ void SolutionInfo::InstanceInfo::printInstanceToFile(double bestBound, string * 
 	ins << "Single visits:\t" << this->nSingleService << "\n";
 	ins << "nRoutes:\t" << this->nRoutes << "\n";
 
-	if (divisible) {
+	if (heurestic) {
 		ins << "Diversification iterations:\t" << nIterations << "\n";
 		ins << "Intensification iterations:\t" << nIntIterations << "\n";
 
@@ -201,9 +203,9 @@ void SolutionInfo::InstanceInfo::printInstanceToFile(double bestBound, string * 
 
 	ins << "Solution time:\t" << this->solTime << "\n";
 
-	if (divisible) {
+	if (heurestic) {
 		ins << "\nSolution method\n";
-		if (ModelParameters::Simultaneous)
+		if (ModelParameters::Simultanoues_RelaxedIRP)
 			ins << "Simultanous IRP\n";
 		else
 			ins << "Divisible IRP\n";
@@ -221,7 +223,7 @@ void SolutionInfo::InstanceInfo::printInstanceToFile(double bestBound, string * 
 		
 	}
 
-	if (divisible) {
+	if (heurestic) {
 		ins << "\nHeurestic parameters\n";
 		ins << "Heurestic time:\t" << ModelParameters::HEURESTIC_TIME << "\n";
 		ins << "Intensification time:\t" << ModelParameters::INTENSIFICATION_TIME << "\n";

@@ -39,6 +39,7 @@ public:
 		int nRoutes = -1;
 		double solTime = -1;
 		double bestBound = -1;
+		double irpRel = -1;
 		void fillInfo();
 		double getGap(int t);
 		double getAverageObjective(int t);

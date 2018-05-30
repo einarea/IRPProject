@@ -3,22 +3,22 @@ class ModelParameters
 {
 public:
 	//Running time
-	static const int MAX_RUNNING_TIME_IRP = 10;//seconds
-	static const int MAX_RUNNING_TIME_VRP = 60; //seconds
+	static const int MAX_RUNNING_TIME_IRP = 20;//seconds
+	static const int MAX_RUNNING_TIME_VRP = 20; //seconds
 	static const int MAX_TIME_ROUTE_PROBLEM = 90; //seconds
-	static const int INTENSIFICATION_TIME = 60; //seconds
+	static const int INTENSIFICATION_TIME = 20; //seconds
 	static const int TERMINATE_IF_NO_NEW_SOLUTION = 12000; //seconds
-	static const int HEURESTIC_TIME = 1200; // seconds
+	static const int HEURESTIC_TIME = 60; // seconds
 
 	static const int nVehicles = 3;
-	static const bool SUBTOUR_ELIMINATION = false;
+	static const bool SUBTOUR_ELIMINATION = true;
 	//For the heurestic
-	static const bool Simultanoues_RelaxedIRP = true;
+	static const bool Simultanoues_RelaxedIRP = false;
 	static const bool SelectBetweenAllRoutes = true;
 
 	//Only one of the diversification constraints should be true
-	static const bool RouteChange = true;
-	static const bool MinChanges = false;
+	static const bool RouteChange = false;
+	static const bool MinChanges = true;
 
 	//Holding cost removed from objective
 	static const bool HoldingCost = false;
@@ -32,7 +32,7 @@ public:
 	static const int ROUTE_LOCK = 50; //Percentage of routes to require changes to
 	static const int MIN_CHANGE = 10; //Percentage of changes to solution
 	static const int TabuLength = 2;  //Number of diversication iterations locked
-	static const int TABU_LOCK = 20; //Percentage of changes to lock randomly.
+	static const int TABU_LOCK = 15; //Percentage of changes to lock randomly.
 	static const int HOLDING_COST_INCREMENT = 5; //Used by addHoldingCostCtr, Holding cost allowed to increase in percentage, removed from objective function.
 
 	//Subtour parameters
