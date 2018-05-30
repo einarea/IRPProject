@@ -187,7 +187,7 @@ void SolutionInfo::InstanceInfo::printInstanceToFile(double bBound, string * fil
 	ins << "1% from best sol after:\t" << getPercentSolutionTime(1) << "\n";
 	ins << "2% from best sol after:\t" << getPercentSolutionTime(2) << "\n";
 	ins << "5% from best sol after: \t" << getPercentSolutionTime(5) << "\n";
-	ins << "10% from best sol after: \t" << getPercentSolutionTime(1) << "\n";
+	ins << "10% from best sol after: \t" << getPercentSolutionTime(10) << "\n";
 	ins << "nDivisible:\t" << this->nDivisible << "\n";
 	ins << "nSimultaneous:\t" << this->nSimultanouesService << "\n";
 	ins << "Total nodes served:\t" << this->nTotalNodesServed << "\n";
