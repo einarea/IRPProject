@@ -22,7 +22,7 @@ public:
 	static const int SLACK = 10; //Slack in restricted shift constraint, % of capacity
 
 	//Subtour parameters
-	static const int EDGE_WEIGHT = 10; //Divided by 10, weight of edges in graph to construct
+	static const int EDGE_WEIGHT = 25; //Divided by 10, weight of edges in graph to construct
 	//static int EDGE_WEIGHT;
 	//static const int ALPHA = 1;		//Degree of subtour, divided by 10
 	static int ALPHA;
@@ -43,7 +43,7 @@ public:
 	static const int LOCAL_CUTS = 34;
 
 	////Model parameters;
-	static const int nVehicles = 3;
+	static const int nVehicles = 5;
 	static const int TRANSCOST_MULTIPLIER = 13;
 	static const int SERVICECOST_MULTIPLIER =100;
 	static const int TRAVELTIME_MULTIPLIER = 1;
