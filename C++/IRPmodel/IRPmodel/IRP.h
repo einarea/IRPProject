@@ -142,7 +142,7 @@ public:
 	
 
 	IRP(const NodeInstanceDB&, bool relaxed = false, SolutionInfo::InstanceInfo * instance = nullptr, bool maskOn = false, int ** VisitMask = 0);
-	void addVisitConstraint(double ** VisitMatrix, int selection);
+	void addVisitConstraint(double ** VisitMatrix, int selection, int relaxed = -1);
 	Route * getRoute(int id);
 	vector<Route const*>& getRoutes();
 	int newRoute(vector <Node*> &path);
@@ -153,7 +153,7 @@ public:
 	void updateTabuMatrix(double ** changeMatrix);
 	int getNumOfNodes();
 	void addHoldingCostCtr(double holdingCost);
-	void addRouteCtr(vector<Route*> routes);
+	void addRouteCtr(vector<Route*> routes, int relaxed = -1);
 	void printMatrix();
 	int getCapacity();
 	void useIPSubtourElimination(int cuttype);

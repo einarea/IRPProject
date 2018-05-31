@@ -1868,7 +1868,7 @@ IRP::~IRP()
 
 
 
-void IRP::addVisitConstraint(double ** Visit, int selection)
+void IRP::addVisitConstraint(double ** Visit, int selection, int relaxed)
 {
 	XPRBexpr p1 = 0;
 	XPRBexpr p2 = 0;
@@ -1893,9 +1893,14 @@ void IRP::addVisitConstraint(double ** Visit, int selection)
 				}
 			}
 		}
-		VisitCtr = prob.newCtr("MinVisits", p1 >= ceil(visits*(double) ModelParameters::MIN_CHANGE/100));
-		VisitCtr.print();
-		cout << "\n";
+		if (relaxed == -1) {
+			VisitCtr = prob.newCtr("MinVisits", p1 >= ceil(visits*(double)ModelParameters::MIN_CHANGE / 100));
+			p1 = 0;
+		}
+		else {
+			VisitCtr = prob.newCtr("MinVisits", p1 >= ceil(visits*(double)relaxed / 100));
+			p1 = 0;
+		}
 	}
 
 	if (selection == ModelParameters::ForceChanges) {
@@ -1912,10 +1917,15 @@ void IRP::addVisitConstraint(double ** Visit, int selection)
 		}
 
 		//add constraint
-		VisitCtr = prob.newCtr("MinVisits", p1 + p2 >= ceil(Database.Nodes.size()*Database.Periods.size()* (double) ModelParameters::MIN_CHANGE/100));
-		p1 = 0;
-		VisitCtr.print();
-		cout << "\n";
+		if (relaxed == -1) {
+			VisitCtr = prob.newCtr("MinChanges", p1 + p2 >= ceil(Database.Nodes.size()*Database.Periods.size()* (double)ModelParameters::MIN_CHANGE / 100));
+			p1 = 0;
+		}
+		else {
+			VisitCtr = prob.newCtr("MinChanges", p1 + p2 >= ceil(Database.Nodes.size()*Database.Periods.size()* (double)relaxed/ 100));
+			p1 = 0;
+		}
+
 
 	} //End force changes
 
@@ -2261,7 +2271,7 @@ void IRP::addHoldingCostCtr(double holdingCost)
 	prob.print();
 }
 
-void IRP::addRouteCtr(vector<Route*> routes)
+void IRP::addRouteCtr(vector<Route*> routes, int relaxed)
 {
 	for (XPRBctr ctr : RouteCtr)
 		if(ctr.isValid())
@@ -2290,7 +2300,10 @@ void IRP::addRouteCtr(vector<Route*> routes)
 		rr++;
 	}
 
-	RouteChangeCtr = prob.newCtr(XPRBnewname("Logical"), p2 >= floor(routes.size()*ModelParameters::ROUTE_LOCK/100));
+	if(relaxed == -1)
+		RouteChangeCtr = prob.newCtr(XPRBnewname("Logical"), p2 >= floor(routes.size()*ModelParameters::ROUTE_LOCK/100));
+	else
+		RouteChangeCtr = prob.newCtr(XPRBnewname("Logical"), p2 >= floor(routes.size()*relaxed / 100));
 
 	//What percentage of routes that need change
 
