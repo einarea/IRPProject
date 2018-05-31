@@ -50,7 +50,8 @@ public:
 		string Name;
 		double getBestSolutionTime();
 		double getPercentSolutionTime(double percent);
-		void printInstanceToFile(double bestInfo = -1, string * filename = nullptr, bool heurestic = true);
+		SolutionInfo::InstanceInfo * const printInstanceToFile(bool heurestic = true);
+		void printInstanceTimeSeriesToFile(bool heurestic = true);
 		int getMaxTime();
 		void addSolutionPoint(int state, double objectiveVal, double time);
 	};

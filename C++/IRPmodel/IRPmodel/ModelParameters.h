@@ -6,9 +6,9 @@ public:
 	static const int MAX_RUNNING_TIME_IRP = 240;//seconds
 	static const int MAX_RUNNING_TIME_VRP = 60; //seconds
 	static const int MAX_TIME_ROUTE_PROBLEM = 90; //seconds
-	static const int INTENSIFICATION_TIME = 60; //seconds
+	static const int INTENSIFICATION_TIME = 5; //seconds
 	static const int TERMINATE_IF_NO_NEW_SOLUTION = 12000; //seconds
-	static const int HEURESTIC_TIME = 1800; // seconds
+	static const int HEURESTIC_TIME = 10; // seconds
 
 	static const int nVehicles = 3;
 	static const bool SUBTOUR_ELIMINATION = true;

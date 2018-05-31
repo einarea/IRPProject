@@ -166,15 +166,15 @@ double SolutionInfo::InstanceInfo::getPercentSolutionTime(double percent)
 	exit(145);
 }
 
-void SolutionInfo::InstanceInfo::printInstanceToFile(double bBound, string * filename, bool heurestic)
+SolutionInfo::InstanceInfo * const SolutionInfo::InstanceInfo::printInstanceToFile(bool heurestic)
 {
-	bestBound = bBound;
+	
 	ofstream ins;
 	if (heurestic) {
 		ins.open("Heurestic/" + Name + ".txt");
 	}
 	else
-		ins.open("Exact/" + *filename + ".txt");
+		ins.open("Exact/" + Name + ".txt");
 
 	ins << "Best objective:\t" << this->bestObjective << "\n";
 	if (heurestic) {
@@ -276,6 +276,26 @@ void SolutionInfo::InstanceInfo::printInstanceToFile(double bBound, string * fil
 		}
 	}
 
+
+	ins.close();
+
+	return this;
+}
+
+void SolutionInfo::InstanceInfo::printInstanceTimeSeriesToFile(bool heurestic)
+{
+	ofstream ins;
+	if (heurestic)
+		ins.open("Heurestic/" + Name + "_timeseries.txt");
+	else
+		ins.open("Exact/" + Name + "timeseries.txt");
+	double avg;
+	for (int t = infoHolder.front().Time; t <= infoHolder.back().Time; t++) {
+		avg = getAverageObjective(t);
+
+		ins << "Time:\t" << t << "\tAvg. obj.:\t" << to_string((double)avg) << "\t" << bestBound << "\n";
+
+	}
 
 	ins.close();
 }
