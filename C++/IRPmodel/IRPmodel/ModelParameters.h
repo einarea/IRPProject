@@ -3,14 +3,14 @@ class ModelParameters
 {
 public:
 	//Running time
-	static const int MAX_RUNNING_TIME_IRP = 20;//seconds
-	static const int MAX_RUNNING_TIME_VRP = 20; //seconds
+	static const int MAX_RUNNING_TIME_IRP = 240;//seconds
+	static const int MAX_RUNNING_TIME_VRP = 60; //seconds
 	static const int MAX_TIME_ROUTE_PROBLEM = 90; //seconds
-	static const int INTENSIFICATION_TIME = 5; //seconds
+	static const int INTENSIFICATION_TIME = 300; //seconds
 	static const int TERMINATE_IF_NO_NEW_SOLUTION = 12000; //seconds
-	static const int HEURESTIC_TIME = 1800; // seconds
+	static const int HEURESTIC_TIME = 3600; // seconds
 
-	static const int nVehicles = 3;
+	static const int nVehicles = 5;
 	static const bool SUBTOUR_ELIMINATION = true;
 	//For the heurestic
 	static const bool Simultanoues_RelaxedIRP = true;
@@ -37,7 +37,7 @@ public:
 
 	//Subtour parameters
 	static const int EDGE_WEIGHT = 10; //Divided by 100, weight of edges in graph to construct
-	static const int ALPHA = 10;		//Degree of subtour, divided by 100
+	static const int ALPHA = 25;		//Degree of subtour, divided by 100
 
 
 	//Only record improvement

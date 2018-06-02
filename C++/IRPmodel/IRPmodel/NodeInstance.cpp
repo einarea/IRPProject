@@ -126,7 +126,7 @@ NodeInstance::NodeInstance(int nodeId, bool Del, int posX, int posY, int nPer, i
 }
 
 //Create random node
-NodeInstance::NodeInstance(int id, bool del, int nPer, int randSeed, int positionType)
+NodeInstance::NodeInstance(int id, bool del, int nPer, int randSeed, int positionType, vector<int> clusterPosition)
 	:
 	NodeID(id),
 	Delivery(del),
@@ -153,6 +153,16 @@ NodeInstance::NodeInstance(int id, bool del, int nPer, int randSeed, int positio
 	if (positionType == RANDOM_POS) {
 		PosX = (rand() % 100 + 0) - 50;
 		PosY = (rand() % 100 + 0) - 50;
+	}
+
+	if (positionType == CLUSTER) {
+		srand(time(NULL) + randSeed);
+		PosX = clusterPosition[0] + (rand() % 20 + 0) - 10;
+		PosX = min(PosX, (double) 50);
+		PosX = max(PosX, (double)-50);
+		PosY = clusterPosition[1] + (rand() % 20 + 0) - 20;
+		PosY = min(PosY, (double)50);
+		PosY = max(PosY, (double)-50);
 	}
 
 	randomQuantities(randSeed);

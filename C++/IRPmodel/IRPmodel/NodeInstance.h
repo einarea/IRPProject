@@ -43,11 +43,12 @@ public:
 	//Position selection
 	static const int RANDOM_POS = 31;
 	static const int CLOSE_DEPOT = 32;
+	static const int CLUSTER = 33;
 
 
 	NodeInstance(int NodeId, bool Del, int posX, int posY, int nPer, int inital, int holdingCost, int upperLim, int lowerLim, vector<int> Demand);
 	NodeInstance(int NodeId, bool Del, int posX, int posY, int nPer, int randSeed);
-	NodeInstance(int id, bool Del, int nPer, int randSeed, int positionType = RANDOM_POS);
+	NodeInstance(int id, bool Del, int nPer, int randSeed, int positionType = RANDOM_POS, vector<int> clusterPosition = {-1, -1});
 	bool isDelivery() const;
 	bool isColocated(const NodeInstance *) const;
 	bool hasArc(NodeInstance * node);

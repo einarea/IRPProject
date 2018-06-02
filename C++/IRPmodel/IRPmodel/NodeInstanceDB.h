@@ -16,6 +16,7 @@ class NodeInstanceDB
 	static const int COLOCATED = 23;
 	static const int SEPARATE = 24;
 	static const int CLOSENESS_TO_DEPOT = 25;
+	static const int CLUSTER = 26;
 	friend class Solution;
 	friend class Route;
 	friend class IRP;
@@ -34,7 +35,7 @@ public:
 	double Capacity;
 
 	NodeInstanceDB(string fileName);
-	NodeInstanceDB(int nCustomers, int nPeriods, int type = COLOCATED);
+	NodeInstanceDB(int nCustomers, int nPeriods, int type = COLOCATED, int nClusters = -1);
 	~NodeInstanceDB();
 
 	string getName() const;
@@ -45,6 +46,7 @@ public:
 	static NodeInstanceDB * createClosenessToDepotInstance(int nCustomers, int nPeriods, int version);
 	static NodeInstanceDB * createPDInstance(int nCustomers, int nPeriods, int version);
 	static NodeInstanceDB * createDelInstance(int nCustomers, int nPeriods, int version);
+	static NodeInstanceDB * createClusterInstance(int nCustomers, int nClusters, int nPeriods, int version);
 	static NodeInstanceDB * openInstance(int nCustomers, int nPeriods, int version);
 	static string getFilename(int nCustomers, int nPeriods, int version);
 	NodeInstance * getColocatedNode(const NodeInstance*);

@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include "NodeInstanceDB.h"
+#include <time.h>
 using namespace std;
 
 
@@ -319,7 +320,7 @@ NodeInstanceDB::NodeInstanceDB(string fileName)
 }
 
 //Generate two colocated nodes for nCustomers
-NodeInstanceDB::NodeInstanceDB(int nCustomers, int nPer, int type)
+NodeInstanceDB::NodeInstanceDB(int nCustomers, int nPer, int type, int nClusters)
 	:
 	nPeriods(nPer)
 {
@@ -358,6 +359,50 @@ NodeInstanceDB::NodeInstanceDB(int nCustomers, int nPer, int type)
 			auto delNode = new NodeInstance(i, true, nPer, i, NodeInstance::CLOSE_DEPOT);
 			AllNodes.push_back(delNode);
 			AllNodes.push_back(new NodeInstance(i + 1, false, delNode->PosX, delNode->PosY, nPer, i + 1));
+		}
+		break;
+	}
+
+	case CLUSTER: {
+		//Draw cluster position
+		int customersInCluster = (int) ceil(nCustomers / nClusters);
+
+		vector<vector<int>> positions;
+		int id = 1;
+		for (int i = 0; i < nClusters; i++) {
+			srand(time(NULL) + i);
+			bool pickPos = true;
+			bool repeat = false;
+			int PosX;
+			int PosY;
+			while (pickPos) {
+				PosX = (rand() % 100 + 0) - 50;
+				PosY = (rand() % 100 + 0) - 50;
+
+				for (auto pos : positions) {
+					if (sqrt(pow(PosX - pos[0], 2) + pow(PosY - pos[1], 2)) <= 30) {
+						repeat = true;
+			
+					}
+				}
+				if (repeat)
+					pickPos = true;
+	
+				else
+					pickPos = false;
+
+				repeat = false;
+			}
+			positions.push_back({ PosX, PosY });
+
+			
+
+			for (int cust = 1; cust <= 2 * customersInCluster; cust = cust + 2){
+				auto delNode = new NodeInstance(id, true, nPer, (cust+1)*100*(i+1), NodeInstance::CLUSTER, {PosX, PosY});
+				AllNodes.push_back(delNode);
+				AllNodes.push_back(new NodeInstance(id + 1, false, delNode->PosX, delNode->PosY, nPer, id + 1));
+				id = id+2;
+			}
 		}
 		break;
 	}
@@ -428,6 +473,21 @@ NodeInstanceDB * NodeInstanceDB::createDelInstance(int nCustomers, int nPeriods,
 	return db;
 
 	return nullptr;
+}
+
+NodeInstanceDB * NodeInstanceDB::createClusterInstance(int nCustomers, int nClusters, int nPeriods, int version)
+{
+
+	NodeInstanceDB *db = new NodeInstanceDB(nCustomers, nPeriods, CLUSTER, nClusters);
+
+	ofstream instanceFile;
+
+	string filename = getFilename(nCustomers, nPeriods, version);
+	db->writeInstanceToFile(instanceFile, filename);
+	return db;
+
+	return nullptr;
+	
 }
 
 NodeInstanceDB * NodeInstanceDB::openInstance(int nCustomers, int nPeriods, int version)
