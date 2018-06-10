@@ -17,7 +17,6 @@ public:
 
 	//Node IRP Holder has access to private members of class NodeIRP
 
-
 	public:
 		EdgeIRP(Node *child, double loadDel, double loadPick, double value);
 		~EdgeIRP();
