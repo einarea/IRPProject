@@ -141,8 +141,8 @@ NodeInstance::NodeInstance(int id, bool del, int nPer, int randSeed, int positio
 		y = (rand() % 50 + 0);
 
 		//map closer to depot by convex function
-		PosX =  ceil( 50/pow(50,1.5) * pow(x, 1.5));
-		PosY = ceil( 50 / pow(50, 1.5) * pow(y, 1.5));
+		PosX =  ceil( 50/pow(50,2.5) * pow(x, 2.5));
+		PosY = ceil( 50 / pow(50, 2.5) * pow(y, 2.5));
 
 		if (rand() % 10 + 0 >= 5)
 			PosX = -PosX;
