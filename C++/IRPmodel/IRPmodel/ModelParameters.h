@@ -2,31 +2,84 @@
 class ModelParameters
 {
 public:
+	//Running time
+	static const int MAX_RUNNING_TIME_IRP = 240;//seconds
+	static const int MAX_RUNNING_TIME_VRP = 60; //seconds
+	static const int MAX_TIME_ROUTE_PROBLEM = 90; //seconds
+	static const int INTENSIFICATION_TIME = 300; //seconds
+	static const int TERMINATE_IF_NO_NEW_SOLUTION = 12000; //seconds
+	static const int HEURESTIC_TIME = 3600; // seconds
 
-	static const int MAX_RUNNING_TIME = 7200; //seconds
+	static const int nVehicles = 5;
+	static const bool SUBTOUR_ELIMINATION = true;
+	//For the heurestic
+	static const bool Simultanoues_RelaxedIRP = true;
+	static const bool SelectBetweenAllRoutes = true;
 
-	//TabuList 
-	static const int TabuLength = 2;
+	//Only one of the diversification constraints should be true
+	static const bool RouteChange = false;
+	static const bool MinChanges = true;
+
+	//Holding cost removed from objective
+	static const bool HoldingCost = false;
 
 
-	ModelParameters();
+	//Simultanous model
+	static bool Simultaneous;
+
+
+	//Diversification parameters
+	static const int ROUTE_LOCK = 50; //Percentage of routes to require changes to
+	static const int MIN_CHANGE = 60; //Percentage of changes to solution
+	static const int TabuLength = 2;  //Number of diversication iterations locked
+	static const int TABU_LOCK = 15; //Percentage of changes to lock randomly.
+	static const int HOLDING_COST_INCREMENT = 5; //Used by addHoldingCostCtr, Holding cost allowed to increase in percentage, removed from objective function.
+
+	//Subtour parameters
+	static const int EDGE_WEIGHT = 10; //Divided by 100, weight of edges in graph to construct
+	static const int ALPHA = 25;		//Degree of subtour, divided by 100
+
+
+	//Only record improvement
+	static const bool RecordImprovement = true;
+
+	//Valid inequalitues
+	static const int ExcessParameter = 30; //Pecentage excess above vehicle capacity. Only those with more are added
+
+	//Selection for shift quantity
+	static const int MAX_SHIFT = 3;
+	static const int RESTRICTED_SHIFT = 4;
+	static const int MINIMIZE_VISITS = 5;
+	static const int INFEASIBLE = 6;
+	static const int SLACK = 10; //Slack in restricted shift constraint, % of capacity
+
+
+	//Selection for route search
+	static const int REQUIRE_CHANGE = 31;
+	static const int NO_CHANGE = 46;
+
+	//Branch and cut
+	static const int GLOBAL_CUTS = 33;
+	static const int LOCAL_CUTS = 34;
+
+	////Model parameters;
+
 	static const int TRANSCOST_MULTIPLIER = 13;
 	static const int SERVICECOST_MULTIPLIER =100;
 	static const int TRAVELTIME_MULTIPLIER = 1;
 	static const int SERVICETIME = 20;
 	static const int maxTime = 480;
-	static const int Capacity;
-	//static const int CapacityPenalty = 10000;
 	static const int VehiclePenalty = 100000;
-	static const int overTime = 3;
-	static const int nVehicles = 4;
 
-	//Simultanous
-	static const bool Simultaneous = false;
 
+
+
+	//Heurestic
 	//static const double VisitRatio = 0.5;
 
+
 	//************For generating customers********************//
+	
 	//Ranges where values are randomly drawn from.
 
 	//Holding cost
@@ -55,10 +108,10 @@ public:
 	
 	static const int LBPick = 0;		
 
-	//Tabu 
+	//**************Constant identifiers******************
+	//Tabu list size
 	static const int ForceVisits = 33;
 	static const int ForceChanges = 34;
-
 
 	//Valid inequalitites
 	static const int MinimumNodeVisit = 22;
@@ -86,6 +139,20 @@ public:
 
 	//Route selection
 	static const int MIN_SERVICE = 33;
+	static const int CLOCKWISE = 54;
+	static const int COUNTER_CLOCKWISE = 53;
+
+	//STATE OF SOLUTION
+	static const int ROUTE_SEARCH = 76;
+	static const int SHIFT_QUANTITY = 77;
+	static const int IRP_REL = 78;
+	static const int VRP = 79;
+	static const int INTENSIFICATAION_END = 80;
+	static const int FINAL_SOL = 81;
+	static const int BBNode = 82;
+
+
+	ModelParameters();
 	~ModelParameters();
 };
 

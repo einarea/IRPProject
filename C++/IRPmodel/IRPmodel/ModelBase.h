@@ -1,8 +1,9 @@
+#ifndef MODELBASE_H
+#define MODELBASE_H
+
 #include "stdafx.h"
 #include "xprb_cpp.h"
-#include "Map.h"
 #include <vector>
-#include "CustomerDB.h"
 #include "Node.h"
 #include "xprs.h"
 
@@ -20,3 +21,4 @@ public:
 	~ModelBase();
 };
 
+#endif

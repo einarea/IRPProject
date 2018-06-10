@@ -1,28 +1,31 @@
 #pragma once
 
+#ifndef IRP_H
+#define IRP_H
 
 #include "xprb_cpp.h"
-#include "MapIRP.h"
+#include "NodeInstanceDB.h"
 #include <vector>
-#include "CustomerDB.h"
 #include "xprs.h"
-#include "Node.h"
+#include "Solution.h"
+#include "NodeIRPHolder.h"
+#include <time.h>
+#include "SolutionInfo.h"
+#include "ModelParameters.h"
 
 
 using namespace ::dashoptimization;
 using namespace::std;
 
 class IRP
-{
+{	
 private:
-
 	//Problem
-	CustomerIRPDB database;
-	MapIRP map;
+	const NodeInstanceDB &Database;
 	XPRBprob prob;
 	XPRSprob oprob;		//Express problem to use with cuts
 	bool MaskOn;
-	void getSubset(vector <int>  subset, int subsetSize, int node, vector <int> & IncludeNodes, int t1, int t2);
+	void getSubset(vector <NodeInstance*>  subset, int subsetSize, int node, vector <NodeInstance*> & IncludeNodes, int t1, int t2);
 
 	//Parameters
 	bool ARC_RELAXED;
@@ -30,54 +33,36 @@ private:
 
 	void addInventoryAndLoadingCtr(XPRBprob & problem);
 
-
 	int NumOfCustomers;
+	double getTransportationCost();
+	double getHoldingCost();
+	double getnRoutes();
 	int MaxTime;
 	int Capacity;
 	int NumOfPeriods;
-	int ** Dist;
-	int ** TransCost;
-	int * HoldCost;
-	int * InitInventory;
-	int * UpperLimit;
-	int * LowerLimit;
-	int ** Demand;
-	int ** TravelTime;
 
 
-	//Map map;
-
-	//Variables
-					//Arc variables
-				//Customer visits variables
-		
+	//Variables	
+	XPRBvar * extraVehicle;
 	XPRBvar ** delivery;
 	XPRBvar ** pickup;
 	XPRBvar *** loadDelivery;
 	XPRBvar *** loadPickup;
-	XPRBvar ** time;
+	XPRBvar ** timeVar;
 	XPRBvar ** actionDelivery;
 	XPRBvar ** actionPickup;
 	XPRBvar *** simAction;
+	vector<XPRBvar>changeRoute;
+	XPRBctr RouteChangeCtr;
+	vector<XPRBctr> RouteCtr;
 	double epsilon = 0.001;
 
-	XPRBctr ** TabuMatrix;
+	vector<vector<XPRBctr>> TabuMatrix;
 	double ** CountMatrix;
-
-
-
 
 	XPRBexpr objective;
 	int ** t;
 
-
-	//Forward declaration
-	class Solution;
-	class NodeIRP;
-	class NodeIRPHolder;
-	class Route;
-
-	//
 	XPRBctr VisitCtr;
 
 	//Utility functions
@@ -86,214 +71,64 @@ private:
 	void generateMask(int ** mask);
 	bool initializeVariables();
 	bool initializeParameters();
+
+	void IRP::copyGraph(vector<Node*>& newGraph, vector<NodeStrong*>& cpGraph);
+	void IRP::copyGraph(vector<Node*>& newGraph, vector<Node*>& cpGraph);
+	bool IRP::getSubtourGraph(vector<Node*>&subtour, int t);
+
 	bool formulateProblem();
-
-
-	void buildGraph(vector <Node*> &, int, bool includeDepot, double weight=0.01);
 
 	void printGraph(vector <Node> &);
 
 	int SolutionCounter; // Tracks number of solutions, solution's ID equals the counter value at the time added
 	int getCounter();
-	
-	vector <Solution *> solutions;
-
-
-
 
 public:
+
+	//Clocks
+	time_t lastSolutionFound;
+	//Solution data
+	double solutionTime = -1;
+	bool SubtourElimination = false;
+	int nNodes = -1;
+	int CutType;
+	int timeCounter = 0;
+	int nVariables = -1;
+	int nConstraints = -1;
+	double bestBound = -1;
+	double bestSol = -1;
+	void printSolutionToFile(double lpOptimat, double trans, double hold, int version, int edge);
+	void buildGraph(vector <Node*> &, int, bool includeDepot, double weight = 0.01);
+	void buildStrongGraph(vector <NodeStrong*> &, int, bool includeDepot, double weight = -1);
+	vector <Solution *> solutions;
+
+	SolutionInfo::InstanceInfo * InstanceData = nullptr;
+
 	XPRBvar ** inventory;
 	XPRBvar ** y;
 	XPRBvar *** x;
 
+	void fillSolution(Solution * sol);
+
 	//To store all routes that are generated
 	vector <Route *> routes;
 
-	vector<vector<vector<XPRBvar>>> subtourIndices;
+	vector<vector<int>> subtourIndices;
+	vector<vector<int>> matrixValues;
 	//Sets
-	int startTime;
-	vector  <int> Periods;
-	vector  <int> AllPeriods;
-	vector  <int> DeliveryNodes;
-	vector <int> PickupNodes;
-	vector  <int> Nodes;
-	vector  <int> AllNodes;
-	vector  <int> Depot;
+	time_t startTime;
 	vector <int> integers1;
 
 
 	void clearVariables();
-	
+	void printStrongCompAlgorithm();
 	//For valid ineq
 	double *** ExcessConsumption;
 	double *** ExcessProd;
-
-	//Solving the aggregated model
-	class IRPproblem
-	{
-
-
-	};
-
-	//*****************Inner classes************************//
-	//Class to store routes and cost of routes
-	class Route {
-		static int counter;
-		public:
-		IRP & Instance;
-		double getTransportationCost();
-		int id;
-		//int removeNode(NodeIRP*, IRP::Route *);
-		//void insertSubRoute(vector<NodeIRP *>, NodeIRP * start, NodeIRP * end);
-	
-		int getTotalDelivery();
-		int getTotalPickup();
-		int getPosition(Node * node);
-		int getId();
-		int ** getRouteMatrix();
-		void printRoute();
-		double getResidualCapacity();
-		Route(vector <NodeIRP*> & path, IRP &instance);
-		//Graph 
-		vector <NodeIRP*> route;
-	}; //end class Route
-
-
-
-	//Class to store solutions to the instance
-
-	//Class that define a IRP node in a particular period
-	class NodeIRP :
-		public Node
-	{
-	public:
-		class EdgeIRP : public Edge {
-		public:
-			EdgeIRP(Node *child, double loadDel, double loadPick, double value);
-			NodeIRP * getEndNode();
-			double LoadDel;
-			double LoadPick;
-		};
-
-		NodeIRP(int id);
-		~NodeIRP();
-		//Override
-		void addEdge(double loadDel, double loadPick, NodeIRP * child,  double value);
-		EdgeIRP * getEdge();
-		static NodeIRP * getNode(Node *);
-		double Quantity;
-		double Inventory;
-		double TimeServed;
-		vector <EdgeIRP*> getEdges();
-		double getOutflow();
-		double getHoldCost();
-	};
-
-	//Class to store nodes over all periods
-	class NodeIRPHolder {
-	public:
-		int Id;
-		int getId();
-		NodeIRPHolder(int id, IRP &instance);
-		IRP & Instance;
-		vector<NodeIRP*> Nodes;
-		//
-		int isInventoryFeasible();
-		int isInventoryFeasible(int period);
-		double moveQuantity(int from, int to, double quantity);
-		double getMinQuantity();
-		double getExcessQuantity();
-		void removeMinQuantity();
-
-		//Changes
-		void addEdge(double loadDel, double loadPic, NodeIRPHolder * child, int period, double value);
-
-		//Information
-		void propInvForw(int period, double quantity);
-		double getOutflow(int period);
-		double quantity(int period);
-		double inventory(int period);
-		double timeServed(int period);
-
-		vector <NodeIRP::EdgeIRP*> getEdges(int period);
-		NodeIRP::EdgeIRP * getEdge(int period);
-		double getHoldCost(int period);
-		void changeQuantity(int period, double quantity);
-		bool isDelivery();
-
-	private:
-		double getFeasibleServiceIncrease(int period);
-		double getFeasibleServiceDecrease(int period);
-		double getFeasibleServiceMove(int from, int to);
-	};
-
-	class Solution {
-	public:
-		Solution(IRP &model, bool integer);
-		Solution(IRP &instance, vector<NodeIRPHolder*> nodes);
-		int SolID;
-		double **pCapacity;
-		int *** getRouteMatrix();
-		vector<NodeIRPHolder *> NodeHolder;
-		int selectPeriod(int selection);
-		vector<NodeIRPHolder *> getNodes();
-		//The set of routes for each period
-		vector<vector <IRP::Route*>> Routes;
-
-		vector<vector <IRP::Route*>> getRoutes();
-
-		//void buildGraph(vector<Node*> &graph, int t);
-		void print(string filname,int weight);
-
-		vector <NodeIRP *> getVisitedNodes(int period);
-		void sort(vector <NodeIRP>*);
-		bool IntegerSolution;
-		bool isFeasible();
-		void clearEdges(int period);
-		int shiftQuantity(int PeriodSelection, int ObjectiveSelection);
-		bool isRouteFeasible(IRP::Route *);
-		double getNumberOfRoutes(int period);
-		double getResidualCapacity(int period);
-		//Returns the amount of total product deliveried less the capacity x (number of vehicles used - 1)
-		double getTotalDelivery(int period);
-		//Returns the amount of total product pickup up less the capacity x (number of vehicles used - 1)
-		double getTotalPickup(int period);
-		double getNodeVisits(int period);
-		double ** getVisitedMatrix();
-		double getDeliveryNodeVisits(int period);
-		double getPickupNodeVisits(int period);
-		//Returns average delivery per node
-		double getDelivery(int period);
-		double getPickup(int period);
-		vector <IRP::Route *> getRoutes(int period);
-		NodeIRPHolder * getNode(int id);
-		int newRoute(vector <Node*> & route, int period);
-
-		int getnPeriods();
-		double getObjective();
-		void printSolution();
-		double getTransportationCost();
-		double getHoldingCost();
-		double getHoldingCost(int period);
-		double getTransportationCost(int period);
-		IRP &Instance;
-
-		//Operators
-		void removeVisit(IRP::Route * route, int selection = 1);
-		IRP::Route * insertSubrouteInRoute(IRP::Route * subroute, int period);
-
-		private:
-		//Integer solutions
-			vector<NodeIRP*> selectPair(IRP::Route *, int Selection);
-			
-		
-	
-	}; //End class solution
-
 	
 	class LocalSearch {
 	public:
-		LocalSearch(IRP & model, IRP::Solution *origSol);
+		LocalSearch(IRP & model, Solution *origSol);
 
 		void ShiftQuantity(Solution *);
 
@@ -302,110 +137,49 @@ public:
 		int ChoosePeriod(int selection);
 	private:
 		IRP & Instance;
-		IRP::Solution * OrigSol;
+		Solution * OrigSol;
 	};
 	
 
-	class RouteProblem{
-	public:
-		RouteProblem(IRP & Instance, vector<IRP::Route*> routes);
-		void addRouteConstraints();
-		void formulateRouteProblem(int objectiveSelection);
-		void initializeRouteParameters();
-		void initializeRouteVariables();
-		void addInventoryCtr();
-		int getShiftPeriod();
-		void shiftQuantityCtr(int quantity);
-		void initializeRoutes();
-		void printRouteMatrix();
-		void addRoutesToVector();
-		void lockRoutes(vector<vector<IRP::Route*>> RouteHolder);
-
-		int ShiftPeriod;
-	
-		Solution * solveProblem();
-	private:
-		XPRBprob routeProblem;
-
-		//Variables
-		XPRBvar ** inventory;
-		XPRBvar ** delivery;
-		XPRBvar ** pickup;
-		XPRBvar *** loadDelivery;
-		XPRBvar *** loadPickup;
-		XPRBvar ** travelRoute;
-
-		void lockRoute(int period, int routeId);
-		int getRoutePosition(int routeId);
-		Solution * allocateSolution();
-		void fillRoutes(vector<vector<IRP::Route* >>& routes);
-		void fillNodes(vector<NodeIRPHolder*> &nodeHolder);
-		void fillLoad(IRP::Route *, vector<NodeIRPHolder*> &nodeHolder, int period);
-		//Holder of all routes
-		vector <Route *> routes;
-		IRP & Instance;
-		//Parameters*********
-		vector<double> RouteCost;
-		//Route matrix
-		vector<int **>A;
-		//Variables
-	
-		//Set of all routes
-		vector <int> Routes;
-	};
-
-	//Class that solves a VRP for a period while pushing quantity to other periods and its existing routes
-	class RouteProblemWithVRP : public RouteProblem {
-	public:
-		RouteProblemWithVRP(IRP & Instance, int period, vector<IRP::Route*> routes);
-		void initializeVaribles();
-		void formulateProblem();
-		void solveProblem();
-		void addRoutingConstraints();
-	private:
-		int VRPperiod;
-	};
-
-	IRP(CustomerIRPDB&, bool relaxed = false, bool maskOn = false, int ** VisitMask = 0);
-	//void addSolution(int ** y, int ***x, int **d, int **pic, int ***loadDel, int ***loadPic, int **inv, int ** t);
-
-	void addVisitConstraint(double ** VisitMatrix, int selection);
+	IRP(const NodeInstanceDB&, bool relaxed = false, SolutionInfo::InstanceInfo * instance = nullptr, bool maskOn = false, int ** VisitMask = 0);
+	void addVisitConstraint(double ** VisitMatrix, int selection, int relaxed = -1);
 	Route * getRoute(int id);
-	vector<Route const*> getRoutes();
+	vector<Route const*>& getRoutes();
 	int newRoute(vector <Node*> &path);
 	void addValidIneq(int ValidInequality);
 
-	//Solution information
-	double ** getVisitDifference(Solution * sol1, Solution * sol2);
-
-
 
 	//Route functions
-
 	void updateTabuMatrix(double ** changeMatrix);
 	int getNumOfNodes();
-
+	void addHoldingCostCtr(double holdingCost);
+	void addRouteCtr(vector<Route*> routes, int relaxed = -1);
 	void printMatrix();
 	int getCapacity();
-	Map * getMap();
+	void useIPSubtourElimination(int cuttype);
+	void useLPSubtourElimination();
+	bool LPSubtour;
 	void calculateExcess();
-	void IRP::buildGraph(vector<NodeIRP*> &graph, int t, Solution * solution);
-	Solution * allocateSolution();
-	int allocateIRPSolution();
+	
+	Solution* allocateIRPSolution();
 	bool sepStrongComponents(vector<XPRBcut> &);
 	void addSubtourCut(vector<vector <Node *>> &, int t, bool &, vector<XPRBcut> &);
-	IRP::Solution * solveModel();
+	bool addSubtourCtr(vector<vector <Node *>> &, int t);
+	Solution * solveModel();
+	Solution * solveLPModel();
 	XPRBprob * getProblem();
-	CustomerDB * getDB();
 	vector <XPRBbasis> SavedBasis;
 	int nSubtourCuts;
 	int getNumOfPeriods();
 	int getNumOfCustomers();
-	void getVisitedCustomers(int period, vector <Customer *> &);
-	void getDemand(int period, vector<vector<double>> &, vector <Customer *> &);
+	//void getVisitedCustomers(int period, vector <Customer *> &);
+	//void getDemand(int period, vector<vector<double>> &, vector <Customer *> &);
 	Solution * getSolution(int id);
-	void printBounds();
+	NodeInstanceDB const * getDB();
+	//void printBounds();
 
 	~IRP();
 };
+
+#endif
 

@@ -2,18 +2,52 @@
 #include "Node.h"
 
 
-
-Node::Node(int id)
-	:
-	NodeID(id)
-{
-}
-
 Node::Node(int id, vector<Edge*> edges)
 	:
 	NodeID(id),
 	Edges(edges)
 {
+}
+
+Node::Node(const Node & cpNode)
+	:
+	NodeID(cpNode.NodeID),
+	State(cpNode.State)
+{
+	//Do not copy the edges
+}
+
+
+
+Node::Node(int id)
+	:
+	NodeID(id)
+{
+
+}
+
+Node & Node::operator=(const Node &cpNode)
+{
+	for (Edge *edge: Edges)
+		delete edge;
+
+	return * new Node(cpNode);
+}
+	
+
+void Node::setId(int id)
+{
+	NodeID = id;
+}
+
+bool Node::isDepot() const
+{
+	return NodeID == 0;
+}
+
+int Node::getState()
+{
+	return State;
 }
 
 int Node::getId() const {
@@ -50,10 +84,16 @@ vector<Node::Edge*> Node::getEdges()
 	return Edges;
 }
 
+
+
 Node::Edge::Edge(Node & endNode, double value)
 	:
 	EndNode(endNode),
 	Value(value)
+{
+}
+
+Node::Edge::~Edge()
 {
 }
 
@@ -65,26 +105,38 @@ bool Node::operator==(const Node & node) const
 		return false;
 }
 
-void Node::addEdge(Edge* edge)
+Node::Edge* Node::addEdge(Edge* edge)
 {
 	this->Edges.push_back(edge);
+	return edge;
 }
 
-void Node::addEdge(double value, Node &child)
+bool Node::hasEdge(Edge * checkEdge)
 {
-	this->Edges.push_back(new Edge(child, value));
+	for (auto edge : getEdges()) {
+		if (edge->getEndNode()->getId() == checkEdge->getEndNode()->getId())
+			return true;
+	}
+
+	return false;
 }
 
-void Node::addEdge(Node & child)
+Node::Edge* Node::addEdge(double value, Node *child)
 {
-	addEdge(1, child);
+	Edge * edge = new Edge(*child, value);
+	this->Edges.push_back(edge);
+	return edge;
+}
+
+Node::Edge * Node::addEdge(Node * child)
+{
+	return addEdge(1, child);
 }
 
 void Node::removeEdge(Node & child)
 {
 	for (int i = 0; i < Edges.size(); i++) {
 		if (child.getId() == Edges[i]->getEndNode()->getId()) {
-			delete Edges[i];
 			Edges.erase(Edges.begin() + i);
 		}
 	}
@@ -98,12 +150,24 @@ void Node::removeEdges()
 		}
 }
 
+void Node::setState(int s)
+{
+	State = s;
+}
+
 void Node::deleteEdges()
 {
-	int size = Edges.size();
-	for (int i = size - 1; i >= 0; i--) {
-		delete Edges[i];
-		Edges.erase(Edges.begin() + i);
+	for(Node::Edge* edge : Edges){
+		delete edge;
+	}
+	Edges.resize(0);
+}
+
+void Node::deleteEdge(Node * node)
+{
+	for (int i = 0; i < Edges.size(); i++) {
+		if(Edges[i]->getEndNode() == node)
+			Edges.erase(Edges.begin() + i);
 	}
 }
 
@@ -123,4 +187,6 @@ Node *Node::Edge::getEndNode()
 
 Node::~Node()
 {
+	//Release dynamic memory
+	deleteEdges();
 }

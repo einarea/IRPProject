@@ -1,8 +1,6 @@
 #pragma once
 #include "xprb_cpp.h"
-#include "Map.h"
 #include <vector>
-#include "CustomerVRPDB.h"
 #include "NodeIRP.h"
 #include "xprs.h"
 #include <string.h>
@@ -14,46 +12,54 @@ using namespace dashoptimization;
 class VRPmodel
 {
 public:
-	VRPmodel(CustomerVRPDB & db, Map &map, int Capacity);
-	void solveModel();
+	VRPmodel(const NodeInstanceDB & db, vector<NodeIRP*> nodes, int period);
+	void solveModel(Solution * currentSol = 0);
 	~VRPmodel();
-	void addToIRPSolution(int t, IRP::Solution * sol, IRP &);
-	void addRoutesToIRP(IRP& instance, int t, IRP::Solution * sol);
+	void updateSolution(Solution * sol);
+	XPRBprob* getProblem();
+	bool VRPmodel::sepStrongComponents(vector<XPRBcut> & cut);
+	int nSubtourCuts = 0;
+
+	time_t StartTime;
+	double SolutionTime;
+	time_t lastSolutionFound;
+
+	void useIPSubtourElimination(int cuttype);
+	vector<vector<int>> subtourIndices;
+	vector<vector<int>> matrixValues;
+	int CutType;
 
 private:
-
-	CustomerVRPDB database;
-	Map map;
+	void clearVariables();
+	int Period;
 	XPRBprob prob;
 
-	//Sets
-	vector <int> DeliveryNodes;
-	vector <int> PickupNodes;
-	vector <int> Nodes;
-	vector <int> AllNodes;
-	vector <int> Depot;
+	void buildStrongGraph(vector<NodeStrong*>& graph, bool Depot = false, double weight = -1);
+	void addSubtourCut(vector<vector<Node *>>& strongComp, bool &newCut, vector<XPRBcut> &SubtourCut);
 
 	//Variables
 	XPRBvar **x;
 	XPRBvar *y;
 	XPRBvar **loadDelivery;
 	XPRBvar **loadPickup;
-	XPRBvar *time;
+	XPRBvar *timeVar;
 	XPRBvar extraVehicle;
-	XPRBvar **pCapacity; //Penalty capacity
 
+	//Sets
+	vector<NodeIRP*> AllNodes;
+	vector<NodeIRP*> Nodes;
+	vector<NodeIRP*> DeliveryNodes;
+	vector<NodeIRP*> PickupNodes;
+	
 	//Parameters
-	int Capacity;
 	int MaxTime;
 	int nVehicles;
-	int * Demand;
-	int ** TransCost;
-	int ** TravelTime;
+
+	XPRSprob oprob;
 
 	//Linear expreassions;
 	XPRBexpr objective;
-
-
+	const NodeInstanceDB &Database;
 
 	//Helper functions
 	bool initializeSets();

@@ -1,5 +1,6 @@
 #pragma once
-#include <vector>;
+#include <vector>
+
 
 using namespace std;
 class Node
@@ -8,7 +9,10 @@ class Node
 public:
 	class Edge {
 	public:
+		//Edge(Edge& edge);
 		Edge(Node& endNode, double value);
+		//Declared virtual to invoke destructor of any derived classes, avoids memory leak
+		virtual ~Edge();
 		double getValue();
 		void setValue(double);
 		Node *getEndNode();
@@ -16,39 +20,56 @@ public:
 	private:
 		double Value;
 		Node &EndNode;
-
 	};
 
 
-	Node(int id);
+	//Constructores
 	Node(int id, vector<Edge*> edges);
+	Node(const Node&);
+	Node(int id);
+
+	virtual Node& operator =(const Node&);
+	//Destructor
+	virtual ~Node();
+
+	//get functions
 	Edge * getEdge(Node & n);
 	int getnEdges();
 	//Returns the first edge
 	Edge * getEdge();
 	vector <Edge*> getEdges();
-	void addEdge(double value, Node & child);
-	void addEdge(Edge *);
-	void addEdge(Node& child);
+	int getState();
+	int getId() const;
+
+	//modifier functions
+	void setId(int id);
+	bool isDepot() const;
+	void setState(int s);
+	Edge* addEdge(double value, Node * child);
+	Edge* addEdge(Edge *);
+	bool hasEdge(Edge *);
+	Edge* addEdge(Node * child);
 	void removeEdge(Node &child);
 	void deleteEdges();
+	void deleteEdge(Node *);
 	void removeEdges();
-	int getId() const;
-	~Node();
-
+	
+	//Operator overloading
 	bool operator==(const Node &) const;
 	bool operator!=(const Node &node) const
 	{
 		return !(*this == node); // invokes Array::operator==
 	}
-
-
-
-	
+	//Possible state constants
+	static const int TABU_EDGE = 31;
+	static const int FREE = 30;
+	static const int REMOVE = 32;
+	static const int TABU = 33;
 
 private:
 	int NodeID;
-	vector <Edge*> Edges;
+	int State;
 
+	vector <Edge*> Edges;
 };
 
