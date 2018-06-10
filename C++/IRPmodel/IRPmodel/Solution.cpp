@@ -845,7 +845,7 @@ void Solution::print(string filename, int load)
 	vector<NodeIRP *> graph;
 	for (int t : Instance.Periods) {
 		buildGraph(graph, t);
-		graphAlgorithm::printGraph(graph, filename + to_string(solCounter) + "t" + to_string(t), load);
+		//graphAlgorithm::printGraph(graph, filename + to_string(solCounter) + "t" + to_string(t), load);
 		graph.clear();
 	}
 }
@@ -1242,7 +1242,7 @@ void Solution::plotPeriod(int t, string filename)
 	for (NodeIRPHolder * node : Nodes){
 		nodes.push_back(node->NodePeriods[t]);
 	}
-	graphAlgorithm::printGraph(nodes, filename, ModelParameters::X);
+//	graphAlgorithm::printGraph(nodes, filename, ModelParameters::X);
 }
 
 void Solution::plot(string filename)

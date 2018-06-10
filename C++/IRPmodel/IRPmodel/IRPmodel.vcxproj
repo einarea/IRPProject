@@ -76,7 +76,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>C:\Users\einarea\Source\Repos\IRPProject\include;C:\Users\einarea\Source\Repos\IRPProject\boost_1_60_0;C:\Users\einarea\Source\Repos\IRPProject\exlibs\gnuplot-iostream;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Users\Einar Aastveit\source\repos\IRPProject\lib;C:\Users\einarea\Source\Repos\IRPProject\boost_1_60_0\lib64-msvc-14.0;$(LibraryPath)</LibraryPath>
+    <LibraryPath>C:\Users\einarea\Source\Repos\IRPProject\lib;C:\Users\einarea\Source\Repos\IRPProject\boost_1_60_0\lib64-msvc-14.0;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>

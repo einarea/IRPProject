@@ -8,7 +8,7 @@ graphAlgorithm::graphAlgorithm()
 {
 }
 
-void graphAlgorithm::printGraph(vector<NodeStrong*>& graph, string filename, int weight) {
+/*void graphAlgorithm::printGraph(vector<NodeStrong*>& graph, string filename, int weight) {
 	vector<NodeIRP*> graph2;
 	for (Node* n : graph)
 		graph2.push_back(NodeIRP::getNode(n));
@@ -28,7 +28,7 @@ void graphAlgorithm::printGraph(vector<Node*>& graph, string filename, int weigh
 void graphAlgorithm::printGraph(vector<NodeIRP*>& graph, string filename, int weight) {
 
 	printGraphHelper(graph, filename, true, weight);
-}
+}*/
 
 void graphAlgorithm::getRoutes(vector<Node*>& graph,  vector<vector<Node*>>& routes)
 {
@@ -223,7 +223,7 @@ void graphAlgorithm::strongConnect(NodeStrong & node, int &index, stack <NodeStr
 
 }
 
-void graphAlgorithm::printGraphHelper(vector<NodeIRP *>& graph, string filename,  bool load, int weight)
+/*void graphAlgorithm::printGraphHelper(vector<NodeIRP *>& graph, string filename,  bool load, int weight)
 {
 	FILE *gnuplotPipe = _popen("C:\\Octave\\3.2.4_gcc-4.4.0\\bin\\gnuplot", "w");
 	Gnuplot gp(gnuplotPipe);
@@ -382,7 +382,7 @@ void graphAlgorithm::printGraphHelper(vector<NodeIRP *>& graph, string filename,
 			gp.send1d(Depot);
 		}
 	}
-}
+}*/
 
 
 

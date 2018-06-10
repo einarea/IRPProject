@@ -1320,7 +1320,7 @@ void IRP::printStrongCompAlgorithm()
 		//Print graph
 		buildStrongGraph(graph, t, false); //Do not include depot in graph
 		copyGraph(tempGraph, graph);
-		graphAlgorithm::printGraph(tempGraph, "Subtour/DepotGone" + to_string(t), ModelParameters::X);
+//		graphAlgorithm::printGraph(tempGraph, "Subtour/DepotGone" + to_string(t), ModelParameters::X);
 		tempGraph.clear();
 
 
@@ -1333,7 +1333,7 @@ void IRP::printStrongCompAlgorithm()
 		}
 
 		copyGraph(tempGraph, tempGraph2);
-		graphAlgorithm::printGraph(tempGraph, "Subtour/Separation" + to_string(t), ModelParameters::X);
+	//	graphAlgorithm::printGraph(tempGraph, "Subtour/Separation" + to_string(t), ModelParameters::X);
 		tempGraph.clear();
 		tempGraph2.clear();
 
@@ -1348,7 +1348,7 @@ void IRP::printStrongCompAlgorithm()
 		}
 
 		copyGraph(tempGraph, tempGraph2);
-		graphAlgorithm::printGraph(tempGraph, "Subtour/SUBTOUR" + to_string(t), ModelParameters::X);
+	//	graphAlgorithm::printGraph(tempGraph, "Subtour/SUBTOUR" + to_string(t), ModelParameters::X);
 		tempGraph.clear();
 		tempGraph2.clear();
 		

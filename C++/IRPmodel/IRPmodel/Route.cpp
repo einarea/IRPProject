@@ -307,7 +307,7 @@ for (NodeIRP* node : route)
 	graph.push_back(node);
 }
 
-graphAlgorithm::printGraph(graph, filename, ModelParameters::X);
+//graphAlgorithm::printGraph(graph, filename, ModelParameters::X);
 }
 
 void Route::printRoute()
