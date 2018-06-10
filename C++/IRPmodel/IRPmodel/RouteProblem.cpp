@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "RouteProblem.h"
 
+#define min(a,b)            (((a) < (b)) ? (a) : (b))
 
 //Time callback
 void XPRS_CC cbmngtimeRoute(XPRSprob oprob, void * vd, int parent, int newnode, int branch) {

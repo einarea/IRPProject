@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "Route.h"
 
+#define max(a,b)            (((a) > (b)) ? (a) : (b))
+#define min(a,b)            (((a) < (b)) ? (a) : (b))
 
 Route::~Route()
 {

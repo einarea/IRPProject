@@ -2,8 +2,6 @@
 #include "NodeStrong.h"
 #include <stack>
 #include "NodeIRP.h"
-#include <boost/tuple/tuple.hpp>
-#include "gnuplot-iostream.h"
 
 class graphAlgorithm
 {
