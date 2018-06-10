@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "Solution.h"
 
-
 Solution::~Solution()
 {
 	//Delete nodeholder
